@@ -1,4 +1,5 @@
 const express = require('express')
+const serveIndex = require('serve-index')
 const dayjs = require('dayjs')
 const fs = require('fs')
 const Downloader = require('nodejs-file-downloader')
@@ -61,10 +62,12 @@ function pdfToImage(pdf) {
 	const png = pdf.replace('.pdf', '.png')
 	if (!fs.existsSync(png)) {
 		console.log(`Converting ${pdf} to png ...`)
-		pdf2img.convert(pdf).then(images => {
-			fs.writeFileSync(png, images[0])
-			console.log(`Wrote ${png}`)
-		})
+		pdf2img.convert(pdf)
+			.then(images => {
+				fs.writeFileSync(png, images[0])
+				console.log(`Wrote ${png}`)
+			})
+			.catch(error => console.error(`Could not convert ${pdf} to png`, error))
 	}
 }
 
@@ -84,7 +87,8 @@ app.get('/', (req, res) => {
 	res.sendFile(nextPaper())
 })
 
-app.use(express.static(newsstand))
+app.use('/static', serveIndex(newsstand))
+app.use('/static', express.static(newsstand))
 
 app.listen(port, () => {
 	downloadAll()
