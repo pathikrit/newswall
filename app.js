@@ -84,6 +84,8 @@ app.get('/', (req, res) => {
 	res.sendFile(nextPaper())
 })
 
+app.use(express.static(newsstand))
+
 app.listen(port, () => {
 	downloadAll()
 	console.log(`Starting server on port ${port} ...`)
