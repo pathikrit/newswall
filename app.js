@@ -12,28 +12,34 @@ const port = 3000
 // Newsstand configs
 const newsstand = './.newspapers' // Local directory to cache newspaper downloads
 const newspapers = ['WSJ', 'NY_NYT'] // See https://www.freedomforum.org/todaysfrontpages/ for list of papers
-const offsets = [0, 1, 2, 3] // Try today, yesterday etc
+const numDays = 3 // Try today, yesterday etc
 const refreshChron = '0 * * * *' // Every hour check for new newspapers
 
 schedule.scheduleJob(refreshChron, downloadAll)
 
-function downloadAll() {
+function recentDays() {
 	const today = dayjs()
-	for (const offset of offsets)
+	return Array(numDays).fill(null).map((_, i) => today.subtract(i, 'days'))
+}
+
+function downloadAll() {
+	for (const date of recentDays())
 		for (const paper of newspapers)
-			download(paper, today.subtract(offset, 'days'))
+			download(paper, date)
 }
 
 function download(key, date) {
 	const path = [newsstand, date.format('YYYY-MM-DD'), `${key}.pdf`]
-	const debug = path.slice(1).join('/')
+	const pdf = path.slice(1).join('/')
+	const fullPath = path.join('/')
 
-	if (fs.existsSync(path.join('/'))) {
-		console.log(`Already downloaded ${debug}`)
+	if (fs.existsSync(fullPath)) {
+		console.debug(`Already downloaded ${pdf}`)
+		pdfToImage(fullPath)
 		return
 	}
 
-	console.log(`Checking for ${debug} ...`)
+	console.log(`Checking for ${pdf} ...`)
 	const downloader = new Downloader({
 		// e.g. https://cdn.freedomforum.org/dfp/pdf12/WSJ.pdf
 		url: `https://cdn.freedomforum.org/dfp/pdf${date.date()}/${path[2]}`,
@@ -42,20 +48,31 @@ function download(key, date) {
 		onBeforeSave: deducedName => console.log(`Saving ${path[1]}/${deducedName} ...`)
 	})
 	downloader.download()
-		.then(pdfToImage)
+		.then(() => pdfToImage(fullPath))
 		.catch(error => {
 			if (error.statusCode && error.statusCode === 404)
-				console.log(`${debug} is not available yet`)
+				console.log(`${pdf} is not available`)
 			else
-				console.error(`Could not download ${debug}`, error)
+				console.error(`Could not download ${pdf}`, error)
 		})
 }
 
 function pdfToImage(pdf) {
-	console.log(`Converting ${pdf.filePath} to png ...`)
-	pdf2img.convert(pdf.filePath).then(images => {
-		fs.writeFileSync(pdf.filePath.replace('.pdf', '.png'), images[0])
-	})
+	const png = pdf.replace('.pdf', '.png')
+	if (!fs.existsSync(png)) {
+		console.log(`Converting ${pdf} to png ...`)
+		pdf2img.convert(pdf).then(images => {
+			fs.writeFileSync(png, images[0])
+			console.log(`Wrote ${png}`)
+		})
+	}
+}
+
+function nextPaper() {
+	for (const date of recentDays()) {
+		const directory = [newsstand, date.format('YYYY-MM-DD')].join('/')
+		//fs.readdirSync(directory)
+	}
 }
 
 app.get('/', (req, res) => {
