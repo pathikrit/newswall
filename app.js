@@ -68,19 +68,24 @@ function pdfToImage(pdf) {
 	}
 }
 
+let counter = 0 // We cycle through this so every time we get a new paper
 function nextPaper() {
 	for (const date of recentDays()) {
 		const directory = [newsstand, date.format('YYYY-MM-DD')].join('/')
-		//fs.readdirSync(directory)
+		const papers = fs.readdirSync(directory).filter((file) => file.endsWith('.png'))
+		const numPapers = papers.length
+		if (numPapers > 0) {
+			return [__dirname, directory, papers[Math.abs(counter++) % numPapers]].join('/')
+		}
 	}
 }
 
 app.get('/', (req, res) => {
-	res.send('Hello World!')
+	res.sendFile(nextPaper())
 })
 
 app.listen(port, () => {
 	console.log(`Starting server on port ${port} ...`)
 })
 
-downloadAll()
+
