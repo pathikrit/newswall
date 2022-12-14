@@ -6,6 +6,7 @@
     "dayjs": "^1.11.7",
     "express": "^4.18.2",
     "node-schedule": "^2.1.0",
-    "nodejs-file-downloader": "^4.10.2"
+    "nodejs-file-downloader": "^4.10.2",
+    "pdf-img-convert": "^1.1.1"
   }
 }
