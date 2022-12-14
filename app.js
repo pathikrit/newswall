@@ -7,7 +7,7 @@ const pdf2img = require('pdf-img-convert')
 
 // Server configs
 const app = express()
-const port = 3000
+const port = process.env.PORT || 3000
 
 // Newsstand configs
 const newsstand = './.newspapers' // Local directory to cache newspaper downloads
@@ -85,7 +85,6 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
+	downloadAll()
 	console.log(`Starting server on port ${port} ...`)
 })
-
-
