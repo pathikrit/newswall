@@ -42,9 +42,9 @@ function downloadAll() {
 
 // Download the newspaper for given day
 function download(newspaper, date) {
-	const path = [newsstand, date.format('YYYY-MM-DD'), `${newspaper}.pdf`]
-	const pdf = path.slice(1).join('/')
-	const fullPath = path.join('/')
+	const fragments = [newsstand, date.format('YYYY-MM-DD'), `${newspaper}.pdf`]
+	const pdf = path.join(...fragments.slice(1))
+	const fullPath = path.join(...fragments)
 
 	if (fs.existsSync(fullPath)) {
 		console.debug(`Already downloaded ${pdf}`)
@@ -54,10 +54,10 @@ function download(newspaper, date) {
 
 	console.log(`Checking for ${pdf} ...`)
 	const downloader = new Downloader({
-		url: `https://cdn.freedomforum.org/dfp/pdf${date.date()}/${path[2]}`,
-		directory: path.slice(0, 2).join('/'),
+		url: `https://cdn.freedomforum.org/dfp/pdf${date.date()}/${fragments[2]}`,
+		directory: path.join(...fragments.slice(0, 2)),
 		skipExistingFileName: true,
-		onBeforeSave: deducedName => console.log(`Saving ${path[1]}/${deducedName} ...`)
+		onBeforeSave: deducedName => console.log(`Saving ${fragments[1]}/${deducedName} ...`)
 	})
 	downloader.download()
 		.then(() => pdfToImage(fullPath))
@@ -90,12 +90,12 @@ function pdfToImage(pdf) {
 let counter = 0 // We cycle through this so every time we get a new paper
 function nextPaper() {
 	for (const date of recentDays()) {
-		const directory = [newsstand, date.format('YYYY-MM-DD')].join('/')
+		const directory = path.join(newsstand, date.format('YYYY-MM-DD'))
 		if (fs.existsSync(directory)) {
 			const papers = fs.readdirSync(directory).filter((file) => file.endsWith('.png'))
 			const numPapers = papers.length
 			if (numPapers > 0) {
-				return [directory, papers[Math.abs(counter++) % numPapers]].join('/')
+				return path.join(directory, papers[Math.abs(counter++) % numPapers])
 			}
 		}
 	}

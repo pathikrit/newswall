@@ -2,9 +2,9 @@ Inspired by the [e-ink newspaper](https://github.com/mmicire/nyt2png) project ([
 
 This is a pure node.js port of [graiz/newsprint](https://github.com/graiz/newsprint)
 
-For installing and running the Visionect server, see [visionect.md](visionect.md).
+For installing and running the Visionect server, see [visionect.md](visionect.md)
 
-Running the client locally:
+The server is a simple express app. Running it locally:
 ```
 node --watch app.js
 ```
