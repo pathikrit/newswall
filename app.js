@@ -37,10 +37,6 @@ const newspapers = [
 const numDays = 3 // Try today, yesterday etc
 const refreshChron = '0 * * * *' // Every hour check for new newspapers
 
-// Schedule the download job for immediate and periodic
-schedule.scheduleJob(refreshChron, downloadAll)
-downloadAll()
-
 function recentDays() {
 	const today = dayjs()
 	return Array(numDays).fill(null).map((_, i) => today.subtract(i, 'days').format('YYYY-MM-DD'))
@@ -101,11 +97,12 @@ function pdfToImage(pdf) {
 }
 
 let counter = 0 // We cycle through this so every time we get a new paper
-function nextPaper() {
+function nextPaper(key) {
 	for (const date of recentDays()) {
 		const directory = path.join(newsstand, date)
 		if (fs.existsSync(directory)) {
-			const papers = fs.readdirSync(directory).filter(file => file.endsWith('.png'))
+			// If specific key is requested, look for key.png else any png
+			const papers = fs.readdirSync(directory).filter(file => key ? file === `${key}.png` : file.endsWith('.png'))
 			const numPapers = papers.length
 			if (numPapers > 0) {
 				const paper = papers[Math.abs(counter++) % numPapers]
@@ -120,16 +117,24 @@ function nextPaper() {
 	}
 }
 
-// Setup the server
+// Setup the express server
 const app = express()
 	.set('view engine', 'ejs')
 	.use(compression())
-
-app
+	// Serve the archive statically
 	.use('/archive', serveIndex(newsstand))
 	.use('/archive', express.static(newsstand))
+	// Main pages
+	.get('/', (req, res) => res.render('index', {papers: newspapers}))
+	.get('/latest/:key?', (req, res) => res.render('paper', {paper: nextPaper(req.params.key)}))
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')))
-app.get('/latest', (req, res) => res.render('paper', {paper: nextPaper()}))
+// Invoking this actually starts everything
+function run() {
+	// Schedule the download job for immediate and periodic
+	schedule.scheduleJob(refreshChron, downloadAll)
+	downloadAll()
+	// Start the server
+	app.listen(port, () => console.log(`Starting server on port ${port} ...`))
+}
 
-app.listen(port, () => console.log(`Starting server on port ${port} ...`))
+run()
