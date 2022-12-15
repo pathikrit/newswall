@@ -75,10 +75,12 @@ let counter = 0 // We cycle through this so every time we get a new paper
 function nextPaper() {
 	for (const date of recentDays()) {
 		const directory = [newsstand, date.format('YYYY-MM-DD')].join('/')
-		const papers = fs.readdirSync(directory).filter((file) => file.endsWith('.png'))
-		const numPapers = papers.length
-		if (numPapers > 0) {
-			return [directory, papers[Math.abs(counter++) % numPapers]].join('/')
+		if (fs.existsSync(directory)) {
+			const papers = fs.readdirSync(directory).filter((file) => file.endsWith('.png'))
+			const numPapers = papers.length
+			if (numPapers > 0) {
+				return [directory, papers[Math.abs(counter++) % numPapers]].join('/')
+			}
 		}
 	}
 }
