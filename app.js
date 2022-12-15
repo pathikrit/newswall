@@ -78,19 +78,22 @@ function nextPaper() {
 		const papers = fs.readdirSync(directory).filter((file) => file.endsWith('.png'))
 		const numPapers = papers.length
 		if (numPapers > 0) {
-			return [__dirname, directory, papers[Math.abs(counter++) % numPapers]].join('/')
+			return [directory, papers[Math.abs(counter++) % numPapers]].join('/')
 		}
 	}
 }
 
-app.get('/', (req, res) => {
-	res.sendFile(nextPaper())
-})
+if (!nextPaper()) downloadAll()
 
 app.use('/static', serveIndex(newsstand))
 app.use('/static', express.static(newsstand))
 
-app.listen(port, () => {
-	downloadAll()
-	console.log(`Starting server on port ${port} ...`)
+app.get('/', (req, res) => {
+	const paper = nextPaper()
+	if (paper)
+		res.sendFile(paper, {root: __dirname})
+	else
+		res.sendStatus(404)
 })
+
+app.listen(port, () => console.log(`Starting server on port ${port} ...`))
