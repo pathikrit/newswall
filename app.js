@@ -3,16 +3,17 @@ const compression = require('compression')
 const serveIndex = require('serve-index')
 const dayjs = require('dayjs')
 const fs = require('fs')
+const path = require('path')
 const Downloader = require('nodejs-file-downloader')
 const schedule = require('node-schedule')
 const pdf2img = require('pdf-img-convert')
 
 // Server configs
 const app = express()
-const port = process.env.PORT || 8080
+const port = process.env.PORT || 3000
 
 // Newsstand configs
-const newsstand = (process.env.NODE_ENV === 'production') ? '/var/lib/data/newsstand' : './.newspapers' // Local directory to cache newspaper downloads
+const newsstand = (process.env.NODE_ENV === 'production') ? '/var/lib/data/newsstand' : path.resolve('./.newspapers') // Local directory to cache newspaper downloads
 const newspapers = ['WSJ', 'NY_NYT'] // See https://www.freedomforum.org/todaysfrontpages/ for list of papers
 const numDays = 3 // Try today, yesterday etc
 const refreshChron = '0 * * * *' // Every hour check for new newspapers
@@ -98,7 +99,7 @@ app.use('/static', express.static(newsstand))
 app.get('/', (req, res) => {
 	const paper = nextPaper()
 	if (paper)
-		res.sendFile(paper, {root: __dirname})
+		res.sendFile(paper)
 	else
 		res.sendStatus(404)
 })
