@@ -8,13 +8,19 @@ const Downloader = require('nodejs-file-downloader')
 const schedule = require('node-schedule')
 const pdf2img = require('pdf-img-convert')
 
-// Server configs
-const app = express()
+// Configs
 const port = process.env.PORT || 3000
+// Directory to cache newspaper downloads
+const newsstand = (process.env.NODE_ENV === 'production') ? '/var/lib/data/newsstand' : path.resolve('./.newspapers')
 
-// Newsstand configs
-const newsstand = (process.env.NODE_ENV === 'production') ? '/var/lib/data/newsstand' : path.resolve('./.newspapers') // Local directory to cache newspaper downloads
-const newspapers = ['WSJ', 'NY_NYT'] // See https://www.freedomforum.org/todaysfrontpages/ for list of papers
+// See https://www.freedomforum.org/todaysfrontpages/ for list of supported papers
+// e.g. for Wall Street Journal the url is https://cdn.freedomforum.org/dfp/pdf12/WSJ.pdf and thus the key is 'WSJ'
+const newspapers = [
+	'WSJ',   	 // Wall Street Journal
+	'NY_NYT',  // New York Times
+	'DC_WP',	 // Washington Post
+]
+
 const numDays = 3 // Try today, yesterday etc
 const refreshChron = '0 * * * *' // Every hour check for new newspapers
 
@@ -44,7 +50,6 @@ function download(key, date) {
 
 	console.log(`Checking for ${pdf} ...`)
 	const downloader = new Downloader({
-		// e.g. https://cdn.freedomforum.org/dfp/pdf12/WSJ.pdf
 		url: `https://cdn.freedomforum.org/dfp/pdf${date.date()}/${path[2]}`,
 		directory: path.slice(0, 2).join('/'),
 		skipExistingFileName: true,
@@ -62,18 +67,20 @@ function download(key, date) {
 
 function pdfToImage(pdf) {
 	const png = pdf.replace('.pdf', '.png')
-	if (!fs.existsSync(png)) {
-		console.log(`Converting ${pdf} to png ...`)
-		pdf2img.convert(pdf)
-			.then(images => {
-				fs.writeFileSync(png, images[0])
-				console.log(`Wrote ${png}`)
-			})
-			.catch(error => {
-				console.error(`Could not convert ${pdf} to png`, error)
-				fs.unlinkSync(pdf) // Corrupted pdf? Delete it
-			})
+	if (fs.existsSync(png)) {
+		console.debug(`${png} already exists`)
+		return
 	}
+	console.log(`Converting ${pdf} to png ...`)
+	pdf2img.convert(pdf)
+		.then(images => {
+			fs.writeFileSync(png, images[0])
+			console.log(`Wrote ${png}`)
+		})
+		.catch(error => {
+			console.error(`Could not convert ${pdf} to png`, error)
+			fs.unlinkSync(pdf) // Corrupted pdf? Delete it
+		})
 }
 
 let counter = 0 // We cycle through this so every time we get a new paper
@@ -90,7 +97,8 @@ function nextPaper() {
 	}
 }
 
-if (!nextPaper()) downloadAll()
+downloadAll()
+const app = express()
 
 app.use(compression())
 app.use('/static', serveIndex(newsstand))
