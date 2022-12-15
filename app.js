@@ -15,10 +15,23 @@ const newsstand = (process.env.NODE_ENV === 'production') ? '/var/lib/data/newss
 
 // See https://www.freedomforum.org/todaysfrontpages/ for list of supported papers
 // e.g. for Wall Street Journal the url is https://cdn.freedomforum.org/dfp/pdf12/WSJ.pdf and thus the key is 'WSJ'
+// For the style, you just have to experiment to remove the margins and scale a bit
 const newspapers = [
-	'WSJ',   	 // Wall Street Journal
-	'NY_NYT',  // New York Times
-	'DC_WP',	 // Washington Post
+	{
+		name: 'Wall Street Journal',
+		key: 'WSJ',
+		style: 'width:98%; margin:-70px 0px 0px -15px'
+	},
+	{
+		name: 'New York Times',
+		key: 'NY_NYT',
+		style: 'width:108%; margin:-5% -5% 0px -5%'
+	},
+	{
+		name: 'Washington Post',
+		key: 'DC_WP',
+		style: 'width:99%; margin:-28px 14px 0px 3px'
+	}
 ]
 
 const numDays = 3 // Try today, yesterday etc
@@ -30,7 +43,7 @@ downloadAll()
 
 function recentDays() {
 	const today = dayjs()
-	return Array(numDays).fill(null).map((_, i) => today.subtract(i, 'days'))
+	return Array(numDays).fill(null).map((_, i) => today.subtract(i, 'days').format('YYYY-MM-DD'))
 }
 
 // Downloads all newspapers for all recent days
@@ -42,17 +55,17 @@ function downloadAll() {
 
 // Download the newspaper for given day
 function download(newspaper, date) {
-	const fragments = [newsstand, date.format('YYYY-MM-DD'), `${newspaper}.pdf`]
-	const pdf = path.join(...fragments.slice(1))
+	const fragments = [newsstand, date, `${newspaper.key}.pdf`]
 	const fullPath = path.join(...fragments)
+	const name = `${newspaper.name} for ${fragments[1]}`
 
 	if (fs.existsSync(fullPath)) {
-		console.debug(`Already downloaded ${pdf}`)
+		console.debug(`Already downloaded ${name}`)
 		pdfToImage(fullPath)
 		return
 	}
 
-	console.log(`Checking for ${pdf} ...`)
+	console.log(`Checking for ${name} ...`)
 	const downloader = new Downloader({
 		url: `https://cdn.freedomforum.org/dfp/pdf${date.date()}/${fragments[2]}`,
 		directory: path.join(...fragments.slice(0, 2)),
@@ -63,9 +76,9 @@ function download(newspaper, date) {
 		.then(() => pdfToImage(fullPath))
 		.catch(error => {
 			if (error.statusCode && error.statusCode === 404)
-				console.log(`${pdf} is not available`)
+				console.log(`${name} is not available`)
 			else
-				console.error(`Could not download ${pdf}`, error)
+				console.error(`Could not download ${name}`, error)
 		})
 }
 
@@ -90,12 +103,19 @@ function pdfToImage(pdf) {
 let counter = 0 // We cycle through this so every time we get a new paper
 function nextPaper() {
 	for (const date of recentDays()) {
-		const directory = path.join(newsstand, date.format('YYYY-MM-DD'))
+		const directory = path.join(newsstand, date)
 		if (fs.existsSync(directory)) {
 			const papers = fs.readdirSync(directory).filter(file => file.endsWith('.png'))
 			const numPapers = papers.length
-			if (numPapers > 0)
-				return path.join(directory, papers[Math.abs(counter++) % numPapers])
+			if (numPapers > 0) {
+				const paper = papers[Math.abs(counter++) % numPapers]
+				const key = paper.replace('.png', '')
+				for (const item of newspapers) {
+					if (item.key === key)
+						return {...item, ...{date: date}}
+				}
+				console.error(`Unknown paper found: ${paper}`)
+			}
 		}
 	}
 }
@@ -112,7 +132,7 @@ app.get('/latest', (req, res) => res.sendFile(path.join(__dirname, 'paper.html')
 
 app.get('/next', (req, res) => {
 	const paper = nextPaper()
-	paper ? res.sendFile(paper) : res.sendStatus(404)
+	paper ? res.sendFile(path.join(newsstand, paper.date, `${paper.key}.png`)) : res.sendStatus(404)
 })
 
 app.listen(port, () => console.log(`Starting server on port ${port} ...`))
