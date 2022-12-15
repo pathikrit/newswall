@@ -12,7 +12,7 @@ const app = express()
 const port = process.env.PORT || 8080
 
 // Newsstand configs
-const newsstand = './.newspapers' // Local directory to cache newspaper downloads
+const newsstand = (process.env.NODE_ENV === 'production') ? '/var/lib/data/newsstand' : './.newspapers' // Local directory to cache newspaper downloads
 const newspapers = ['WSJ', 'NY_NYT'] // See https://www.freedomforum.org/todaysfrontpages/ for list of papers
 const numDays = 3 // Try today, yesterday etc
 const refreshChron = '0 * * * *' // Every hour check for new newspapers
@@ -68,7 +68,10 @@ function pdfToImage(pdf) {
 				fs.writeFileSync(png, images[0])
 				console.log(`Wrote ${png}`)
 			})
-			.catch(error => console.error(`Could not convert ${pdf} to png`, error))
+			.catch(error => {
+				console.error(`Could not convert ${pdf} to png`, error)
+				fs.unlinkSync(pdf) // Corrupted pdf? Delete it
+			})
 	}
 }
 
