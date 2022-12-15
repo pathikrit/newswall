@@ -24,7 +24,7 @@ const newspapers = [
 const numDays = 3 // Try today, yesterday etc
 const refreshChron = '0 * * * *' // Every hour check for new newspapers
 
-// Schedule the job for immediate and cron schedule
+// Schedule the download job for immediate and periodic
 schedule.scheduleJob(refreshChron, downloadAll)
 downloadAll()
 
@@ -92,11 +92,10 @@ function nextPaper() {
 	for (const date of recentDays()) {
 		const directory = path.join(newsstand, date.format('YYYY-MM-DD'))
 		if (fs.existsSync(directory)) {
-			const papers = fs.readdirSync(directory).filter((file) => file.endsWith('.png'))
+			const papers = fs.readdirSync(directory).filter(file => file.endsWith('.png'))
 			const numPapers = papers.length
-			if (numPapers > 0) {
+			if (numPapers > 0)
 				return path.join(directory, papers[Math.abs(counter++) % numPapers])
-			}
 		}
 	}
 }
@@ -109,13 +108,11 @@ app.use('/archive', serveIndex(newsstand))
 app.use('/archive', express.static(newsstand))
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')))
+app.get('/latest', (req, res) => res.sendFile(path.join(__dirname, 'paper.html')))
 
-app.get('/latest', (req, res) => {
+app.get('/next', (req, res) => {
 	const paper = nextPaper()
-	if (paper)
-		res.sendFile(paper)
-	else
-		res.sendStatus(404)
+	paper ? res.sendFile(paper) : res.sendStatus(404)
 })
 
 app.listen(port, () => console.log(`Starting server on port ${port} ...`))
