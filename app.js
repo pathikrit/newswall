@@ -25,12 +25,12 @@ const newspapers = [
 	{
 		name: 'New York Times',
 		key: 'NY_NYT',
-		style: 'width:108%; margin:-5% -5% 0px -5%'
+		style: 'width:99%; margin:-28px 14px 0px 3px'
 	},
 	{
 		name: 'Washington Post',
 		key: 'DC_WP',
-		style: 'width:99%; margin:-28px 14px 0px 3px'
+		style: 'width:108%; margin:-5% -5% 0px -5%'
 	}
 ]
 
@@ -122,17 +122,14 @@ function nextPaper() {
 
 // Setup the server
 const app = express()
+	.set('view engine', 'ejs')
+	.use(compression())
 
-app.use(compression())
-app.use('/archive', serveIndex(newsstand))
-app.use('/archive', express.static(newsstand))
+app
+	.use('/archive', serveIndex(newsstand))
+	.use('/archive', express.static(newsstand))
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')))
-app.get('/latest', (req, res) => res.sendFile(path.join(__dirname, 'paper.html')))
-
-app.get('/next', (req, res) => {
-	const paper = nextPaper()
-	paper ? res.sendFile(path.join(newsstand, paper.date, `${paper.key}.png`)) : res.sendStatus(404)
-})
+app.get('/latest', (req, res) => res.render('paper', {paper: nextPaper()}))
 
 app.listen(port, () => console.log(`Starting server on port ${port} ...`))
