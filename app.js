@@ -24,21 +24,25 @@ const newspapers = [
 const numDays = 3 // Try today, yesterday etc
 const refreshChron = '0 * * * *' // Every hour check for new newspapers
 
+// Schedule the job for immediate and cron schedule
 schedule.scheduleJob(refreshChron, downloadAll)
+downloadAll()
 
 function recentDays() {
 	const today = dayjs()
 	return Array(numDays).fill(null).map((_, i) => today.subtract(i, 'days'))
 }
 
+// Downloads all newspapers for all recent days
 function downloadAll() {
 	for (const date of recentDays())
-		for (const paper of newspapers)
-			download(paper, date)
+		for (const newspaper of newspapers)
+			download(newspaper, date)
 }
 
-function download(key, date) {
-	const path = [newsstand, date.format('YYYY-MM-DD'), `${key}.pdf`]
+// Download the newspaper for given day
+function download(newspaper, date) {
+	const path = [newsstand, date.format('YYYY-MM-DD'), `${newspaper}.pdf`]
 	const pdf = path.slice(1).join('/')
 	const fullPath = path.join('/')
 
@@ -97,14 +101,16 @@ function nextPaper() {
 	}
 }
 
-downloadAll()
+// Setup the server
 const app = express()
 
 app.use(compression())
-app.use('/static', serveIndex(newsstand))
-app.use('/static', express.static(newsstand))
+app.use('/archive', serveIndex(newsstand))
+app.use('/archive', express.static(newsstand))
 
-app.get('/', (req, res) => {
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')))
+
+app.get('/latest', (req, res) => {
 	const paper = nextPaper()
 	if (paper)
 		res.sendFile(paper)
