@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "main": "app.js",
   "dependencies": {
+    "compression": "^1.7.4",
     "dayjs": "^1.11.7",
     "express": "^4.18.2",
     "node-schedule": "^2.1.0",

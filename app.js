@@ -1,4 +1,5 @@
 const express = require('express')
+const compression = require('compression')
 const serveIndex = require('serve-index')
 const dayjs = require('dayjs')
 const fs = require('fs')
@@ -8,7 +9,7 @@ const pdf2img = require('pdf-img-convert')
 
 // Server configs
 const app = express()
-const port = process.env.PORT || 3000
+const port = process.env.PORT || 8080
 
 // Newsstand configs
 const newsstand = './.newspapers' // Local directory to cache newspaper downloads
@@ -87,6 +88,7 @@ function nextPaper() {
 
 if (!nextPaper()) downloadAll()
 
+app.use(compression())
 app.use('/static', serveIndex(newsstand))
 app.use('/static', express.static(newsstand))
 
