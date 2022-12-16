@@ -107,9 +107,10 @@ function pdfToImage(pdf) {
 }
 
 let counter = 0 // We cycle through this so every time we get a new paper
-function nextPaper(searchId) {
+function nextPaper(papers) {
+	const searchTerm = papers ? (papers.includes(',') ? `{${papers}}` : papers) : '*'
 	for (const date of recentDays().map(d => d.format('YYYY-MM-DD'))) {
-		const images = glob.sync(path.join(newsstand, date, `${searchId || '*'}.png`))
+		const images = glob.sync(path.join(newsstand, date, `${searchTerm}.png`))
 		if (images.length === 0) continue
 		const image = images[Math.abs(counter++) % images.length]
 		const id = path.parse(image).name
@@ -122,15 +123,18 @@ function nextPaper(searchId) {
 /** Setup the express server */
 const express = require('express')
 const app = express()
-	.set('view engine', 'ejs')
+	// Hook up middlewares
 	.use(require('compression')())
-	.use(require('nocache')())	// We don't want page to be cached since they can be refreshed in the background
+	.use(require('nocache')())  // We don't want page to be cached since they can be refreshed in the background
+	.set('view engine', 'ejs')
 	// Statically serve the archive
 	.use('/archive', require('serve-index')(newsstand))
 	.use('/archive', express.static(newsstand))
 	// Main pages
 	.get('/', (req, res) => res.render('index', {papers: newspapers}))
-	.get('/latest/:id?', (req, res) => res.render('paper', {paper: nextPaper(req.params.id)}))
+	.get('/latest', (req, res) => {
+		res.render('paper', {paper: nextPaper(req.query.papers)})
+	})
 
 /** Invoking this actually starts everything! */
 function run() {
