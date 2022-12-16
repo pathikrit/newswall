@@ -14,24 +14,29 @@ const port = process.env.PORT || 3000
 // Directory to cache newspaper downloads
 const newsstand = (process.env.NODE_ENV === 'production') ? '/var/lib/data/newsstand' : path.resolve('./.newspapers')
 
-// See https://www.freedomforum.org/todaysfrontpages/ for list of supported papers
-// e.g. for Wall Street Journal the url is https://cdn.freedomforum.org/dfp/pdf12/WSJ.pdf and thus the key is 'WSJ'
-// For the style, you just have to experiment to remove the margins and scale a bit
+// List of newspapers we support
+// and a function for each that given a date returns the url of the pdf of the front page of that newspaper for that date
+// Usually we simply grab from: see https://www.freedomforum.org/todaysfrontpages/ for list of supported papers
+// e.g. for Wall Street Journal the url is https://cdn.freedomforum.org/dfp/pdf12/WSJ.pdf
+// For the CSS style, you just have to experiment to remove the margins and scale a bit
 const newspapers = [
 	{
 		name: 'Wall Street Journal',
-		key: 'WSJ',
+		id: 'WSJ',
+		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.date()}/WSJ.pdf`,
 		style: 'width:98%; margin:-70px 0px 0px -15px'
 	},
 	{
 		name: 'New York Times',
-		key: 'NY_NYT',
+		id: 'NYT',
+		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.date()}/NY_NYT.pdf`,
 		style: 'width:99%; margin:-60px 10px 0px 3px'
 	},
 	{
 		name: 'Washington Post',
-		key: 'DC_WP',
-		style: 'width:108%; margin:-5% -5% 0px -5%'
+		id: 'WaPo',
+		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.date()}/DC_WP.pdf`,
+		style: 'width:99%; margin:-5% -5% 0px -5%'
 	}
 ]
 
@@ -58,7 +63,7 @@ function downloadAll() {
 
 // Download the newspaper for given day
 function download(newspaper, date) {
-	const fragments = [newsstand, date.format('YYYY-MM-DD'), `${newspaper.key}.pdf`]
+	const fragments = [newsstand, date.format('YYYY-MM-DD'), `${newspaper.id}.pdf`]
 	const fullPath = path.join(...fragments)
 	const name = `${newspaper.name} for ${fragments[1]}`
 
@@ -72,19 +77,20 @@ function download(newspaper, date) {
 	}
 
 	console.log(`Checking for ${name} ...`)
+	const url = newspaper.url(date)
 	const downloader = new Downloader({
-		url: `https://cdn.freedomforum.org/dfp/pdf${date.date()}/${fragments[2]}`,
+		url: url,
 		directory: path.join(...fragments.slice(0, 2)),
 		skipExistingFileName: true,
-		onBeforeSave: deducedName => console.log(`Saving ${fragments[1]}/${deducedName} ...`)
+		fileName: fragments[2]
 	})
 	downloader.download()
 		.then(() => pdfToImage(fullPath))
 		.catch(error => {
 			if (error.statusCode && error.statusCode === 404)
-				console.log(`${name} is not available`)
+				console.log(`${name} is not available at ${url}`)
 			else
-				console.error(`Could not download ${name}`, error)
+				console.error(`Could not download ${name} from ${url}`, error)
 		})
 }
 
@@ -103,15 +109,15 @@ function pdfToImage(pdf) {
 }
 
 let counter = 0 // We cycle through this so every time we get a new paper
-function nextPaper(searchKey) {
+function nextPaper(searchId) {
 	for (const date of recentDays().map(d => d.format('YYYY-MM-DD'))) {
-		const papers = glob.sync(path.join(newsstand, date, `${searchKey || '*'}.png`))
+		const papers = glob.sync(path.join(newsstand, date, `${searchId || '*'}.png`))
 		if (papers.length === 0) continue
 
 		const paper = papers[Math.abs(counter++) % papers.length]
-		const key = path.parse(paper).name
+		const id = path.parse(paper).name
 		for (const item of newspapers) {
-			if (item.key === key) {
+			if (item.id === id) {
 				return {...item, ...{date: date}}
 			}
 		}
@@ -128,10 +134,15 @@ const app = express()
 	.use('/archive', express.static(newsstand))
 	// Main pages
 	.get('/', (req, res) => res.render('index', {papers: newspapers}))
-	.get('/latest/:key?', (req, res) => res.render('paper', {paper: nextPaper(req.params.key)}))
+	.get('/latest/:id?', (req, res) => res.render('paper', {paper: nextPaper(req.params.id)}))
 
 // Invoking this actually starts everything
 function run() {
+	glob(path.join(newsstand, '*', 'NY_NYT.pdf'), (err, pdfs) => pdfs.forEach(fs.unlinkSync))
+	glob(path.join(newsstand, '*', 'NY_NYT.png'), (err, pdfs) => pdfs.forEach(fs.unlinkSync))
+	glob(path.join(newsstand, '*', 'DC_WP.png'), (err, pdfs) => pdfs.forEach(fs.unlinkSync))
+	glob(path.join(newsstand, '*', 'DC_WP.pdf'), (err, pdfs) => pdfs.forEach(fs.unlinkSync))
+
 	if (reRenderImages) {
 		console.warn('Re-rendering all images ...')
 		glob(path.join(newsstand, '*', '*.pdf'), (err, pdfs) => pdfs.forEach(pdfToImage))
