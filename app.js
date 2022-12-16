@@ -39,16 +39,15 @@ const newspapers = [
 		style: 'width:99%; margin:-5% -5% 0px -5%'
 	}
 ]
-
-const numDays = 3 // Try today, yesterday etc
 const refreshChron = '0 * * * *' // Every hour check for new newspapers
 
 // See: https://www.npmjs.com/package/pdf-img-convert; We choose 1600 since the display is 2560 x 1600
 const pdf2ImgOpts = { width: 1600 }
 
+// Return tomorrow, today, yesterday, day before yesterday etc.
 function recentDays() {
 	const today = dayjs()
-	return Array(numDays).fill(null).map((_, i) => today.subtract(i, 'days'))
+	return [1, 0, -1, -2, -3].map(i => today.add(i, 'days'))
 }
 
 // Downloads all newspapers for all recent days
