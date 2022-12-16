@@ -97,8 +97,7 @@ function pdfToImage(pdf) {
 		.convert(pdf, pdf2ImgOpts)
 		.then(images => {
 			const png = pdf.replace('.pdf', '.png')
-			fs.writeFileSync(png, images[0])
-			console.log(`Wrote ${png}`)
+			fs.writeFile(png, images[0], () => console.log(`Wrote ${png}`))
 		})
 		.catch(error => {
 			console.error(`Could not convert ${pdf} to png`, error)
@@ -115,7 +114,7 @@ function nextPaper(papers) {
 		const image = images[Math.abs(counter++) % images.length]
 		const id = path.parse(image).name
 		const paper = newspapers.find(item => item.id === id)
-		if (paper) return {...paper, ...{date: date}}
+		if (paper) return Object.assign(paper, {date: date})
 		console.error(`Unknown image found: ${image}`)
 	}
 }
@@ -132,15 +131,13 @@ const app = express()
 	.use('/archive', express.static(newsstand))
 	// Main pages
 	.get('/', (req, res) => res.render('index', {papers: newspapers}))
-	.get('/latest', (req, res) => {
-		res.render('paper', {paper: nextPaper(req.query.papers)})
-	})
+	.get('/latest', (req, res) => res.render('paper', {paper: nextPaper(req.query.papers)}))
 
 /** Invoking this actually starts everything! */
 function run() {
 	// Uncomment this line to trigger a rerender of images on deployment
 	// If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
-	// glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.unlinkSync))
+	// glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.unlinkSync)
 
 	// Schedule the download job for immediate and periodic
 	const scheduler = require('node-schedule')
