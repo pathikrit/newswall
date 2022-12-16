@@ -40,7 +40,7 @@ const newspapers = [
 ]
 
 // Every hour check for new newspapers
-const refreshChron = '0 * * * *'
+const refreshCron = '0 * * * *'
 
 // We choose width:1600 since the display is 2560 x 1600; see: https://www.npmjs.com/package/pdf-img-convert
 const pdf2ImgOpts = { width: 1600 }
@@ -93,7 +93,8 @@ function download(newspaper, date) {
 
 function pdfToImage(pdf) {
 	console.log(`Converting ${pdf} to png ...`)
-	require('pdf-img-convert').convert(pdf, pdf2ImgOpts)
+	require('pdf-img-convert')
+		.convert(pdf, pdf2ImgOpts)
 		.then(images => {
 			const png = pdf.replace('.pdf', '.png')
 			fs.writeFileSync(png, images[0])
@@ -108,17 +109,13 @@ function pdfToImage(pdf) {
 let counter = 0 // We cycle through this so every time we get a new paper
 function nextPaper(searchId) {
 	for (const date of recentDays().map(d => d.format('YYYY-MM-DD'))) {
-		const papers = glob.sync(path.join(newsstand, date, `${searchId || '*'}.png`))
-		if (papers.length === 0) continue
-
-		const paper = papers[Math.abs(counter++) % papers.length]
-		const id = path.parse(paper).name
-		for (const item of newspapers) {
-			if (item.id === id) {
-				return {...item, ...{date: date}}
-			}
-		}
-		console.error(`Unknown paper found: ${paper}`)
+		const images = glob.sync(path.join(newsstand, date, `${searchId || '*'}.png`))
+		if (images.length === 0) continue
+		const image = images[Math.abs(counter++) % images.length]
+		const id = path.parse(image).name
+		const paper = newspapers.find(item => item.id === id)
+		if (paper) return {...paper, ...{date: date}}
+		console.error(`Unknown image found: ${image}`)
 	}
 }
 
@@ -127,7 +124,8 @@ const express = require('express')
 const app = express()
 	.set('view engine', 'ejs')
 	.use(require('compression')())
-	// Serve the archive statically
+	.use(require('nocache')())	// We don't want page to be cached since they can be refreshed in the background
+	// Statically serve the archive
 	.use('/archive', require('serve-index')(newsstand))
 	.use('/archive', express.static(newsstand))
 	// Main pages
@@ -142,7 +140,7 @@ function run() {
 
 	// Schedule the download job for immediate and periodic
 	const scheduler = require('node-schedule')
-	scheduler.scheduleJob(refreshChron, downloadAll)
+	scheduler.scheduleJob(refreshCron, downloadAll)
 	downloadAll()
 	// Start the server
 	app.listen(port, () => console.log(`Starting server on port ${port} ...`))
