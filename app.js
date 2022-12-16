@@ -39,7 +39,7 @@ const refreshChron = '0 * * * *' // Every hour check for new newspapers
 
 function recentDays() {
 	const today = dayjs()
-	return Array(numDays).fill(null).map((_, i) => today.subtract(i, 'days').format('YYYY-MM-DD'))
+	return Array(numDays).fill(null).map((_, i) => today.subtract(i, 'days'))
 }
 
 // Downloads all newspapers for all recent days
@@ -51,7 +51,7 @@ function downloadAll() {
 
 // Download the newspaper for given day
 function download(newspaper, date) {
-	const fragments = [newsstand, date, `${newspaper.key}.pdf`]
+	const fragments = [newsstand, date.format('YYYY-MM-DD'), `${newspaper.key}.pdf`]
 	const fullPath = path.join(...fragments)
 	const name = `${newspaper.name} for ${fragments[1]}`
 
@@ -97,23 +97,22 @@ function pdfToImage(pdf) {
 }
 
 let counter = 0 // We cycle through this so every time we get a new paper
-function nextPaper(key) {
+function nextPaper(searchKey) {
 	for (const date of recentDays()) {
-		const directory = path.join(newsstand, date)
-		if (fs.existsSync(directory)) {
-			// If specific key is requested, look for key.png else any png
-			const papers = fs.readdirSync(directory).filter(file => key ? file === `${key}.png` : file.endsWith('.png'))
-			const numPapers = papers.length
-			if (numPapers > 0) {
-				const paper = papers[Math.abs(counter++) % numPapers]
-				const key = paper.replace('.png', '')
-				for (const item of newspapers) {
-					if (item.key === key)
-						return {...item, ...{date: date}}
-				}
-				console.error(`Unknown paper found: ${paper}`)
+		const directory = path.join(newsstand, date.format('YYYY-MM-DD'))
+		if (!fs.existsSync(directory)) continue
+
+		const papers = fs.readdirSync(directory).filter(file => searchKey ? file === `${searchKey}.png` : file.endsWith('.png'))
+		if (papers.length === 0) continue
+
+		const paper = papers[Math.abs(counter++) % papers.length]
+		const key = paper.replace('.png', '')
+		for (const item of newspapers) {
+			if (item.key === key) {
+				return {...item, ...{date: date.format('YYYY-MM-DD')}}
 			}
 		}
+		console.error(`Unknown paper found: ${paper}`)
 	}
 }
 
@@ -137,4 +136,4 @@ function run() {
 	app.listen(port, () => console.log(`Starting server on port ${port} ...`))
 }
 
-run()
+run() //Yolo!

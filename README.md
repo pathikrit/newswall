@@ -8,4 +8,4 @@ The server is a simple express app. Running it locally:
 ```
 node --watch app.js
 ```
-Then open `localhost:3000`
+Then open <localhost:3000>
