@@ -3,6 +3,7 @@ const compression = require('compression')
 const serveIndex = require('serve-index')
 const dayjs = require('dayjs')
 const fs = require('fs')
+const glob = require('glob')
 const path = require('path')
 const Downloader = require('nodejs-file-downloader')
 const schedule = require('node-schedule')
@@ -25,7 +26,7 @@ const newspapers = [
 	{
 		name: 'New York Times',
 		key: 'NY_NYT',
-		style: 'width:99%; margin:-28px 14px 0px 3px'
+		style: 'width:99%; margin:-60px 10px 0px 3px'
 	},
 	{
 		name: 'Washington Post',
@@ -36,6 +37,12 @@ const newspapers = [
 
 const numDays = 3 // Try today, yesterday etc
 const refreshChron = '0 * * * *' // Every hour check for new newspapers
+
+// See: https://www.npmjs.com/package/pdf-img-convert; We choose 1600 since the display is 2560 x 1600
+const pdf2ImgOpts = { width: 1600 }
+// Set this to true to re-render images e.g. if you changed above params
+// Note: this is expensive - so this should be set back to false in subsequent deployment
+const reRenderImages = true
 
 function recentDays() {
 	const today = dayjs()
@@ -78,14 +85,14 @@ function download(newspaper, date) {
 		})
 }
 
-function pdfToImage(pdf) {
+function pdfToImage(pdf, skipExisting = true) {
 	const png = pdf.replace('.pdf', '.png')
-	if (fs.existsSync(png)) {
+	if (skipExisting && fs.existsSync(png)) {
 		console.debug(`${png} already exists`)
 		return
 	}
 	console.log(`Converting ${pdf} to png ...`)
-	pdf2img.convert(pdf)
+	pdf2img.convert(pdf, pdf2ImgOpts)
 		.then(images => {
 			fs.writeFileSync(png, images[0])
 			console.log(`Wrote ${png}`)
@@ -98,18 +105,15 @@ function pdfToImage(pdf) {
 
 let counter = 0 // We cycle through this so every time we get a new paper
 function nextPaper(searchKey) {
-	for (const date of recentDays()) {
-		const directory = path.join(newsstand, date.format('YYYY-MM-DD'))
-		if (!fs.existsSync(directory)) continue
-
-		const papers = fs.readdirSync(directory).filter(file => searchKey ? file === `${searchKey}.png` : file.endsWith('.png'))
+	for (const date of recentDays().map(d => d.format('YYYY-MM-DD'))) {
+		const papers = glob.sync(path.join(newsstand, date, `${searchKey || '*'}.png`))
 		if (papers.length === 0) continue
 
 		const paper = papers[Math.abs(counter++) % papers.length]
-		const key = paper.replace('.png', '')
+		const key = path.parse(paper).name
 		for (const item of newspapers) {
 			if (item.key === key) {
-				return {...item, ...{date: date.format('YYYY-MM-DD')}}
+				return {...item, ...{date: date}}
 			}
 		}
 		console.error(`Unknown paper found: ${paper}`)
@@ -129,6 +133,10 @@ const app = express()
 
 // Invoking this actually starts everything
 function run() {
+	if (reRenderImages) {
+		console.warn('Re-rendering all images ...')
+		glob(path.join(newsstand, '*', '*.pdf'), (err, pdfs) => pdfs.forEach(pdf => pdfToImage(pdf, false)))
+	}
 	// Schedule the download job for immediate and periodic
 	schedule.scheduleJob(refreshChron, downloadAll)
 	downloadAll()

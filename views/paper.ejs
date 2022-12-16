@@ -7,13 +7,14 @@
             text-align: center
         }
         .paper {
-            filter: grayscale(100%)
+            filter: grayscale(100%);
+            border: 5px solid;
         }
     </style>
 </head>
 <body>
 <% if (paper) { %>
-    <img class="paper" src="/archive/<%=paper.date%>/<%=paper.key%>.png" alt="<%=paper.name%>" style="<%=paper.style%>">
+    <img class="paper" src="/archive/<%=paper.date%>/<%=paper.key%>.png" alt="<%=paper.name%> for <%=paper.date%>" style="<%=paper.style%>">
 <% } else { %>
     <h1>No paper found</h1>
 <% } %>
