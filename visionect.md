@@ -29,4 +29,7 @@ docker-compose up -d
 
 6. You can now open `localhost:8081` and use the [following credentials](https://docs.visionect.com/VisionectSoftwareSuite/Installation.html#default-settings) to login
 
-7. Configure the client on the server
+7. Configure the client on the server (TBD)
+
+------
+My affiliate link to purchase a [Visionect e-ink display]((https://www.visionect.com/shop/place-play-32/ref/pathikrit/))

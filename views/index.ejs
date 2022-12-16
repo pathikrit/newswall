@@ -3,24 +3,23 @@
 <head>
     <title>Newswall</title>
     <style>
-        li {
-            margin-bottom: 5px;
-        }
+        li { margin: 5px; }
     </style>
 </head>
 <body>
     <h1>Newswall</h1>
-    <p>This is little node.js website to render newspapers for <a href="https://www.visionect.com/shop/place-play-32/ref/pathikrit/" target="_blank">e-ink displays</a> (original idea by <a href="https://onezero.medium.com/the-morning-paper-revisited-35b407822494" target="_blank">Max Braun</a>):</p>
+    <p>This is a little node.js website to render newspapers for <a href="https://www.visionect.com/shop/place-play-32/ref/pathikrit/" target="_blank">e-ink displays</a> (original idea by <a href="https://onezero.medium.com/the-morning-paper-revisited-35b407822494" target="_blank">Max Braun</a>):</p>
     <ul>
         <li><a href="/latest"><code>/latest</code></a>: Cycles through grayscaled front pages of newspapers on each refresh. <i>You should point your e-ink device to this.</i></li>
-        <li><code>/latest/XXX</code>: Only fetches a particular newspaper. This server is configured to support the following:</li>
+        <li><code>/latest/XXX</code>: Only fetches a particular newspaper. This server is configured to support the following:
             <ol>
                 <% papers.forEach((paper) => {%>
                     <li><a href="/latest/<%=paper.id%>"><code>/latest/<%=paper.id%></code></a>: <%=paper.name%></li>
                 <% }) %>
             </ol>
-        <li><a href="/archive"><code>/archive</code></a>: Archive of newspapers courtesy of the <a href="https://www.freedomforum.org/todaysfrontpages/" target="_blank">The Freedom Forum</a></li>
+        </li>
+        <li><a href="/archive"><code>/archive</code></a>: Browse the raw newspaper files on the server
     </ul>
-    <p>Checkout the <a href="https://github.com/pathikrit/newswall" target="_blank">github project</a> for more details.</p>
+    <p>Checkout the <a href="https://github.com/pathikrit/newswall" target="_blank">project on Github</a> for more details.</p>
 </body>
 </html>
