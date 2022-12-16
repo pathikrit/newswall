@@ -45,9 +45,6 @@ const refreshChron = '0 * * * *' // Every hour check for new newspapers
 
 // See: https://www.npmjs.com/package/pdf-img-convert; We choose 1600 since the display is 2560 x 1600
 const pdf2ImgOpts = { width: 1600 }
-// Set this to true to re-render images e.g. if you changed above params
-// Note: this is expensive - so this should be set back to false in subsequent deployment
-const reRenderImages = false
 
 function recentDays() {
 	const today = dayjs()
@@ -138,15 +135,9 @@ const app = express()
 
 // Invoking this actually starts everything
 function run() {
-	glob(path.join(newsstand, '*', 'NY_NYT.pdf'), (err, pdfs) => pdfs.forEach(fs.unlinkSync))
-	glob(path.join(newsstand, '*', 'NY_NYT.png'), (err, pdfs) => pdfs.forEach(fs.unlinkSync))
-	glob(path.join(newsstand, '*', 'DC_WP.png'), (err, pdfs) => pdfs.forEach(fs.unlinkSync))
-	glob(path.join(newsstand, '*', 'DC_WP.pdf'), (err, pdfs) => pdfs.forEach(fs.unlinkSync))
+	// Leaving this line commented but useful to trigger a one time rerender of images
+	// glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.unlinkSync))
 
-	if (reRenderImages) {
-		console.warn('Re-rendering all images ...')
-		glob(path.join(newsstand, '*', '*.pdf'), (err, pdfs) => pdfs.forEach(pdfToImage))
-	}
 	// Schedule the download job for immediate and periodic
 	schedule.scheduleJob(refreshChron, downloadAll)
 	downloadAll()
