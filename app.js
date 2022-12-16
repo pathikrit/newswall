@@ -42,7 +42,7 @@ const refreshChron = '0 * * * *' // Every hour check for new newspapers
 const pdf2ImgOpts = { width: 1600 }
 // Set this to true to re-render images e.g. if you changed above params
 // Note: this is expensive - so this should be set back to false in subsequent deployment
-const reRenderImages = true
+const reRenderImages = false
 
 function recentDays() {
 	const today = dayjs()
@@ -63,8 +63,11 @@ function download(newspaper, date) {
 	const name = `${newspaper.name} for ${fragments[1]}`
 
 	if (fs.existsSync(fullPath)) {
-		console.debug(`Already downloaded ${name}`)
-		pdfToImage(fullPath)
+		if (fs.existsSync(fullPath.replace('.pdf', '.png'))) {
+			console.debug(`Already downloaded ${name}`)
+		} else {
+			pdfToImage(fullPath)
+		}
 		return
 	}
 
@@ -85,15 +88,11 @@ function download(newspaper, date) {
 		})
 }
 
-function pdfToImage(pdf, skipExisting = true) {
-	const png = pdf.replace('.pdf', '.png')
-	if (skipExisting && fs.existsSync(png)) {
-		console.debug(`${png} already exists`)
-		return
-	}
+function pdfToImage(pdf) {
 	console.log(`Converting ${pdf} to png ...`)
 	pdf2img.convert(pdf, pdf2ImgOpts)
 		.then(images => {
+			const png = pdf.replace('.pdf', '.png')
 			fs.writeFileSync(png, images[0])
 			console.log(`Wrote ${png}`)
 		})
@@ -135,7 +134,7 @@ const app = express()
 function run() {
 	if (reRenderImages) {
 		console.warn('Re-rendering all images ...')
-		glob(path.join(newsstand, '*', '*.pdf'), (err, pdfs) => pdfs.forEach(pdf => pdfToImage(pdf, false)))
+		glob(path.join(newsstand, '*', '*.pdf'), (err, pdfs) => pdfs.forEach(pdfToImage))
 	}
 	// Schedule the download job for immediate and periodic
 	schedule.scheduleJob(refreshChron, downloadAll)
