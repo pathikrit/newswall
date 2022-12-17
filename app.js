@@ -36,8 +36,21 @@ const newspapers = [
 		name: 'Washington Post',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.date()}/DC_WP.pdf`,
 		style: 'width:99%; margin:-5% -5% 0px -5%'
-	}
+	},
+	// {
+	// 	id: 'Pravda',
+	// 	name: 'Moskovskaya Pravda',
+	// 	url: date => `https://cdn.freedomforum.org/dfp/pdf${date.date()}/RUS_MP.pdf`,
+	// 	style: 'width:100%; margin:-50px 0px 0px -15px'
+	// },
+	// {
+	// 	id: 'AsianAge',
+	// 	name: 'The Asian Age',
+	// 	url: date => `https://cdn.freedomforum.org/dfp/pdf${date.date()}/IND_AGE.pdf`,
+	// 	style: 'width:100%; margin:-50px 0px 0px -15px'
+	// },
 ]
+console.assert(newspapers.length > 0, 'Please add atleast 1 newspaper for app to work')
 
 // Every hour check for new newspapers
 const refreshCron = '0 * * * *'

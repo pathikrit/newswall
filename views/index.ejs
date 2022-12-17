@@ -1,4 +1,5 @@
 <!doctype html>
+<!--suppress HtmlUnknownTarget -->
 <html lang="en">
 <head>
     <title>Newswall</title>
@@ -10,24 +11,26 @@
 </head>
 <body>
 <h1>Newswall</h1>
-<p>This is a little node.js website to render newspapers for <a
-            href="https://www.visionect.com/shop/place-play-32/ref/pathikrit/" target="_blank">e-ink displays</a>
+<p>This is a little node.js website to render newspapers for
+    <a href="https://www.visionect.com/shop/place-play-32/ref/pathikrit/" target="_blank">e-ink displays</a>
     (original idea by <a href="https://onezero.medium.com/the-morning-paper-revisited-35b407822494" target="_blank">Max
         Braun</a>):</p>
 <ul>
     <li>
         <a href="/latest"><code>/latest</code></a>: Cycles through grayscaled front pages of newspapers on each refresh.
         <i>You should point your e-ink device to this.</i>
-        <br/>This server is configured to support the following:
+        <br/>This server is <a href="https://github.com/pathikrit/newswall/blob/master/app.js#L12" target="_blank">configured</a>
+        to support the following:
         <ol>
             <% papers.forEach((paper) => { %>
-            <li><%= paper.name %>: <a href="/latest?papers=<%= paper.id %>"><code>/latest?papers=<%= paper.id %></code></a>
-            </li>
+                <li><%= paper.name %>: <a
+                            href="/latest?papers=<%= paper.id %>"><code>/latest?papers=<%= paper.id %></code></a>
+                </li>
             <% }) %>
         </ol>
         <% if (papers.length > 1) { %>
-        e.g. to display only <%= papers[0].name %> or <%= papers[1].name %> (when available): <a
-                href="/latest?papers=<%= papers.slice(0, 2).map(p => p.id).join(',') %>"><code>/latest?papers=<%= papers.slice(0, 2).map(p => p.id).join(',') %></code></a>
+            e.g. to display only <%= papers[0].name %> or <%= papers[1].name %> (when available):
+            <a href="/latest?papers=<%= papers.slice(0, 2).map(p => p.id).join(',') %>"><code>/latest?papers=<%= papers.slice(0, 2).map(p => p.id).join(',') %></code></a>
         <% } %>
     </li>
     <li><a href="/archive"><code>/archive</code></a>: Browse the raw newspaper files on the server
