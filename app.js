@@ -22,19 +22,19 @@ const newspapers = [
 	{
 		id: 'WSJ',
 		name: 'Wall Street Journal',
-		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.date()}/WSJ.pdf`,
+		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/WSJ.pdf`,
 		style: 'width:98%; margin:-70px 0px 0px -15px'
 	},
 	{
 		id: 'NYT',
 		name: 'New York Times',
-		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.date()}/NY_NYT.pdf`,
+		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
 		style: 'width:99%; margin:-60px 10px 0px 3px'
 	},
 	{
 		id: 'WaPo',
 		name: 'Washington Post',
-		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.date()}/DC_WP.pdf`,
+		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
 		style: 'width:99%; margin:-5% -5% 0px -5%'
 	},
 	// {
@@ -63,9 +63,11 @@ function recentDays() {
 	return [1, 0, -1, -2, -3].map(i => dayjs().add(i, 'days'))
 }
 
-Array.prototype.random = function() {
-	return this[~~(this.length * Math.random())]
-}
+Object.defineProperty(Array.prototype, 'random', {
+	value: function() {
+		return this[~~(this.length * Math.random())]
+	}
+})
 
 /** Downloads all newspapers for all recent days */
 function downloadAll() {
@@ -128,12 +130,11 @@ function nextPaper(papers, current) {
 	for (const date of recentDays().map(d => d.format('YYYY-MM-DD'))) {
 		const globExpr = path.join(newsstand, date, `${searchTerm || '*'}.png`)
 		const ids = glob.sync(globExpr).map(image => path.parse(image).name)
-		if (ids.length === 0) continue
 		// Find something that is not current or a random one
 		const id = ids.filter(id => current && id !== current).random() || ids.random()
 		const paper = newspapers.find(item => item.id === id)
 		if (paper) return Object.assign(paper, {date: date})
-		console.error(`Unknown paper found: ${id}`)
+		if (id) console.error(`Unknown paper found: ${id}`)
 	}
 }
 

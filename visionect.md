@@ -1,6 +1,8 @@
 How to install and run the [Visionect Software Suite](https://docs.visionect.com/VisionectSoftwareSuite/Installation.html)
 locally on a mac:
 
+1. You will first need to follow instructions at <start.visionect.com> to get your device connected to your WiFi.
+
 1. Install Docker:
 ```
 brew install colima docker-compose
