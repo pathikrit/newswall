@@ -63,6 +63,10 @@ function recentDays() {
 	return [1, 0, -1, -2, -3].map(i => dayjs().add(i, 'days'))
 }
 
+Array.prototype.random = function() {
+	return this[~~(this.length * Math.random())]
+}
+
 /** Downloads all newspapers for all recent days */
 function downloadAll() {
 	for (const date of recentDays())
@@ -118,17 +122,18 @@ function pdfToImage(pdf) {
 		})
 }
 
-let counter = 0 // We cycle through this so every time we get a new paper
-function nextPaper(papers) {
-	const searchTerm = papers ? (papers.includes(',') ? `{${papers}}` : papers) : '*'
+/** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
+function nextPaper(papers, current) {
+	const searchTerm = papers && papers.includes(',') ? `{${papers}}` : papers
 	for (const date of recentDays().map(d => d.format('YYYY-MM-DD'))) {
-		const images = glob.sync(path.join(newsstand, date, `${searchTerm}.png`))
-		if (images.length === 0) continue
-		const image = images[Math.abs(counter++) % images.length]
-		const id = path.parse(image).name
+		const globExpr = path.join(newsstand, date, `${searchTerm || '*'}.png`)
+		const ids = glob.sync(globExpr).map(image => path.parse(image).name)
+		if (ids.length === 0) continue
+		// Find something that is not current or a random one
+		const id = ids.filter(id => current && id !== current).random() || ids.random()
 		const paper = newspapers.find(item => item.id === id)
 		if (paper) return Object.assign(paper, {date: date})
-		console.error(`Unknown image found: ${image}`)
+		console.error(`Unknown paper found: ${id}`)
 	}
 }
 
@@ -136,6 +141,7 @@ function nextPaper(papers) {
 const express = require('express')
 const app = express()
 	// Hook up middlewares
+	.use(require('cookie-parser')())
 	.use(require('compression')())
 	.use(require('nocache')())  // We don't want page to be cached since they can be refreshed in the background
 	.set('view engine', 'ejs')
@@ -144,7 +150,11 @@ const app = express()
 	.use('/archive', express.static(newsstand))
 	// Main pages
 	.get('/', (req, res) => res.render('index', {papers: newspapers}))
-	.get('/latest', (req, res) => res.render('paper', {paper: nextPaper(req.query.papers)}))
+	.get('/latest', (req, res) => {
+		const paper = nextPaper(req.query.papers, req.cookies['current'])
+		if (paper) res.cookie('current', paper.id).render('paper', {paper: paper})
+		else res.sendStatus(404)
+	})
 
 /** Invoking this actually starts everything! */
 function run() {

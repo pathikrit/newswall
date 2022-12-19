@@ -4,6 +4,7 @@
   "main": "app.js",
   "dependencies": {
     "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
     "dayjs": "^1.11.7",
     "ejs": "^3.1.8",
     "express": "^4.18.2",
@@ -14,9 +15,9 @@
     "pdf-img-convert": "^1.1.1",
     "serve-index": "^1.9.1"
   },
-  "engines" : {
-    "npm" : ">=6",
-    "node" : ">=14"
+  "engines": {
+    "npm": ">=6",
+    "node": ">=14"
   },
-  "engineStrict" : true
+  "engineStrict": true
 }

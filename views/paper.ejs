@@ -13,10 +13,6 @@
     </style>
 </head>
 <body>
-<% if (paper) { %>
     <img class="paper" src="/archive/<%=paper.date%>/<%=paper.id%>.png" alt="<%=paper.name%> for <%=paper.date%>" style="<%=paper.style%>">
-<% } else { %>
-    <h1>No paper found</h1>
-<% } %>
 </body>
 </html>
