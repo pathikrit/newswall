@@ -35,7 +35,7 @@ const newspapers = [
 		id: 'WaPo',
 		name: 'Washington Post',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
-		style: 'transform: scale(1.05); margin:0px 0px 0px 0px'
+		style: 'transform: scale(1.05); margin:-10px 0px 0px 0px'
 	},
 	// {
 	// 	id: 'Pravda',
@@ -55,7 +55,7 @@ console.assert(newspapers.length > 0, 'Please add atleast 1 newspaper for app to
 // Every hour check for new newspapers
 const refreshCron = '0 * * * *'
 
-// We choose width:1600 since the display is 2560 x 1600; see: https://www.npmjs.com/package/pdf-img-convert
+// Although our display is 2560x1440 we choose a slightly bigger width of 1600 which makes it easier to crop useless white margins around the edges
 const pdf2ImgOpts = { width: 1600 }
 
 /** Returns tomorrow, today, yesterday, day before yesterday etc. */
