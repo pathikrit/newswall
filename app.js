@@ -17,25 +17,25 @@ const newsstand = (process.env.NODE_ENV === 'production') ? '/var/lib/data/newss
 // But, any url as a function of date works e.g. for NYT, this works too (albeit with slight adjustment of the style param):
 // url: date => `https://static01.nyt.com/images/${date.format('YYYY')}/${date.format('MM')}/${date.format('DD')}/nytfrontpage/scan.pdf`
 //
-// For the CSS style, you just have to experiment to remove the margins and scale a bit
+// For the CSS style, you just have to experiment to remove the margins - margin:top right bottom left
 const newspapers = [
 	{
 		id: 'WSJ',
 		name: 'Wall Street Journal',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/WSJ.pdf`,
-		style: 'width:98%; margin:-70px 0px 0px -15px'
+		style: 'margin:-70px 0px 0px -15px'
 	},
 	{
 		id: 'NYT',
 		name: 'New York Times',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
-		style: 'width:99%; margin:-60px 10px 0px 3px'
+		style: 'margin:-60px 10px 0px 3px'
 	},
 	{
 		id: 'WaPo',
 		name: 'Washington Post',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
-		style: 'width:99%; margin:-5% -5% 0px -5%'
+		style: 'margin:-5% -5% 0px -5%'
 	},
 	// {
 	// 	id: 'Pravda',
