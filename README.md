@@ -5,7 +5,8 @@ This is a pure node.js port of [graiz/newsprint](https://github.com/graiz/newspr
 For installing and running the Visionect server, see [visionect.md](visionect.md)
 
 The server is a simple express app. Running it locally:
-```
+```shell
+npm install
 node --watch app.js
 ```
 Then open <http://localhost:3000>
