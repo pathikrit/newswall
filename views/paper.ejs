@@ -3,17 +3,30 @@
 <head>
     <title>Newswall</title>
     <!-- Auto refresh page every 300s -->
-    <meta http-equiv="refresh" content="300">
     <style>
         body {
             text-align: center
         }
-        .paper {
+        .paper-container {
+            position: relative;
+            /* Displaying on a 2560x1600 e-ink display */
+            height: 2560px;
+            width: 1600px;
+            border: 5px solid;
+            overflow: hidden;
+        }
+        .paper-container img {
             filter: grayscale(100%);
+            height: 100%;
+            width: 100%;
+            object-fit: contain;
         }
     </style>
+    <meta http-equiv="refresh" content="300">
 </head>
 <body>
-    <img class="paper" src="/archive/<%=paper.date%>/<%=paper.id%>.png" alt="<%=paper.name%> for <%=paper.date%>" style="<%=paper.style%>">
+    <div class="paper-container">
+        <img src="/archive/<%=paper.date%>/<%=paper.id%>.png" style="<%=paper.style%>" alt="<%=paper.name%> for <%=paper.date%>">
+    </div>
 </body>
 </html>

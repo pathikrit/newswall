@@ -23,19 +23,19 @@ const newspapers = [
 		id: 'WSJ',
 		name: 'Wall Street Journal',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/WSJ.pdf`,
-		style: 'margin:-70px 0px 0px -15px'
+		style: 'transform: scale(1.05); margin:0px 0px 0px 0px'
 	},
 	{
 		id: 'NYT',
 		name: 'New York Times',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
-		style: 'margin:-60px 10px 0px 3px'
+		style: 'transform: scale(1.05); margin:0px 0px 0px 0px'
 	},
 	{
 		id: 'WaPo',
 		name: 'Washington Post',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
-		style: 'margin:-5% -5% 0px -5%'
+		style: 'transform: scale(1.05); margin:0px 0px 0px 0px'
 	},
 	// {
 	// 	id: 'Pravda',
