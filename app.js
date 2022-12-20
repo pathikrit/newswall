@@ -9,6 +9,8 @@ const port = process.env.PORT || 3000
 
 // Directory to cache newspaper downloads
 const newsstand = isProd ? '/var/lib/data/newsstand' : path.resolve('./.newspapers')
+// If following is set to true, only recent papers are kept; rest are deleted
+const onlyKeepRecentPapers = false
 
 // List of newspapers we support
 // and a function for each that given a date returns the url of the pdf of the front page of that newspaper for that date
@@ -87,9 +89,17 @@ Object.defineProperty(Array.prototype, 'random', {
 	}
 })
 
-/** Downloads all newspapers for all recent days */
+/** Downloads all newspapers for all recent days; trashes old ones */
 function downloadAll() {
-	for (const date of recentDays())
+	const dates = recentDays()
+
+	if (onlyKeepRecentPapers) {
+		glob(`${newsstand}/!(${dates.map(d => d.format('YYYY-MM-DD')).join('|')})`, (err, dirs) => {
+			dirs.forEach(dir => fs.rm(dir, {force: true, recursive: true}, () => console.log(`Deleted old files: ${dir}`)))
+		})
+	}
+
+	for (const date of dates)
 		for (const newspaper of newspapers)
 			download(newspaper, date)
 }
@@ -138,7 +148,7 @@ function pdfToImage(pdf) {
 		})
 		.catch(error => {
 			console.error(`Could not convert ${pdf} to png`, error)
-			fs.unlinkSync(pdf) // Corrupted pdf? Delete it
+			fs.rm(pdf) // Corrupted pdf? Delete it
 		})
 }
 
@@ -180,7 +190,7 @@ const app = express()
 function run() {
 	// Uncomment this line to trigger a rerender of images on deployment
 	// If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
-	// glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.unlinkSync)
+	// glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
 
 	// Schedule the download job for immediate and periodic
 	const scheduler = require('node-schedule')
