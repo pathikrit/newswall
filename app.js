@@ -4,10 +4,11 @@ const glob = require('glob')
 const path = require('path')
 
 // Configs
+const isProd = process.env.NODE_ENV === 'production'
 const port = process.env.PORT || 3000
 
 // Directory to cache newspaper downloads
-const newsstand = (process.env.NODE_ENV === 'production') ? '/var/lib/data/newsstand' : path.resolve('./.newspapers')
+const newsstand = isProd ? '/var/lib/data/newsstand' : path.resolve('./.newspapers')
 
 // List of newspapers we support
 // and a function for each that given a date returns the url of the pdf of the front page of that newspaper for that date
@@ -15,7 +16,7 @@ const newsstand = (process.env.NODE_ENV === 'production') ? '/var/lib/data/newss
 // e.g. for Wall Street Journal the url is https://cdn.freedomforum.org/dfp/pdf12/WSJ.pdf
 //
 // But, any url as a function of date works e.g. for NYT, this works too (albeit with slight adjustment of the style param):
-// url: date => `https://static01.nyt.com/images/${date.format('YYYY')}/${date.format('MM')}/${date.format('DD')}/nytfrontpage/scan.pdf`
+// url: date => `https://static01.nyt.com/images/${date.format('YYYY/MM/DD')}/nytfrontpage/scan.pdf`
 //
 // displayFor: Configure this (in minutes) to display this paper before moving onto the next one
 //
@@ -26,7 +27,7 @@ const newspapers = [
 		name: 'New York Times',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
 		style: 'transform: scale(1.05)',
-		displayFor: 30
+		displayFor: 60
 	},
 	{
 		id: 'WSJ',
@@ -70,7 +71,10 @@ console.assert(newspapers.length > 0, 'Please configure at least 1 newspaper for
 const refreshCron = '0 * * * *'
 
 // Although our display is 2560x1440 we choose a slightly bigger width of 1600 which makes it easier to zoom/crop useless white margins around the edges
-const pdf2ImgOpts = { width: 1600 }
+const pdf2ImgOpts = {width: 1600}
+
+// request logging - see: https://github.com/expressjs/morgan
+const requestLogFormat = ':method :url from :remote-addr (:user-agent): :status (:total-time[0] ms) (req.cookie=:req[Cookie] res.cookie=:res[Set-Cookie])'
 
 /** Returns tomorrow, today, yesterday, day before yesterday etc. */
 function recentDays() {
@@ -78,7 +82,7 @@ function recentDays() {
 }
 
 Object.defineProperty(Array.prototype, 'random', {
-	value: function() {
+	value: function () {
 		return this[~~(this.length * Math.random())]
 	}
 })
@@ -158,6 +162,7 @@ const app = express()
 	// Hook up middlewares
 	.use(require('cookie-parser')())
 	.use(require('compression')())
+	.use(require('morgan')(requestLogFormat))
 	.use(require('nocache')())  // We don't want page to be cached since they can be refreshed in the background
 	.set('view engine', 'ejs')
 	// Statically serve the archive
