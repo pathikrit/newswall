@@ -16,8 +16,8 @@
     "serve-index": "^1.9.1"
   },
   "engines": {
-    "npm": ">=6",
-    "node": ">=14"
+    "npm": ">=8",
+    "node": ">=19"
   },
   "engineStrict": true
 }

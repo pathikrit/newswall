@@ -39,7 +39,7 @@ const newspapers = [
 		id: 'WaPo',
 		name: 'Washington Post',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
-		style: 'transform: scale(1.05); margin:-20px 0px 0px 0px',
+		style: 'transform: scale(1.05); margin:-100px 0px 0px 0px',
 		displayFor: 10
 	},
 	{
@@ -57,7 +57,7 @@ const newspapers = [
 	// 	displayFor: 5
 	// },
 ]
-console.assert(newspapers.length > 0, 'Please add atleast 1 newspaper for app to work')
+console.assert(newspapers.length > 0, 'Please configure at least 1 newspaper for app to work')
 
 // Every hour check for new newspapers
 const refreshCron = '0 * * * *'
