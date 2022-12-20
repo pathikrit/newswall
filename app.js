@@ -25,37 +25,44 @@ const newspapers = [
 		id: 'NYT',
 		name: 'New York Times',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
-		style: 'transform: scale(1.05); margin:0px 0px 0px 0px',
+		style: 'transform: scale(1.05)',
 		displayFor: 30
 	},
 	{
 		id: 'WSJ',
 		name: 'Wall Street Journal',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/WSJ.pdf`,
-		style: 'transform: scale(1.05); margin:0px 0px 0px 0px',
+		style: 'transform: scale(1.05)',
 		displayFor: 30
+	},
+	{
+		id: 'UsaToday',
+		name: 'Usa Today',
+		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/USAT.pdf`,
+		style: 'transform: scale(1.05)',
+		displayFor: 10
 	},
 	{
 		id: 'WaPo',
 		name: 'Washington Post',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
-		style: 'transform: scale(1.05); margin:-100px 0px 0px 0px',
+		style: 'transform: scale(1.07); margin-top:-100px',
 		displayFor: 10
 	},
 	{
 		id: 'Pravda',
 		name: 'Moskovskaya Pravda',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/RUS_MP.pdf`,
-		style: 'transform: scale(1.05); margin:-250px 0px 0px 0px',
+		style: 'transform: scale(1.05); margin-top:-250px',
 		displayFor: 5
 	},
-	// {
-	// 	id: 'AsianAge',
-	// 	name: 'The Asian Age',
-	// 	url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_AGE.pdf`,
-	// 	style: 'transform: scale(1.01); margin:-150px 0px 0px 0px',
-	// 	displayFor: 5
-	// },
+	{
+		id: 'AsianAge',
+		name: 'The Asian Age',
+		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_AGE.pdf`,
+		style: 'transform: scale(1.01); margin-top:-150px',
+		displayFor: 5
+	},
 ]
 console.assert(newspapers.length > 0, 'Please configure at least 1 newspaper for app to work')
 
