@@ -171,7 +171,6 @@ function nextPaper(papers, current) {
 const express = require('express')
 const app = express()
 	// Hook up middlewares
-	.use(require('cookie-parser')())
 	.use(require('compression')())
 	.use(require('nocache')())  // We don't want page to be cached since they can be refreshed in the background
 	.set('view engine', 'ejs')
@@ -181,10 +180,9 @@ const app = express()
 	// Main pages
 	.get('/', (req, res) => res.render('index', {papers: newspapers}))
 	.get('/latest', (req, res) => {
-		const paper = nextPaper(req.query.papers, req.cookies['current'])
-		console.log(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Current=${req.cookies['current']}; Next=${paper ? `${paper.id} (${paper.date})` : ''}`)
-		if (paper) res.cookie('current', paper.id).render('paper', {paper: paper})
-		else res.sendStatus(404)
+		const paper = nextPaper(req.query.papers, req.query.prev)
+		console.log(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=${req.query.prev}; Next=${paper ? `${paper.id} (${paper.date})` : 'NOT FOUND'}`)
+		paper ? res.render('paper', {paper: paper}) : res.sendStatus(404)
 	})
 
 /** Invoking this actually starts everything! */

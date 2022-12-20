@@ -12,7 +12,7 @@ This is a pure node.js port of [graiz/newsprint](https://github.com/graiz/newspr
     displayFor: 60
 }
 ```
-3. Uses a cookie to ensure you get a new paper on next refresh instead of global server counter
+3. Does [not use](https://github.com/pathikrit/newswall/blob/master/views/paper.ejs#L5) a global server-side counter to rotate papers - thus works with multiple clients
 
 The server is a simple express app. Running it locally:
 ```shell
