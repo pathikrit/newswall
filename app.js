@@ -7,6 +7,9 @@ const path = require('path')
 const isProd = process.env.NODE_ENV === 'production'
 const port = process.env.PORT || 3000
 
+// Change this to your liking - you may not want to see a newspaper in the future
+process.env.TZ = 'America/New_York'
+
 // Directory to cache newspaper downloads
 const newsstand = isProd ? '/var/lib/data/newsstand' : path.resolve('./.newspapers')
 // If following is set to true, only recent papers are kept; rest are deleted
@@ -52,20 +55,20 @@ const newspapers = [
 		style: 'transform: scale(1.07); margin-top:-100px',
 		displayFor: 10
 	},
-	{
-		id: 'Pravda',
-		name: 'Moskovskaya Pravda',
-		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/RUS_MP.pdf`,
-		style: 'transform: scale(1.05); margin-top:-250px',
-		displayFor: 5
-	},
-	{
-		id: 'AsianAge',
-		name: 'The Asian Age',
-		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_AGE.pdf`,
-		style: 'transform: scale(1.01); margin-top:-150px',
-		displayFor: 5
-	},
+	// {
+	// 	id: 'Pravda',
+	// 	name: 'Moskovskaya Pravda',
+	// 	url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/RUS_MP.pdf`,
+	// 	style: 'transform: scale(1.05); margin-top:-250px',
+	// 	displayFor: 5
+	// },
+	// {
+	// 	id: 'AsianAge',
+	// 	name: 'The Asian Age',
+	// 	url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_AGE.pdf`,
+	// 	style: 'transform: scale(1.01); margin-top:-150px',
+	// 	displayFor: 5
+	// },
 ]
 console.assert(newspapers.length > 0, 'Please configure at least 1 newspaper for app to work')
 
@@ -75,9 +78,9 @@ const refreshCron = '0 * * * *'
 // Although our display is 2560x1440 we choose a slightly bigger width of 1600 which makes it easier to zoom/crop useless white margins around the edges
 const pdf2ImgOpts = {width: 1600}
 
-/** Returns tomorrow, today, yesterday, day before yesterday etc. */
+/** Returns today, yesterday, day before yesterday etc. */
 function recentDays() {
-	return [1, 0, -1, -2, -3].map(i => dayjs().add(i, 'days'))
+	return [0, 1, 2, 3].map(i => dayjs().subtract(i, 'days'))
 }
 
 Object.defineProperty(Array.prototype, 'random', {
@@ -91,7 +94,8 @@ function downloadAll() {
 	const dates = recentDays()
 
 	if (onlyKeepRecentPapers) {
-		glob(`${newsstand}/!(${dates.map(d => d.format('YYYY-MM-DD')).join('|')})`, (err, dirs) => {
+		const oldDirs = path.join(newsstand, `!(${dates.map(d => d.format('YYYY-MM-DD')).join('|')})`)
+		glob(oldDirs, (err, dirs) => {
 			dirs.forEach(dir => fs.rm(dir, {force: true, recursive: true}, () => console.log(`Deleted old files: ${dir}`)))
 		})
 	}
