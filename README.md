@@ -12,7 +12,7 @@ This is a pure node.js port of [graiz/newsprint](https://github.com/graiz/newspr
     displayFor: 60
 }
 ```
-3. Does [not use](https://github.com/pathikrit/newswall/blob/master/views/paper.ejs#L5) a global server-side counter to rotate papers - thus works with multiple clients
+3. Does [not use](https://github.com/pathikrit/newswall/blob/3c2171cdb3ae9c2a7c8c53eed7bc7c6edda9a7fd/views/paper.ejs#L5) a global server-side counter to rotate papers - thus works with multiple clients
 
 The server is a simple express app. Running it locally:
 ```shell

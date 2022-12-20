@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <title>Newswall</title>
-    <!-- Refresh this page every displayFor minutes and mark the current item as a prev in url parameter so we try to pick a different paper next time -->
+    <!-- Refresh this page every displayFor minutes and marks the current item as previous in query param so that we try to pick a different paper next time -->
     <meta http-equiv="refresh" content="<%=paper.displayFor * 60%>;/latest?prev=<%=paper.id%>">
     <style>
         * {

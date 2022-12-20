@@ -43,7 +43,7 @@ const newspapers = [
 	},
 	{
 		id: 'UsaToday',
-		name: 'Usa Today',
+		name: 'USA Today',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/USAT.pdf`,
 		style: 'transform: scale(1.05)',
 		displayFor: 10
