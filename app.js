@@ -80,7 +80,7 @@ const pdf2ImgOpts = {width: 1600}
 
 /** Returns today, yesterday, day before yesterday etc. */
 function recentDays() {
-	return [0, 1, 2, 3].map(i => dayjs().subtract(i, 'days'))
+	return [0, 1, 2, 3].map(i => dayjs().subtract(i, 'days').format('YYYY-MM-DD'))
 }
 
 Object.defineProperty(Array.prototype, 'random', {
@@ -94,8 +94,7 @@ function downloadAll() {
 	const dates = recentDays()
 
 	if (onlyKeepRecentPapers) {
-		const oldDirs = path.join(newsstand, `!(${dates.map(d => d.format('YYYY-MM-DD')).join('|')})`)
-		glob(oldDirs, (err, dirs) => {
+		glob(path.join(newsstand, `!(${dates.join('|')})`), (err, dirs) => {
 			dirs.forEach(dir => fs.rm(dir, {force: true, recursive: true}, () => console.log(`Deleted old files: ${dir}`)))
 		})
 	}
@@ -107,9 +106,9 @@ function downloadAll() {
 
 /** Download the newspaper for given date */
 function download(newspaper, date) {
-	const fragments = [newsstand, date.format('YYYY-MM-DD'), `${newspaper.id}.pdf`]
+	const fragments = [newsstand, date, `${newspaper.id}.pdf`]
 	const fullPath = path.join(...fragments)
-	const name = `${newspaper.name} for ${fragments[1]}`
+	const name = `${newspaper.name} for ${date}`
 
 	if (fs.existsSync(fullPath)) {
 		if (fs.existsSync(fullPath.replace('.pdf', '.png'))) {
@@ -121,7 +120,7 @@ function download(newspaper, date) {
 	}
 
 	console.log(`Checking for ${name} ...`)
-	const url = newspaper.url(date)
+	const url = newspaper.url(dayjs(date))
 	const Downloader = require('nodejs-file-downloader')
 	const downloader = new Downloader({
 		url: url,
@@ -156,7 +155,7 @@ function pdfToImage(pdf) {
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
 function nextPaper(papers, current) {
 	const searchTerm = papers && papers.includes(',') ? `{${papers}}` : papers
-	for (const date of recentDays().map(d => d.format('YYYY-MM-DD'))) {
+	for (const date of recentDays()) {
 		const globExpr = path.join(newsstand, date, `${searchTerm || '*'}.png`)
 		const ids = glob.sync(globExpr).map(image => path.parse(image).name)
 		// Find something that is not current or a random one
@@ -181,7 +180,7 @@ const app = express()
 	.get('/', (req, res) => res.render('index', {papers: newspapers}))
 	.get('/latest', (req, res) => {
 		const paper = nextPaper(req.query.papers, req.query.prev)
-		console.log(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=${req.query.prev}; Next=${paper ? `${paper.id} (${paper.date})` : 'NOT FOUND'}`)
+		console.log(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}]` : 'NOT FOUND'}`)
 		paper ? res.render('paper', {paper: paper}) : res.sendStatus(404)
 	})
 
