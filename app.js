@@ -17,37 +17,44 @@ const newsstand = (process.env.NODE_ENV === 'production') ? '/var/lib/data/newss
 // But, any url as a function of date works e.g. for NYT, this works too (albeit with slight adjustment of the style param):
 // url: date => `https://static01.nyt.com/images/${date.format('YYYY')}/${date.format('MM')}/${date.format('DD')}/nytfrontpage/scan.pdf`
 //
+// displayFor: Configure this (in minutes) to display this paper before moving onto the next one
+//
 // For the CSS style, you just have to experiment to remove the margins - margin:top right bottom left
 const newspapers = [
-	{
-		id: 'WSJ',
-		name: 'Wall Street Journal',
-		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/WSJ.pdf`,
-		style: 'transform: scale(1.05); margin:0px 0px 0px 0px'
-	},
 	{
 		id: 'NYT',
 		name: 'New York Times',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
-		style: 'transform: scale(1.05); margin:0px 0px 0px 0px'
+		style: 'transform: scale(1.05); margin:0px 0px 0px 0px',
+		displayFor: 30
+	},
+	{
+		id: 'WSJ',
+		name: 'Wall Street Journal',
+		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/WSJ.pdf`,
+		style: 'transform: scale(1.05); margin:0px 0px 0px 0px',
+		displayFor: 30
 	},
 	{
 		id: 'WaPo',
 		name: 'Washington Post',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
-		style: 'transform: scale(1.05); margin:-20px 0px 0px 0px'
+		style: 'transform: scale(1.05); margin:-20px 0px 0px 0px',
+		displayFor: 10
 	},
-	// {
-	// 	id: 'Pravda',
-	// 	name: 'Moskovskaya Pravda',
-	// 	url: date => `https://cdn.freedomforum.org/dfp/pdf${date.date()}/RUS_MP.pdf`,
-	// 	style: 'width:100%; margin:-50px 0px 0px -15px'
-	// },
+	{
+		id: 'Pravda',
+		name: 'Moskovskaya Pravda',
+		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/RUS_MP.pdf`,
+		style: 'transform: scale(1.05); margin:-250px 0px 0px 0px',
+		displayFor: 5
+	},
 	// {
 	// 	id: 'AsianAge',
 	// 	name: 'The Asian Age',
-	// 	url: date => `https://cdn.freedomforum.org/dfp/pdf${date.date()}/IND_AGE.pdf`,
-	// 	style: 'width:100%; margin:-50px 0px 0px -15px'
+	// 	url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_AGE.pdf`,
+	// 	style: 'transform: scale(1.01); margin:-150px 0px 0px 0px',
+	// 	displayFor: 5
 	// },
 ]
 console.assert(newspapers.length > 0, 'Please add atleast 1 newspaper for app to work')

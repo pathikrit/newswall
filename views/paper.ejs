@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
     <title>Newswall</title>
-    <!-- Auto refresh page every 300s -->
-    <meta http-equiv="refresh" content="300">
+    <meta http-equiv="refresh" content="<%=paper.displayFor * 60%>">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
         .paper-container {
             /* Displaying on a 2560x1440 e-ink display */
             height: 2560px;
