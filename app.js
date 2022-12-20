@@ -75,9 +75,6 @@ const refreshCron = '0 * * * *'
 // Although our display is 2560x1440 we choose a slightly bigger width of 1600 which makes it easier to zoom/crop useless white margins around the edges
 const pdf2ImgOpts = {width: 1600}
 
-// request logging - see: https://github.com/expressjs/morgan
-const requestLogFormat = ':method :url from :remote-addr (:user-agent): :status (:total-time[0] ms) (req.cookie=:req[Cookie] res.cookie=:res[Set-Cookie])'
-
 /** Returns tomorrow, today, yesterday, day before yesterday etc. */
 function recentDays() {
 	return [1, 0, -1, -2, -3].map(i => dayjs().add(i, 'days'))
@@ -172,7 +169,6 @@ const app = express()
 	// Hook up middlewares
 	.use(require('cookie-parser')())
 	.use(require('compression')())
-	.use(require('morgan')(requestLogFormat))
 	.use(require('nocache')())  // We don't want page to be cached since they can be refreshed in the background
 	.set('view engine', 'ejs')
 	// Statically serve the archive
@@ -182,6 +178,7 @@ const app = express()
 	.get('/', (req, res) => res.render('index', {papers: newspapers}))
 	.get('/latest', (req, res) => {
 		const paper = nextPaper(req.query.papers, req.cookies['current'])
+		console.log(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Current=${req.cookies['current']}; Next=${paper ? `${paper.id} (${paper.date})` : ''}`)
 		if (paper) res.cookie('current', paper.id).render('paper', {paper: paper})
 		else res.sendStatus(404)
 	})
