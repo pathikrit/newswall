@@ -25,7 +25,7 @@ const onlyKeepRecentPapers = false
 //
 // displayFor: Configure this (in minutes) to display this paper before moving onto the next one
 //
-// For the CSS style, you just have to experiment to remove the margins - margin:top right bottom left
+// For the CSS style, you want to usually scale and remove white space margins. Use the emulator on homepage to experiment
 const newspapers = [
 	{
 		id: 'NYT',
@@ -75,8 +75,13 @@ console.assert(newspapers.length > 0, 'Please configure at least 1 newspaper for
 // Every hour check for new newspapers
 const refreshCron = '0 * * * *'
 
-// Although our display is 2560x1440 we choose a slightly bigger width of 1600 which makes it easier to zoom/crop useless white margins around the edges
-const pdf2ImgOpts = {width: 1600}
+// Although my e-ink display is 2560x1440 we choose a slightly bigger width of 1600px when converting from pdf to png
+// since it makes it easier to zoom/crop useless white margins around the edges of the newspapers
+const display = {
+	height: 2560,
+	width: 1440,
+	pdf2ImgOpts: {width: 1600}
+}
 
 /** Returns today, yesterday, day before yesterday etc. */
 function recentDays() {
@@ -141,15 +146,12 @@ function download(newspaper, date) {
 function pdfToImage(pdf) {
 	console.log(`Converting ${pdf} to png ...`)
 	require('pdf-img-convert')
-		.convert(pdf, pdf2ImgOpts)
+		.convert(pdf, display.pdf2ImgOpts)
 		.then(images => {
 			const png = pdf.replace('.pdf', '.png')
 			fs.writeFile(png, images[0], () => console.log(`Wrote ${png}`))
 		})
-		.catch(error => {
-			console.error(`Could not convert ${pdf} to png`, error)
-			fs.rm(pdf) // Corrupted pdf? Delete it
-		})
+		.catch(error => fs.rm(pdf, () => console.error(`Could not convert ${pdf} to png`, error))) // Corrupted pdf? Delete it
 }
 
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
@@ -177,11 +179,11 @@ const app = express()
 	.use('/archive', require('serve-index')(newsstand))
 	.use('/archive', express.static(newsstand))
 	// Main pages
-	.get('/', (req, res) => res.render('index', {papers: newspapers}))
+	.get('/', (req, res) => res.render('index', {papers: newspapers, display: display}))
 	.get('/latest', (req, res) => {
 		const paper = nextPaper(req.query.papers, req.query.prev)
 		console.log(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}]` : 'NOT FOUND'}`)
-		paper ? res.render('paper', {paper: paper}) : res.sendStatus(404)
+		paper ? res.render('paper', {paper: paper, display: display}) : res.sendStatus(404)
 	})
 
 /** Invoking this actually starts everything! */
