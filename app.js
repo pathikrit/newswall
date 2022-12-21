@@ -25,50 +25,50 @@ const onlyKeepRecentPapers = false
 //
 // displayFor: Configure this (in minutes) to display this paper before moving onto the next one
 //
-// For the CSS style, you want to usually scale and remove white space margins. Use the emulator on homepage to experiment
+// scale: Gets compiled to transform: scale(x) CSS style to zoom in to remove useless white margins. Use the emulator on homepage to experiment
 const newspapers = [
 	{
 		id: 'NYT',
 		name: 'New York Times',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
-		style: 'transform: scale(1.05)',
+		scale: 1.05,
 		displayFor: 60
 	},
 	{
 		id: 'WSJ',
 		name: 'Wall Street Journal',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/WSJ.pdf`,
-		style: 'transform: scale(1.05)',
+		scale: 1.06,
 		displayFor: 30
 	},
 	{
 		id: 'UsaToday',
 		name: 'USA Today',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/USAT.pdf`,
-		style: 'transform: scale(1.05)',
+		scale: 1.04,
 		displayFor: 10
 	},
 	{
 		id: 'WaPo',
 		name: 'Washington Post',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
-		style: 'transform: scale(1.07); margin-top:-100px',
+		scale: 1.06,
 		displayFor: 10
 	},
-	// {
-	// 	id: 'Pravda',
-	// 	name: 'Moskovskaya Pravda',
-	// 	url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/RUS_MP.pdf`,
-	// 	style: 'transform: scale(1.05); margin-top:-250px',
-	// 	displayFor: 5
-	// },
-	// {
-	// 	id: 'AsianAge',
-	// 	name: 'The Asian Age',
-	// 	url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_AGE.pdf`,
-	// 	style: 'transform: scale(1.01); margin-top:-150px',
-	// 	displayFor: 5
-	// },
+	{
+		id: 'Pravda',
+		name: 'Moskovskaya Pravda',
+		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/RUS_MP.pdf`,
+		scale: 1.06,
+		displayFor: 5
+	},
+	{
+		id: 'AsianAge',
+		name: 'The Asian Age',
+		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_AGE.pdf`,
+		scale: 1.02,
+		displayFor: 5
+	},
 ]
 console.assert(newspapers.length > 0, 'Please configure at least 1 newspaper for app to work')
 
@@ -182,7 +182,7 @@ const app = express()
 	.get('/', (req, res) => res.render('index', {papers: newspapers, display: display}))
 	.get('/latest', (req, res) => {
 		const paper = nextPaper(req.query.papers, req.query.prev)
-		console.log(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}]` : 'NOT FOUND'}`)
+		console.log(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
 		paper ? res.render('paper', {paper: paper, display: display}) : res.sendStatus(404)
 	})
 
