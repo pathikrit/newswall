@@ -2,7 +2,7 @@ const dayjs = require('dayjs')
 const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
-const log = console //todo: find a real logging library
+const log = console // todo: find a real logging library
 
 // Configs
 const isProd = process.env.NODE_ENV === 'production'
@@ -113,8 +113,9 @@ function downloadAll() {
 
 /** Download the newspaper for given date */
 function download(newspaper, date) {
-	const fragments = [newsstand, date, `${newspaper.id}.pdf`]
-	const pdfPath = path.join(...fragments)
+	const directory = path.join(newsstand, date)
+	const fileName = `${newspaper.id}.pdf`
+	const pdfPath = path.join(directory, fileName)
 	const pngPath = pdfPath.replace('.pdf', '.png')
 	const name = `${newspaper.name} for ${date}`
 
@@ -130,13 +131,8 @@ function download(newspaper, date) {
 	log.info(`Checking for ${name} ...`)
 	const url = newspaper.url(dayjs(date))
 	const Downloader = require('nodejs-file-downloader')
-	const downloader = new Downloader({
-		url: url,
-		directory: path.join(...fragments.slice(0, 2)),
-		skipExistingFileName: true,
-		fileName: fragments[2]
-	})
-	downloader.download()
+	new Downloader({url: url, directory: directory, fileName: fileName})
+		.download()
 		.then(() => pdfToImage(pdfPath, pngPath))
 		.catch(error => {
 			if (error.statusCode && error.statusCode === 404)
