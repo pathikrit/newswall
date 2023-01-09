@@ -112,14 +112,15 @@ function downloadAll() {
 /** Download the newspaper for given date */
 function download(newspaper, date) {
 	const fragments = [newsstand, date, `${newspaper.id}.pdf`]
-	const fullPath = path.join(...fragments)
+	const pdfPath = path.join(...fragments)
+	const pngPath = pdfPath.replace('.pdf', '.png')
 	const name = `${newspaper.name} for ${date}`
 
-	if (fs.existsSync(fullPath)) {
-		if (fs.existsSync(fullPath.replace('.pdf', '.png'))) {
+	if (fs.existsSync(pdfPath)) {
+		if (fs.existsSync(pngPath)) {
 			console.debug(`Already downloaded ${name}`)
 		} else {
-			pdfToImage(fullPath)
+			pdfToImage(pdfPath, pngPath)
 		}
 		return
 	}
@@ -134,7 +135,7 @@ function download(newspaper, date) {
 		fileName: fragments[2]
 	})
 	downloader.download()
-		.then(() => pdfToImage(fullPath))
+		.then(() => pdfToImage(pdfPath, pngPath))
 		.catch(error => {
 			if (error.statusCode && error.statusCode === 404)
 				console.log(`${name} is not available at ${url}`)
@@ -143,14 +144,11 @@ function download(newspaper, date) {
 		})
 }
 
-function pdfToImage(pdf) {
-	console.log(`Converting ${pdf} to png ...`)
+function pdfToImage(pdf, png) {
+	console.log(`Converting ${pdf} to ${png} ...`)
 	require('pdf-img-convert')
 		.convert(pdf, display.pdf2ImgOpts)
-		.then(images => {
-			const png = pdf.replace('.pdf', '.png')
-			fs.writeFile(png, images[0], () => console.log(`Wrote ${png}`))
-		})
+		.then(images => fs.writeFile(png, images[0], () => console.log(`Wrote ${png}`)))
 		.catch(error => fs.rm(pdf, () => console.error(`Could not convert ${pdf} to png`, error))) // Corrupted pdf? Delete it
 }
 

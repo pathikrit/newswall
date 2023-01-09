@@ -20,5 +20,5 @@ I use the [32-inch Visionect display](https://www.visionect.com/shop/place-play-
 which can be easily configured in [their online portal](https://portal.getjoan.com/) to point to any website
 ([this](http://newswall.onrender.com) is currently [deployed on render.com](https://render.com/docs/deploy-node-express-app)).
 My excellent [local framing shop](https://tenaflycamera.business.site/)
-made a custom frame for me that not only hides the manufacturer logo but also hides [a small portable powerbank](https://www.amazon.com/gp/product/B09VP41M71/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&th=1) 
-that makes it easy to recharge the frame without taking it off the wall. 
+made a custom frame for me that not only hides the manufacturer's logo on the frame but also hides [a small portable powerbank](https://www.amazon.com/gp/product/B09VP41M71/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&th=1) 
+that makes it easy to recharge the display without taking the frame off the wall. 
