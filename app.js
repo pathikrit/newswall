@@ -2,6 +2,7 @@ const dayjs = require('dayjs')
 const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
+const log = console //todo: find a real logging library
 
 // Configs
 const isProd = process.env.NODE_ENV === 'production'
@@ -100,11 +101,11 @@ function downloadAll() {
 
 	if (onlyKeepRecentPapers) {
 		glob(path.join(newsstand, `!(${dates.join('|')})`), (err, dirs) => {
-			dirs.forEach(dir => fs.rm(dir, {force: true, recursive: true}, () => console.info(`Deleted old files: ${dir}`)))
+			dirs.forEach(dir => fs.rm(dir, {force: true, recursive: true}, () => log.info(`Deleted old files: ${dir}`)))
 		})
 	}
 
-	console.info('Checking for new papers ...')
+	log.info('Checking for new papers ...')
 	for (const date of dates)
 		for (const newspaper of newspapers)
 			download(newspaper, date)
@@ -119,14 +120,14 @@ function download(newspaper, date) {
 
 	if (fs.existsSync(pdfPath)) {
 		if (fs.existsSync(pngPath)) {
-			console.debug(`Already downloaded ${name}`)
+			log.debug(`Already downloaded ${name}`)
 		} else {
 			pdfToImage(pdfPath, pngPath)
 		}
 		return
 	}
 
-	console.info(`Checking for ${name} ...`)
+	log.info(`Checking for ${name} ...`)
 	const url = newspaper.url(dayjs(date))
 	const Downloader = require('nodejs-file-downloader')
 	const downloader = new Downloader({
@@ -139,18 +140,18 @@ function download(newspaper, date) {
 		.then(() => pdfToImage(pdfPath, pngPath))
 		.catch(error => {
 			if (error.statusCode && error.statusCode === 404)
-				console.info(`${name} is not available at ${url}`)
+				log.info(`${name} is not available at ${url}`)
 			else
-				console.error(`Could not download ${name} from ${url}`, error)
+				log.error(`Could not download ${name} from ${url}`, error)
 		})
 }
 
 function pdfToImage(pdf, png) {
-	console.info(`Converting ${pdf} to ${png} ...`)
+	log.info(`Converting ${pdf} to ${png} ...`)
 	require('pdf-img-convert')
 		.convert(pdf, display.pdf2ImgOpts)
-		.then(images => fs.writeFile(png, images[0], () => console.info(`Wrote ${png}`)))
-		.catch(error => fs.rm(pdf, () => console.error(`Could not convert ${pdf} to png`, error))) // Corrupted pdf? Delete it
+		.then(images => fs.writeFile(png, images[0], () => log.info(`Wrote ${png}`)))
+		.catch(error => fs.rm(pdf, () => log.error(`Could not convert ${pdf} to png`, error))) // Corrupted pdf? Delete it
 }
 
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
@@ -163,7 +164,7 @@ function nextPaper(papers, current) {
 		const id = ids.filter(id => current && id !== current).random() || ids.random()
 		const paper = newspapers.find(item => item.id === id)
 		if (paper) return Object.assign(paper, {date: date})
-		if (id) console.error(`Unknown paper found: ${id}`)
+		if (id) log.error(`Unknown paper found: ${id}`)
 	}
 }
 
@@ -181,7 +182,7 @@ const app = express()
 	.get('/', (req, res) => res.render('index', {papers: newspapers, display: display}))
 	.get('/latest', (req, res) => {
 		const paper = nextPaper(req.query.papers, req.query.prev)
-		console.info(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
+		log.info(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
 		paper ? res.render('paper', {paper: paper, display: display}) : res.sendStatus(404)
 	})
 
@@ -195,8 +196,9 @@ function run() {
 	const scheduler = require('node-schedule')
 	scheduler.scheduleJob(refreshCron, downloadAll)
 	downloadAll()
+
 	// Start the server
-	app.listen(port, () => console.info(`Starting server on port ${port} ...`))
+	app.listen(port, () => log.info(`Starting server on port ${port} ...`))
 }
 
 run() //Yolo!
