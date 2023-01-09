@@ -1,6 +1,9 @@
 # NodeJS
 node_modules/
 
+# OSX
+.DS_Store
+
 # IDEs
 .idea/
 

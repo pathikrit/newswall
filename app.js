@@ -100,10 +100,11 @@ function downloadAll() {
 
 	if (onlyKeepRecentPapers) {
 		glob(path.join(newsstand, `!(${dates.join('|')})`), (err, dirs) => {
-			dirs.forEach(dir => fs.rm(dir, {force: true, recursive: true}, () => console.log(`Deleted old files: ${dir}`)))
+			dirs.forEach(dir => fs.rm(dir, {force: true, recursive: true}, () => console.info(`Deleted old files: ${dir}`)))
 		})
 	}
 
+	console.info('Checking for new papers ...')
 	for (const date of dates)
 		for (const newspaper of newspapers)
 			download(newspaper, date)
@@ -125,7 +126,7 @@ function download(newspaper, date) {
 		return
 	}
 
-	console.log(`Checking for ${name} ...`)
+	console.info(`Checking for ${name} ...`)
 	const url = newspaper.url(dayjs(date))
 	const Downloader = require('nodejs-file-downloader')
 	const downloader = new Downloader({
@@ -138,17 +139,17 @@ function download(newspaper, date) {
 		.then(() => pdfToImage(pdfPath, pngPath))
 		.catch(error => {
 			if (error.statusCode && error.statusCode === 404)
-				console.log(`${name} is not available at ${url}`)
+				console.info(`${name} is not available at ${url}`)
 			else
 				console.error(`Could not download ${name} from ${url}`, error)
 		})
 }
 
 function pdfToImage(pdf, png) {
-	console.log(`Converting ${pdf} to ${png} ...`)
+	console.info(`Converting ${pdf} to ${png} ...`)
 	require('pdf-img-convert')
 		.convert(pdf, display.pdf2ImgOpts)
-		.then(images => fs.writeFile(png, images[0], () => console.log(`Wrote ${png}`)))
+		.then(images => fs.writeFile(png, images[0], () => console.info(`Wrote ${png}`)))
 		.catch(error => fs.rm(pdf, () => console.error(`Could not convert ${pdf} to png`, error))) // Corrupted pdf? Delete it
 }
 
@@ -180,7 +181,7 @@ const app = express()
 	.get('/', (req, res) => res.render('index', {papers: newspapers, display: display}))
 	.get('/latest', (req, res) => {
 		const paper = nextPaper(req.query.papers, req.query.prev)
-		console.log(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
+		console.info(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
 		paper ? res.render('paper', {paper: paper, display: display}) : res.sendStatus(404)
 	})
 
@@ -195,7 +196,7 @@ function run() {
 	scheduler.scheduleJob(refreshCron, downloadAll)
 	downloadAll()
 	// Start the server
-	app.listen(port, () => console.log(`Starting server on port ${port} ...`))
+	app.listen(port, () => console.info(`Starting server on port ${port} ...`))
 }
 
 run() //Yolo!
