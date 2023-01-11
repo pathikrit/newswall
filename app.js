@@ -13,8 +13,8 @@ process.env.TZ = 'America/New_York'
 
 // Directory to cache newspaper downloads
 const newsstand = isProd ? '/var/lib/data/newsstand' : path.resolve('./.newspapers')
-// If following is set to true, only recent papers are kept; rest are deleted
-const onlyKeepRecentPapers = false
+// How many days of papers to keep
+const archiveLength = 35
 
 // List of newspapers we support
 // and a function for each that given a date returns the url of the pdf of the front page of that newspaper for that date
@@ -85,8 +85,8 @@ const display = {
 }
 
 /** Returns today, yesterday, day before yesterday etc. */
-function recentDays() {
-	return [0, 1, 2, 3].map(i => dayjs().subtract(i, 'days').format('YYYY-MM-DD'))
+function recentDays(n = 3) {
+	return Array.from(Array(n).keys()).map(i => dayjs().subtract(i, 'days').format('YYYY-MM-DD'))
 }
 
 Object.defineProperty(Array.prototype, 'random', {
@@ -97,16 +97,13 @@ Object.defineProperty(Array.prototype, 'random', {
 
 /** Downloads all newspapers for all recent days; trashes old ones */
 function downloadAll() {
-	const dates = recentDays()
-
-	if (onlyKeepRecentPapers) {
-		glob(path.join(newsstand, `!(${dates.join('|')})`), (err, dirs) => {
-			dirs.forEach(dir => fs.rm(dir, {force: true, recursive: true}, () => log.info(`Deleted old files: ${dir}`)))
-		})
-	}
+	// Delete old stuff
+	glob(path.join(newsstand, `!(${recentDays(archiveLength).join('|')})`), (err, dirs) => {
+		dirs.forEach(dir => fs.rm(dir, {force: true, recursive: true}, () => log.info(`Deleted old files: ${dir}`)))
+	})
 
 	log.info('Checking for new papers ...')
-	for (const date of dates)
+	for (const date of recentDays())
 		for (const newspaper of newspapers)
 			download(newspaper, date)
 }
