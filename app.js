@@ -1,109 +1,38 @@
+const config = require('./config')
 const dayjs = require('dayjs')
 const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
 const log = console // todo: find a real logging library
 
-// Configs
-const isProd = process.env.NODE_ENV === 'production'
-const port = process.env.PORT || 3000
-
-// Change this to your liking - you may not want to see a newspaper in the future
-process.env.TZ = 'America/New_York'
-
-// Directory to cache newspaper downloads
-const newsstand = isProd ? '/var/lib/data/newsstand' : path.resolve('./.newspapers')
-// How many days of papers to keep
-const archiveLength = 35
-
-// List of newspapers we support
-// and a function for each that given a date returns the url of the pdf of the front page of that newspaper for that date
-// The Freedom Forum has a large list of papers: https://www.freedomforum.org/todaysfrontpages/
-// e.g. for Wall Street Journal the url is https://cdn.freedomforum.org/dfp/pdf12/WSJ.pdf
-//
-// But, any url as a function of date works e.g. for NYT, this works too (albeit with slight adjustment of the style param):
-// url: date => `https://static01.nyt.com/images/${date.format('YYYY/MM/DD')}/nytfrontpage/scan.pdf`
-//
-// displayFor: Configure this (in minutes) to display this paper before moving onto the next one
-//
-// scale: Gets compiled to transform: scale(x) CSS style to zoom in to remove useless white margins. Use the emulator on homepage to experiment
-const newspapers = [
-	{
-		id: 'NYT',
-		name: 'New York Times',
-		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
-		scale: 1.04,
-		displayFor: 60
-	},
-	{
-		id: 'WSJ',
-		name: 'Wall Street Journal',
-		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/WSJ.pdf`,
-		scale: 1.05,
-		displayFor: 30
-	},
-	{
-		id: 'UsaToday',
-		name: 'USA Today',
-		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/USAT.pdf`,
-		scale: 1.03,
-		displayFor: 10
-	},
-	{
-		id: 'WaPo',
-		name: 'Washington Post',
-		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
-		scale: 1.07,
-		displayFor: 10
-	},
-	{
-		id: 'AsianAge',
-		name: 'The Asian Age',
-		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_AGE.pdf`,
-		scale: 1.02,
-		displayFor: 5
-	},
-]
-console.assert(newspapers.length > 0, 'Please configure at least 1 newspaper for app to work')
-
-// Every hour check for new newspapers
-const refreshCron = '0 * * * *'
-
-// Although my e-ink display is 2560x1440 we choose a slightly bigger width of 1600px when converting from pdf to png
-// since it makes it easier to zoom/crop useless white margins around the edges of the newspapers
-const display = {
-	height: 2560,
-	width: 1440,
-	pdf2ImgOpts: {width: 1600}
-}
-
-/** Returns today, yesterday, day before yesterday etc. */
-function recentDays(n = 3) {
-	return Array.from(Array(n).keys()).map(i => dayjs().subtract(i, 'days').format('YYYY-MM-DD'))
-}
-
+// Add a util array.random()
 Object.defineProperty(Array.prototype, 'random', {
 	value: function () {
 		return this[~~(this.length * Math.random())]
 	}
 })
 
+/** Returns last n days (including today) */
+function recentDays(n = 3) {
+	return Array.from(Array(n).keys()).map(i => dayjs().subtract(i, 'days').format('YYYY-MM-DD'))
+}
+
 /** Downloads all newspapers for all recent days; trashes old ones */
 function downloadAll() {
 	// Delete old stuff
-	glob(path.join(newsstand, `!(${recentDays(archiveLength).join('|')})`), (err, dirs) => {
+	glob(path.join(config.newsstand, `!(${recentDays(config.archiveLength).join('|')})`), (err, dirs) => {
 		dirs.forEach(dir => fs.rm(dir, {force: true, recursive: true}, () => log.info(`Deleted old files: ${dir}`)))
 	})
 
 	log.info('Checking for new papers ...')
 	for (const date of recentDays())
-		for (const newspaper of newspapers)
+		for (const newspaper of config.newspapers)
 			download(newspaper, date)
 }
 
 /** Download the newspaper for given date */
 function download(newspaper, date) {
-	const directory = path.join(newsstand, date)
+	const directory = path.join(config.newsstand, date)
 	const fileName = `${newspaper.id}.pdf`
 	const pdfPath = path.join(directory, fileName)
 	const pngPath = pdfPath.replace('.pdf', '.png')
@@ -135,7 +64,7 @@ function download(newspaper, date) {
 function pdfToImage(pdf, png) {
 	log.info(`Converting ${pdf} to ${png} ...`)
 	require('pdf-img-convert')
-		.convert(pdf, display.pdf2ImgOpts)
+		.convert(pdf, config.display.pdf2ImgOpts)
 		.then(images => fs.writeFile(png, images[0], () => log.info(`Wrote ${png}`)))
 		.catch(error => fs.rm(pdf, () => log.error(`Could not convert ${pdf} to png`, error))) // Corrupted pdf? Delete it
 }
@@ -144,11 +73,11 @@ function pdfToImage(pdf, png) {
 function nextPaper(papers, current) {
 	const searchTerm = papers && papers.includes(',') ? `{${papers}}` : papers
 	for (const date of recentDays()) {
-		const globExpr = path.join(newsstand, date, `${searchTerm || '*'}.png`)
+		const globExpr = path.join(config.newsstand, date, `${searchTerm || '*'}.png`)
 		const ids = glob.sync(globExpr).map(image => path.parse(image).name)
 		// Find something that is not current or a random one
 		const id = ids.filter(id => current && id !== current).random() || ids.random()
-		const paper = newspapers.find(item => item.id === id)
+		const paper = config.newspapers.find(item => item.id === id)
 		if (paper) return Object.assign(paper, {date: date})
 		if (id) log.error(`Unknown paper found: ${id}`)
 	}
@@ -162,29 +91,31 @@ const app = express()
 	.use(require('nocache')())  // We don't want page to be cached since they can be refreshed in the background
 	.set('view engine', 'ejs')
 	// Statically serve the archive
-	.use('/archive', require('serve-index')(newsstand))
-	.use('/archive', express.static(newsstand))
+	.use('/archive', require('serve-index')(config.newsstand))
+	.use('/archive', express.static(config.newsstand))
 	// Main pages
-	.get('/', (req, res) => res.render('index', {papers: newspapers, display: display}))
+	.get('/', (req, res) => res.render('index', {papers: config.newspapers, display: config.display}))
 	.get('/latest', (req, res) => {
 		const paper = nextPaper(req.query.papers, req.query.prev)
 		log.info(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
-		paper ? res.render('paper', {paper: paper, display: display}) : res.sendStatus(404)
+		paper ? res.render('paper', {paper: paper, display: config.display}) : res.sendStatus(404)
 	})
 
 /** Invoking this actually starts everything! */
 function run() {
+	process.env.TZ = config.timezone
+
 	// Uncomment this line to trigger a rerender of images on deployment
 	// If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
 	// glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
 
 	// Schedule the download job for immediate and periodic
 	const scheduler = require('node-schedule')
-	scheduler.scheduleJob(refreshCron, downloadAll)
+	scheduler.scheduleJob(config.refreshCron, downloadAll)
 	downloadAll()
 
 	// Start the server
-	app.listen(port, () => log.info(`Starting server on port ${port} ...`))
+	app.listen(config.port, () => log.info(`Starting server on port ${config.port} ...`))
 }
 
 run() //Yolo!

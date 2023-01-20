@@ -25,7 +25,7 @@
     <li>
         <a href="/latest"><code>/latest</code></a>: Cycles through front pages of newspapers on each refresh.
         <i>You should point your e-ink device to this.</i>
-        <br/>This server is <a href="https://github.com/pathikrit/newswall/blob/master/app.js#L18" target="_blank">configured</a> to support the following:
+        <br/>This server is <a href="https://github.com/pathikrit/newswall/blob/master/config.js" target="_blank">configured</a> to support the following:
         <ol>
             <% papers.forEach((paper) => { %>
                 <li><%=paper.name%>: <a href="/latest?papers=<%=paper.id%>"><code>/latest?papers=<%=paper.id%></code></a></li>
