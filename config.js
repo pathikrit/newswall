@@ -72,6 +72,21 @@ module.exports = {
 		height: 2560,
 		width: 1440,
 		pdf2ImgOpts: {width: 1600}
+	},
+
+	// Config to interact with the Visonect display via the Joan API: https://portal.getjoan.com/api/docs/
+	joan: {
+		oauth: {
+			client: {
+				id: 'EIFZqijAtYH6DOkgBJV2pthRFHoSmQOq3niiJfoi',
+				secret: 'gRlHMs35NchXe5fkfFiYTyVMXD5PXaKLURPNtlIMLgJm3Pp8YzfrygjEuDjvGAukS1UfNTYHiI7cIX6za2sKvB9gu2HMdtzyNATqgstqo0FdDRUrFwxU6OVzhYvans6v',
+			},
+			auth: {
+				tokenHost: 'https://portal.getjoan.com',
+				tokenPath: '/api/token/'
+			}
+		},
+		apiUrl: 'https://portal.getjoan.com/api/v1.0/'
 	}
 }
 
