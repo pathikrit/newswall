@@ -3,6 +3,7 @@ const dayjs = require('dayjs')
 const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
+const { StatusCodes } = require('http-status-codes')
 const log = console // todo: find a real logging library
 
 // Add a util array.random()
@@ -54,7 +55,7 @@ function download(newspaper, date) {
 		.download()
 		.then(() => pdfToImage(pdfPath, pngPath))
 		.catch(error => {
-			if (error.statusCode && error.statusCode === 404)
+			if (error.statusCode && error.statusCode === StatusCodes.NOT_FOUND)
 				log.info(`${name} is not available at ${url}`)
 			else
 				log.error(`Could not download ${name} from ${url}`, error)
@@ -98,7 +99,7 @@ const app = express()
 	.get('/latest', (req, res) => {
 		const paper = nextPaper(req.query.papers, req.query.prev)
 		log.info(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
-		paper ? res.render('paper', {paper: paper, display: config.display}) : res.sendStatus(404)
+		paper ? res.render('paper', {paper: paper, display: config.display}) : res.sendStatus(StatusCodes.NOT_FOUND)
 	})
 
 /** Invoking this actually starts everything! */
@@ -109,7 +110,7 @@ function run() {
 	// If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
 	// glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
 
-	// Schedule the download job for immediate and periodic
+	// Schedule the download job (and kick one off right now)
 	const scheduler = require('node-schedule')
 	scheduler.scheduleJob(config.refreshCron, downloadAll)
 	downloadAll()
