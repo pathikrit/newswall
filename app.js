@@ -32,36 +32,29 @@ const newspapers = [
 		id: 'NYT',
 		name: 'New York Times',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
-		scale: 1.05,
+		scale: 1.04,
 		displayFor: 60
 	},
 	{
 		id: 'WSJ',
 		name: 'Wall Street Journal',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/WSJ.pdf`,
-		scale: 1.06,
+		scale: 1.05,
 		displayFor: 30
 	},
 	{
 		id: 'UsaToday',
 		name: 'USA Today',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/USAT.pdf`,
-		scale: 1.04,
+		scale: 1.03,
 		displayFor: 10
 	},
 	{
 		id: 'WaPo',
 		name: 'Washington Post',
 		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
-		scale: 1.06,
+		scale: 1.07,
 		displayFor: 10
-	},
-	{
-		id: 'Pravda',
-		name: 'Moskovskaya Pravda',
-		url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/RUS_MP.pdf`,
-		scale: 1.06,
-		displayFor: 5
 	},
 	{
 		id: 'AsianAge',
