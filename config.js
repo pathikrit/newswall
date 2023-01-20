@@ -19,7 +19,7 @@ module.exports = {
 	// The Freedom Forum has a large list of papers: https://www.freedomforum.org/todaysfrontpages/
 	// e.g. for Wall Street Journal the url is https://cdn.freedomforum.org/dfp/pdf12/WSJ.pdf
 	//
-	// But, any url as a function of date works e.g. for NYT, this works too (albeit with slight adjustment of the style param):
+	// But, any url as a function of date works e.g. for NYT, this works too (albeit with slight adjustment of the scale param):
 	// url: date => `https://static01.nyt.com/images/${date.format('YYYY/MM/DD')}/nytfrontpage/scan.pdf`
 	//
 	// displayFor: Configure this (in minutes) to display this paper before moving onto the next one
@@ -41,17 +41,17 @@ module.exports = {
 			displayFor: 30
 		},
 		{
-			id: 'UsaToday',
-			name: 'USA Today',
-			url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/USAT.pdf`,
-			scale: 1.03,
-			displayFor: 10
-		},
-		{
 			id: 'WaPo',
 			name: 'Washington Post',
 			url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
 			scale: 1.07,
+			displayFor: 15
+		},
+		{
+			id: 'UsaToday',
+			name: 'USA Today',
+			url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/USAT.pdf`,
+			scale: 1.03,
 			displayFor: 10
 		},
 		{
