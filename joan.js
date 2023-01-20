@@ -1,47 +1,39 @@
-// This is a standlone util to interact with my Visonect display via the Joan API: https://portal.getjoan.com/api/docs/
-// So that I can display battery level overlayed on the newspaper
+// API client to interact with my Visonect display via the Joan API: https://portal.getjoan.com/api/docs/
+// So that I can display battery level overlay on the newspaper :)
 // Feel free to delete this file if you use some other e-ink display
 
-const config = {
-	client_id: 'EIFZqijAtYH6DOkgBJV2pthRFHoSmQOq3niiJfoi',
-	client_secret: 'gRlHMs35NchXe5fkfFiYTyVMXD5PXaKLURPNtlIMLgJm3Pp8YzfrygjEuDjvGAukS1UfNTYHiI7cIX6za2sKvB9gu2HMdtzyNATqgstqo0FdDRUrFwxU6OVzhYvans6v',
-	apiHost: 'https://portal.getjoan.com',
-	apiVersion: '1.0'
-}
+class JoanApi {
+	static apiHost = 'https://portal.getjoan.com/api'
+	static apiVersion = '1.0'
 
-var accessToken = false
-function newAccessToken() {
-	const oauth2 = require('simple-oauth2').create({
-		client: {id: config.client_id, secret: config.client_secret},
-		auth: {tokenHost: config.apiHost, tokenPath: '/api/token/'}
-	})
-	return oauth2.clientCredentials
-		.getToken({scope: 'read write'})
-		.then(result => oauth2.accessToken.create(result))
-}
-
-async function call(path, data) {
-	if (!accessToken || accessToken.expired()) {
-		accessToken = await newAccessToken()
-		console.log(`Bearer ${accessToken.token.access_token}`)
+	constructor(client_id = process.env.joan_client_id, client_secret = process.env.joan_client_secret) {
+		this.client_id = client_id
+		this.client_secret = client_secret
+		this.accessToken = false
 	}
-	const res = await require('axios')({
-		method: data ? 'POST' : 'GET',
-		url: `${config.apiHost}/api/v${config.apiVersion}/${path}/`,
-		headers: {'Authorization': 'Bearer ' + accessToken.token.access_token},
-		data: data
-	})
-	return res.data
+
+	newAccessToken() {
+		const oauth2 = require('simple-oauth2').create({
+			client: {id: this.client_id, secret: this.client_secret},
+			auth: {tokenHost: JoanApi.apiHost, tokenPath: '/token/'}
+		})
+		return oauth2.clientCredentials
+			.getToken({scope: 'read write'})
+			.then(result => oauth2.accessToken.create(result))
+	}
+
+	async call(path, data) {
+		if (!this.accessToken || this.accessToken.expired()) {
+			this.accessToken = await this.newAccessToken()
+			console.log(`Bearer ${this.accessToken.token.access_token}`)
+		}
+		return require('axios')({
+			method: data ? 'POST' : 'GET',
+			url: `${JoanApi.apiHost}/v${JoanApi.apiVersion}/${path}/`,
+			headers: {'Authorization': `Bearer ${this.accessToken.token.access_token}`},
+			data: data
+		}).then(res => res.data)
+	}
 }
 
-module.exports = {
-	status: () => call('devices').then(data => {
-		console.assert(data.count === 1, `Invalid # of devices found = ${data}`)
-		return data.results[0]
-	})
-}
-
-
-call('devices').then(data => {
-	console.log(data)
-})
+module.exports = { JoanApi }
