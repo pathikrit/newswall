@@ -1,4 +1,6 @@
+require('dotenv').config()
 const config = require('./config')
+const { JoanApi } = require('./joan')
 const dayjs = require('dayjs')
 const fs = require('fs')
 const glob = require('glob')
@@ -84,6 +86,23 @@ function nextPaper(papers, current) {
 	}
 }
 
+/** Schedule the job f (and kick one off right now) */
+function schedule(cron, job) {
+	require('node-schedule').scheduleJob(cron, job)
+	job()
+}
+
+var display = config.display
+const joan = new JoanApi()
+function updateDeviceStatus() {
+	joan.call('devices')
+		.then(res => {
+			if (res.count !== 1) log.error(`Invalid # of devices found: ${res}`)
+			else display = Object.assign(config.display, {status: res.results[0]})
+			console.log(display.status)
+		})
+}
+
 /** Setup the express server */
 const express = require('express')
 const app = express()
@@ -95,11 +114,11 @@ const app = express()
 	.use('/archive', require('serve-index')(config.newsstand))
 	.use('/archive', express.static(config.newsstand))
 	// Main pages
-	.get('/', (req, res) => res.render('index', {papers: config.newspapers, display: config.display}))
+	.get('/', (req, res) => res.render('index', {papers: config.newspapers, display: display}))
 	.get('/latest', (req, res) => {
 		const paper = nextPaper(req.query.papers, req.query.prev)
 		log.info(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
-		paper ? res.render('paper', {paper: paper, display: config.display}) : res.sendStatus(StatusCodes.NOT_FOUND)
+		paper ? res.render('paper', {paper: paper, display: display}) : res.sendStatus(StatusCodes.NOT_FOUND)
 	})
 
 /** Invoking this actually starts everything! */
@@ -110,10 +129,9 @@ function run() {
 	// If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
 	// glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
 
-	// Schedule the download job (and kick one off right now)
-	const scheduler = require('node-schedule')
-	scheduler.scheduleJob(config.refreshCron, downloadAll)
-	downloadAll()
+	// Schedule jobs
+	schedule(config.refreshCron, downloadAll)
+	schedule(config.refreshCron, updateDeviceStatus)
 
 	// Start the server
 	app.listen(config.port, () => log.info(`Starting server on port ${config.port} ...`))

@@ -19,11 +19,21 @@
             width: 100%;
             object-fit: contain;
         }
+        .paper-container .infobar {
+            position: absolute;
+            text-align: right;
+            font-size: 10px;
+            top: <%=display.height - 20%>px;
+            left: <%=display.width - 100%>px;
+        }
     </style>
 </head>
 <body>
     <div class="paper-container">
         <img src="/archive/<%=paper.date%>/<%=paper.id%>.png" style="transform: scale(<%=paper.scale%>)" alt="<%=paper.name%> for <%=paper.date%>">
+        <% if (display.status ) { %>
+            <div class="infobar"><%=display.status.battery%>% 🔋</div>
+        <% } %>
     </div>
 </body>
 </html>
