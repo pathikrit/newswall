@@ -5,21 +5,21 @@ const axios = require('axios')
 class JoanApiClient {
 	static apiHost = 'https://portal.getjoan.com/api'
 	static apiVersion = '1.0'
+	#accessToken = null
 
 	constructor(client_id, client_secret) {
 		this.oauth2 = oauth2lib.create({
 			client: {id: client_id, secret: client_secret},
 			auth: {tokenHost: JoanApiClient.apiHost, tokenPath: '/token/'}
 		})
-		this.accessToken = null
 	}
 
 	call = (method, path, data) =>
-		(this.accessToken && !this.accessToken.expired() ? new Promise() : this.newToken().then(token => this.accessToken = token))
+		(this.#accessToken && !this.#accessToken.expired() ? Promise.resolve(null) : this.newToken().then(token => this.#accessToken = token))
 			.then(() => axios({
 				method: method,
 				url: `${JoanApiClient.apiHost}/v${JoanApiClient.apiVersion}/${path}/`,
-				headers: {'Authorization': `Bearer ${this.accessToken.token.access_token}`},
+				headers: {'Authorization': `Bearer ${this.#accessToken.token.access_token}`},
 				data: data
 			}))
 			.then(res => res.data)
@@ -55,4 +55,4 @@ class JoanApiClient {
 	}
 }
 
-module.exports = { JoanApiClient }
+module.exports = {JoanApiClient}
