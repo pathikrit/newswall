@@ -1,15 +1,15 @@
-// API client to interact with my Visonect display via the Joan API: https://portal.getjoan.com/api/docs/
-// So that I can display battery level overlay on the newspaper :)
-// Feel free to delete this file if you use some other e-ink display
-
+/**
+ * API client to interact with Visonect display via the Joan API: https://portal.getjoan.com/api/docs/
+ * e.g. I can display battery level overlayed on the newspaper :)
+ */
 class JoanApi {
 	static apiHost = 'https://portal.getjoan.com/api'
 	static apiVersion = '1.0'
 
-	constructor(client_id = process.env.joan_client_id, client_secret = process.env.joan_client_secret) {
+	constructor(client_id, client_secret) {
 		this.client_id = client_id
 		this.client_secret = client_secret
-		this.accessToken = false
+		this.accessToken = null
 	}
 
 	newAccessToken() {
@@ -25,7 +25,7 @@ class JoanApi {
 	async call(path, data) {
 		if (!this.accessToken || this.accessToken.expired()) {
 			this.accessToken = await this.newAccessToken()
-			console.log(`Bearer ${this.accessToken.token.access_token}`)
+			console.debug(`Bearer ${this.accessToken.token.access_token}`)
 		}
 		return require('axios')({
 			method: data ? 'POST' : 'GET',

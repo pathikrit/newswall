@@ -86,14 +86,14 @@ function nextPaper(papers, current) {
 	}
 }
 
-/** Schedule the job f (and kick one off right now) */
-function schedule(cron, job) {
+/** Schedule the job (and kick one off right now) */
+function scheduleAndRun(cron, job) {
 	require('node-schedule').scheduleJob(cron, job)
 	job()
 }
 
-var display = config.display
-const joan = new JoanApi()
+let display = config.display
+const joan = new JoanApi(process.env.joan_client_id, process.env.joan_client_secret)
 function updateDeviceStatus() {
 	joan.call('devices')
 		.then(res => {
@@ -130,8 +130,8 @@ function run() {
 	// glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
 
 	// Schedule jobs
-	schedule(config.refreshCron, downloadAll)
-	schedule(config.refreshCron, updateDeviceStatus)
+	scheduleAndRun(config.refreshCron, downloadAll)
+	scheduleAndRun(config.refreshCron, updateDeviceStatus)
 
 	// Start the server
 	app.listen(config.port, () => log.info(`Starting server on port ${config.port} ...`))

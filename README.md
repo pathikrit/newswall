@@ -22,3 +22,4 @@ which can be easily configured in [their online portal](https://portal.getjoan.c
 My excellent [local framing shop](https://tenaflycamera.business.site/)
 made a custom frame for me that not only hides the manufacturer's logo on the frame but also hides [a small portable powerbank](https://www.amazon.com/gp/product/B09VP41M71/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&th=1) 
 that makes it easy to recharge the display without taking the frame off the wall. 
+I have a [little util](joan.js) which uses [their API](https://portal.getjoan.com/api/docs/) to overlay a little battery status on the bottom of the newspaper being shown.
