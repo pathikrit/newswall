@@ -1,11 +1,11 @@
 require('dotenv').config()
 const config = require('./config')
-const { JoanApi } = require('./joan')
+const {JoanApi} = require('./joan')
 const dayjs = require('dayjs')
 const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
-const { StatusCodes } = require('http-status-codes')
+const {StatusCodes} = require('http-status-codes')
 const log = console // todo: find a real logging library
 
 // Add a util array.random()
@@ -95,11 +95,14 @@ function scheduleAndRun(cron, job) {
 let display = config.display
 const joan = new JoanApi(process.env.joan_client_id, process.env.joan_client_secret)
 function updateDeviceStatus() {
-	joan.call('devices')
+	log.info('Updating status ...')
+	return joan.call('devices')
 		.then(res => {
 			if (res.count !== 1) log.error(`Invalid # of devices found: ${res}`)
-			else display = Object.assign(config.display, {status: res.results[0]})
-			console.log(display.status)
+			else {
+				display = Object.assign(config.display, {status: res.results[0]})
+				log.debug(display.status)
+			}
 		})
 }
 
