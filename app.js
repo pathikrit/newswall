@@ -1,6 +1,6 @@
 require('dotenv').config()
 const config = require('./config')
-const {JoanApi} = require('./joan')
+const {JoanApiClient} = require('./joan')
 const dayjs = require('dayjs')
 const fs = require('fs')
 const glob = require('glob')
@@ -93,17 +93,16 @@ function scheduleAndRun(cron, job) {
 }
 
 let display = config.display
-const joan = new JoanApi(process.env.joan_client_id, process.env.joan_client_secret)
+const joan = new JoanApiClient(process.env.joan_client_id, process.env.joan_client_secret)
 function updateDeviceStatus() {
 	log.info('Updating status ...')
-	return joan.call('devices')
-		.then(res => {
-			if (res.count !== 1) log.error(`Invalid # of devices found: ${res}`)
-			else {
-				display = Object.assign(config.display, {status: res.results[0]})
-				log.debug(display.status)
-			}
-		})
+	return joan.devices().then(res => {
+		if (res.count !== 1) log.error(`Invalid # of devices found: ${res}`)
+		else {
+			display = Object.assign(config.display, {status: res.results[0]})
+			log.debug(display.status)
+		}
+	})
 }
 
 /** Setup the express server */
