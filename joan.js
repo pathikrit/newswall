@@ -1,20 +1,10 @@
 const oauth2lib = require('simple-oauth2')
 const axios = require('axios')
 
-/**
- * API client to interact with Visonect display via the Joan API: https://portal.getjoan.com/api/docs/
- * e.g. I can display battery level overlayed on the newspaper :)
- */
+/** API client to interact with Visonect display via the Joan API: https://portal.getjoan.com/api/docs/ */
 class JoanApiClient {
 	static apiHost = 'https://portal.getjoan.com/api'
 	static apiVersion = '1.0'
-
-	static call = (accessToken, path, data, method) => axios({
-		method: method || (data ? 'POST' : 'GET'),
-		url: `${JoanApiClient.apiHost}/v${JoanApiClient.apiVersion}/${path}/`,
-		headers: {'Authorization': `Bearer ${accessToken}`},
-		data: data
-	}).then(res => res.data)
 
 	constructor(client_id, client_secret) {
 		this.oauth2 = oauth2lib.create({
@@ -24,33 +14,42 @@ class JoanApiClient {
 		this.accessToken = null
 	}
 
-	newAccessToken = () => this.oauth2.clientCredentials.getToken().then(result => {return (this.accessToken = this.oauth2.accessToken.create(result))})
+	call = (method, path, data) =>
+		(this.accessToken && !this.accessToken.expired() ? new Promise() : this.oauth2.clientCredentials.getToken().then(result => this.accessToken = this.oauth2.accessToken.create(result)))
+			.then(() => axios({
+				method: method,
+				url: `${JoanApiClient.apiHost}/v${JoanApiClient.apiVersion}/${path}/`,
+				headers: {'Authorization': `Bearer ${this.accessToken.token.access_token}`},
+				data: data
+			}))
+			.then(res => res.data)
 
-	call(path, data, method) {
-		const accessToken = this.accessToken && !this.accessToken.expired() ? Promise.resolve(this.accessToken) : this.newAccessToken()
-		return accessToken.then(access => JoanApiClient.call(access.token.access_token, path, data, method))
-	}
+	get = (path) => this.call('GET', path)
+	post = (path, data) => this.call('POST', path, data)
+	put = (path, data) => this.call('PUT', path, data)
+	patch = (path, data) => this.call('PATCH', path, data)
+	delete = (path, data) => this.call('DELETE', path, data)
 
-	me = () => this.call('me')
-	users = () => this.call('users')
-	devices = () => this.call('devices')
+	me = () => this.get('me')
+	users = () => this.get('users')
+	devices = () => this.get('devices')
 	rooms = {
-		get: (id) => this.call(id ? `rooms/${id}` : 'rooms'),
-		post: (data) => this.call('rooms', data),
-		put: (id, data) => this.call(`rooms/${id}`, data, 'PUT'),
-		patch: (id, data) => this.call(`rooms/${id}`, data, 'PATCH'),
-		delete: (id, data) => this.call(`rooms/${id}`, data, 'DELETE'),
-		book: (data) => this.call(`get_room`, data) // See /api/v1.0/get_room/
+		get: (id) => this.get(id ? `rooms/${id}` : 'rooms'),
+		post: (data) => this.post('rooms', data),
+		put: (id, data) => this.put(`rooms/${id}`, data),
+		patch: (id, data) => this.patch(`rooms/${id}`, data),
+		delete: (id, data) => this.delete(`rooms/${id}`, data),
+		book: (data) => this.post(`get_room`, data)
 	}
 	events = {
-		cancel: (data) => this.call('events/cancel', data),
-		checkin: (data) => this.call('events/checkin', data),
-		extend: (data) => this.call('events/extend', data),
-		move: (data) => this.call('events/move', data),
-		book: (data) => this.call('events/book', data),
-		invite: (data) => this.call('events/invite', data),
-		confirm: (id) => this.call(`events/invite/${id}`),
-		reject: (id) => this.call(`events/reject/${id}`)
+		cancel: (data) => this.post('events/cancel', data),
+		checkin: (data) => this.post('events/checkin', data),
+		extend: (data) => this.post('events/extend', data),
+		move: (data) => this.post('events/move', data),
+		book: (data) => this.post('events/book', data),
+		invite: (data) => this.post('events/invite', data),
+		confirm: (id) => this.get(`events/invite/${id}`),
+		reject: (id) => this.get(`events/reject/${id}`)
 	}
 }
 
