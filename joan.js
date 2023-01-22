@@ -15,7 +15,7 @@ class JoanApiClient {
 	}
 
 	call = (method, path, data) =>
-		(this.#accessToken && !this.#accessToken.expired() ? Promise.resolve(null) : this.newToken().then(token => this.#accessToken = token))
+		(this.#accessToken && !this.#accessToken.expired() ? Promise.resolve(null) : this.newToken())
 			.then(() => axios({
 				method: method,
 				url: `${JoanApiClient.apiHost}/v${JoanApiClient.apiVersion}/${path}/`,
@@ -30,7 +30,7 @@ class JoanApiClient {
 	patch = (path, data) => this.call('PATCH', path, data)
 	delete = (path, data) => this.call('DELETE', path, data)
 
-	newToken = () => this.oauth2.clientCredentials.getToken().then(result => this.oauth2.accessToken.create(result))
+	newToken = () => this.oauth2.clientCredentials.getToken().then(result => {return this.#accessToken = this.oauth2.accessToken.create(result)})
 
 	me = () => this.get('me')
 	users = () => this.get('users')

@@ -1,4 +1,3 @@
-require('dotenv').config()
 const config = require('./config')
 const {JoanApiClient} = require('./joan')
 const dayjs = require('dayjs')
@@ -89,14 +88,15 @@ function nextPaper(papers, current) {
 /** Schedule the job (and kick one off right now) */
 function scheduleAndRun(cron, job) {
 	require('node-schedule').scheduleJob(cron, job)
-	job()
+	return job()
 }
 
 let display = config.display
-const joan = new JoanApiClient(process.env.joan_client_id, process.env.joan_client_secret)
-function updateDeviceStatus() {
+
+/** Fetches the device's WiFi and battery levels to overlay on the paper */
+function updateDeviceStatus(joanApiClient) {
 	log.info('Updating status ...')
-	return joan.devices().then(res => {
+	return joanApiClient.devices().then(res => {
 		if (res.count !== 1) log.error(`Invalid # of devices found: ${res}`)
 		else {
 			display = Object.assign(config.display, {status: res.results[0]})
@@ -125,6 +125,7 @@ const app = express()
 
 /** Invoking this actually starts everything! */
 function run() {
+	require('dotenv').config()
 	process.env.TZ = config.timezone
 
 	// Uncomment this line to trigger a rerender of images on deployment
@@ -133,7 +134,10 @@ function run() {
 
 	// Schedule jobs
 	scheduleAndRun(config.refreshCron, downloadAll)
-	scheduleAndRun(config.refreshCron, updateDeviceStatus)
+	if (process.env.joan_client_id && process.env.joan_client_secret) {
+		const joanApiClient = new JoanApiClient(process.env.joan_client_id, process.env.joan_client_secret)
+		scheduleAndRun(config.refreshCron, () => updateDeviceStatus(joanApiClient))
+	}
 
 	// Start the server
 	app.listen(config.port, () => log.info(`Starting server on port ${config.port} ...`))
