@@ -1,3 +1,4 @@
+require('dotenv').config()
 const path = require('path')
 
 const isProd = process.env.NODE_ENV === 'production'
@@ -72,6 +73,12 @@ module.exports = {
 		height: 2560,
 		width: 1440,
 		pdf2ImgOpts: {width: 1600}
+	},
+
+	// Used to display battery and wifi strength on display; remove this if you don't want it
+	joan: {
+		client_id: process.env.joan_client_id,
+		client_secret: process.env.joan_client_secret
 	}
 }
 

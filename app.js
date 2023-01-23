@@ -125,7 +125,6 @@ const app = express()
 
 /** Invoking this actually starts everything! */
 function run() {
-	require('dotenv').config()
 	process.env.TZ = config.timezone
 
 	// Uncomment this line to trigger a rerender of images on deployment
@@ -134,8 +133,8 @@ function run() {
 
 	// Schedule jobs
 	scheduleAndRun(config.refreshCron, downloadAll)
-	if (process.env.joan_client_id && process.env.joan_client_secret) {
-		const joanApiClient = new JoanApiClient(process.env.joan_client_id, process.env.joan_client_secret)
+	if (config.joan) {
+		const joanApiClient = new JoanApiClient(config.joan.client_id, config.joan.client_secret)
 		scheduleAndRun(config.refreshCron, () => updateDeviceStatus(joanApiClient))
 	}
 
