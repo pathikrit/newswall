@@ -1,5 +1,4 @@
 const config = require('./config')
-const {JoanApiClient} = require('./joan')
 const dayjs = require('dayjs')
 const fs = require('fs')
 const glob = require('glob')
@@ -134,6 +133,7 @@ function run() {
 	// Schedule jobs
 	scheduleAndRun(config.refreshCron, downloadAll)
 	if (config.joan) {
+		const {JoanApiClient} = require('node-joan')
 		const joanApiClient = new JoanApiClient(config.joan.client_id, config.joan.client_secret)
 		scheduleAndRun(config.refreshCron, () => updateDeviceStatus(joanApiClient))
 	}

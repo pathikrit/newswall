@@ -3,7 +3,6 @@
   "license": "MIT",
   "main": "app.js",
   "dependencies": {
-    "axios": "^1.2.3",
     "compression": "^1.7.4",
     "dayjs": "^1.11.7",
     "dotenv": "^16.0.3",
@@ -12,11 +11,11 @@
     "glob": "^8.0.3",
     "http-status-codes": "^2.2.0",
     "nocache": "^3.0.4",
+    "node-joan": "^0.0.1",
     "node-schedule": "^2.1.0",
     "nodejs-file-downloader": "^4.10.2",
     "pdf-img-convert": "^1.1.1",
-    "serve-index": "^1.9.1",
-    "simple-oauth2": "2.4.0"
+    "serve-index": "^1.9.1"
   },
   "engines": {
     "npm": ">=8",
