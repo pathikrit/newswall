@@ -4,6 +4,7 @@
     <title>Newswall</title>
     <%# Refresh this page every displayFor minutes and marks the current item as previous in query param so that we try to pick a different paper next time %>
     <meta http-equiv="refresh" content="<%=paper.displayFor * 60%>;/latest?prev=<%=paper.id%>">
+    <link rel="stylesheet" href="https://kit.fontawesome.com/a22be8527e.css" crossorigin="anonymous">
     <style>
         * {
             margin: 0;
@@ -34,8 +35,16 @@
         <img src="/archive/<%=paper.date%>/<%=paper.id%>.png" style="transform: scale(<%=paper.scale%>)" alt="<%=paper.name%> for <%=paper.date%>">
         <% if (display.status ) { %>
             <%# Display next refresh time, WiFi strength and battery level in the bottom left -%>
-            <% const now = new Date(); now.setSeconds(now.getSeconds() + paper.displayFor * 60) %>
-            <div class="statusbar"><%=now.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })%> 🔄&emsp;<%=display.status.wifi%>% 📶&emsp;<%=display.status.battery%>% <%=display.status.battery > 50 ? '🔋' : '🪫'%></div>
+            <%
+                const nextRefresh = new Date()
+                nextRefresh.setSeconds(nextRefresh.getSeconds() + paper.displayFor * 60)
+                pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
+            %>
+            <div class="statusbar">
+                <%=nextRefresh.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })%> <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;
+                <%=display.status.wifi%>% <i class="fa-duotone fa-<%=pick(display.status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])%>"></i>&emsp;
+                <%=display.status.battery%>% <i class="fa-regular fa-rotate-270	fa-battery-<%=pick(display.status.battery, ['empty', 'low', 'quarters', 'half', 'three-quarters', 'full'])%>"></i>&emsp;
+            </div>
         <% } %>
     </div>
 </body>
