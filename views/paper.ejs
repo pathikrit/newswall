@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <title>Newswall</title>
-    <!-- Refresh this page every displayFor minutes and marks the current item as previous in query param so that we try to pick a different paper next time -->
+    <%# Refresh this page every displayFor minutes and marks the current item as previous in query param so that we try to pick a different paper next time %>
     <meta http-equiv="refresh" content="<%=paper.displayFor * 60%>;/latest?prev=<%=paper.id%>">
     <style>
         * {
@@ -20,10 +20,12 @@
             object-fit: contain;
         }
         .paper-container .statusbar {
+            <% statusBarFontSize = 10 %>
             position: absolute;
-            font-size: 10px;
-            padding-left: 10px;
-            top: <%=display.height - 20%>px;
+            font-size: <%=statusBarFontSize%>px;
+            font-family: serif;
+            padding-left: <%=statusBarFontSize%>px;
+            top: <%=display.height - 2*statusBarFontSize%>px;
         }
     </style>
 </head>
@@ -31,7 +33,9 @@
     <div class="paper-container">
         <img src="/archive/<%=paper.date%>/<%=paper.id%>.png" style="transform: scale(<%=paper.scale%>)" alt="<%=paper.name%> for <%=paper.date%>">
         <% if (display.status ) { %>
-            <div class="statusbar"><%=paper.nextRefresh.format('h:mm A')%>🔄 <%=display.status.wifi%>%📶 <%=display.status.battery%>%<%=display.status.battery > 50 ? '🔋' : '🪫'%></div>
+            <%# Display next refresh time, WiFi strength and battery level in the bottom left -%>
+            <% const now = new Date(); now.setSeconds(now.getSeconds() + paper.displayFor * 60) %>
+            <div class="statusbar"><%=now.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })%> 🔄&emsp;<%=display.status.wifi%>% 📶&emsp;<%=display.status.battery%>% <%=display.status.battery > 50 ? '🔋' : '🪫'%></div>
         <% } %>
     </div>
 </body>

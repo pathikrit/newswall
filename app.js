@@ -79,7 +79,7 @@ function nextPaper(papers, current) {
 		// Find something that is not current or a random one
 		const id = ids.filter(id => current && id !== current).random() || ids.random()
 		const paper = config.newspapers.find(item => item.id === id)
-		if (paper) return Object.assign(paper, {date: date, nextRefresh: dayjs().add(paper.displayFor, 'minutes')})
+		if (paper) return Object.assign(paper, {date: date})
 		if (id) log.error(`Unknown paper found: ${id}`)
 	}
 }
