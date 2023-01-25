@@ -31,7 +31,7 @@
     <div class="paper-container">
         <img src="/archive/<%=paper.date%>/<%=paper.id%>.png" style="transform: scale(<%=paper.scale%>)" alt="<%=paper.name%> for <%=paper.date%>">
         <% if (display.status ) { %>
-            <div class="statusbar"><%=display.status.wifi%>%📶 <%=display.status.battery%>%🔋</div>
+            <div class="statusbar"><%=paper.nextRefresh.format('h:mm A')%>🔄 <%=display.status.wifi%>%📶 <%=display.status.battery%>%<%=display.status.battery > 50 ? '🔋' : '🪫'%></div>
         <% } %>
     </div>
 </body>
