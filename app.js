@@ -90,16 +90,14 @@ function scheduleAndRun(cron, job) {
 	return job()
 }
 
-let display = config.display
-
 /** Fetches the device's WiFi and battery levels to overlay on the paper */
 function updateDeviceStatus(joanApiClient) {
 	log.info('Updating status ...')
 	return joanApiClient.devices().then(res => {
 		if (res.count !== 1) log.error(`Invalid # of devices found: ${res}`)
 		else {
-			display = Object.assign(config.display, {status: res.results[0]})
-			log.debug(display.status)
+			app.locals.display = Object.assign(config.display, {status: Object.assign(res.results[0], {updatedAt: dayjs()})})
+			log.debug(app.locals.display)
 		}
 	})
 }
@@ -116,12 +114,15 @@ const app = express()
 	.use('/archive', express.static(config.newsstand))
 	.use('/my', express.static('my_frame.jpg'))
 	// Main pages
-	.get('/', (req, res) => res.render('index', {papers: config.newspapers, display: display}))
+	.get('/', (req, res) => res.render('index', {papers: config.newspapers}))
 	.get('/latest', (req, res) => {
 		const paper = nextPaper(req.query.papers, req.query.prev)
 		log.info(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
-		paper ? res.render('paper', {paper: paper, display: display}) : res.sendStatus(StatusCodes.NOT_FOUND)
+		paper ? res.render('paper', {paper: paper}) : res.sendStatus(StatusCodes.NOT_FOUND)
 	})
+// Wire up globals to ejs
+app.locals.dayjs = dayjs
+app.locals.display = config.display
 
 /** Invoking this actually starts everything! */
 function run() {
