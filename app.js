@@ -93,12 +93,12 @@ function scheduleAndRun(cron, job) {
 /** Fetches the device's WiFi and battery levels to overlay on the paper */
 function updateDeviceStatus(joanApiClient) {
 	log.info('Updating status ...')
-	return joanApiClient.devices().then(res => {
-		if (res.count !== 1) log.error(`Invalid # of devices found: ${res}`)
-		else {
+	joanApiClient.devices().then(res => {
+		log.debug(res)
+		if (res.count !== 1)
+			log.error('Invalid # of devices found')
+		else
 			app.locals.display = Object.assign(config.display, {status: Object.assign(res.results[0], {updatedAt: dayjs()})})
-			log.debug(app.locals.display)
-		}
 	})
 }
 
