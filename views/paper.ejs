@@ -1,10 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>Newswall</title>
+    <%- include('header') -%>
     <%# Refresh this page every displayFor minutes and marks the current item as previous in query param so that we try to pick a different paper next time %>
     <meta http-equiv="refresh" content="<%=paper.displayFor * 60%>;/latest?prev=<%=paper.id%>">
-    <link rel="stylesheet" href="https://kit.fontawesome.com/a22be8527e.css" crossorigin="anonymous">
     <style>
         * {
             margin: 0;
@@ -40,7 +39,7 @@
                 <%=dayjs().add(paper.displayFor, 'minutes').format('h:mm A')%> <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;
                 ~<%=dayjs().add(paper.displayFor/2, 'minutes').diff(display.status.updatedAt, 'minute')%>m ago:
                 <%=display.status.wifi%>% <i class="fa-regular fa-<%=pick(display.status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])%>"></i>&emsp;
-                <%=display.status.battery%>% <i class="fa-regular fa-rotate-270	fa-battery-<%=pick(display.status.battery, ['empty', 'low', 'quarters', 'half', 'three-quarters', 'full'])%>"></i>&emsp;
+                <%=display.status.battery%>% <i class="fa-regular fa-rotate-270 fa-battery-<%=pick(display.status.battery, ['empty', 'low', 'quarters', 'half', 'three-quarters', 'full'])%>"></i>&emsp;
             </div>
         <% } %>
     </div>
