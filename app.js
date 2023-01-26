@@ -105,9 +105,7 @@ function updateDeviceStatus(joanApiClient) {
 /** Setup the express server */
 const express = require('express')
 const app = express()
-	// Hook up middlewares
 	.use(require('compression')())
-	.use(require('nocache')())  // We don't want page to be cached since they can be refreshed in the background
 	.set('view engine', 'ejs')
 	// Statically serve the archive
 	.use('/archive', require('serve-index')(config.newsstand))
