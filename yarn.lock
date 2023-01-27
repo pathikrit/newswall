@@ -133,9 +133,9 @@ asynckit@^0.4.0:
   integrity sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==
 
 axios@^1.2.3:
-  version "1.2.3"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-1.2.3.tgz#31a3d824c0ebf754a004b585e5f04a5f87e6c4ff"
-  integrity sha512-pdDkMYJeuXLZ6Xj/Q5J3Phpe+jbGdsSzlQaFVkMQzRUL05+6+tetX8TV3p4HrU4kzuO9bt+io/yGQxuyxA/xcw==
+  version "1.2.5"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.2.5.tgz#858c129d286e7ee3b1e970961cde410ba3ea3740"
+  integrity sha512-9pU/8mmjSSOb4CXVsvGIevN+MlO/t9OWtKadTaLuN85Gge3HGorUckgp8A/2FH4V4hJ7JuQ3LIeI7KAV9ITZrQ==
   dependencies:
     follow-redirects "^1.15.0"
     form-data "^4.0.0"
@@ -801,10 +801,10 @@ node-fetch@^2.6.7:
   dependencies:
     whatwg-url "^5.0.0"
 
-node-joan@^0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/node-joan/-/node-joan-0.0.2.tgz#b109e4b64bd9e4cb5c782a562653efec062a8deb"
-  integrity sha512-M1nvBftj6Z5PEVGOquAHHHOba8/ELH3CCrruvkQ853mgXJbwt0yapFN9TUBC5AumxDTkY8pIC9UfBcvX5r3e4Q==
+node-joan@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/node-joan/-/node-joan-0.0.3.tgz#a621ac3734b7bb66943cc2375cb6ff36bb8dfde3"
+  integrity sha512-uVxLCtz5SiCCDUBL7DmGuHbHr4ig5N0TywY1gL/kYGFDodyyFgI74fSlixSVMQwn2rfsrOfITcMuMNLVrHoPpQ==
   dependencies:
     axios "^1.2.3"
     simple-oauth2 "^5.0.0"
