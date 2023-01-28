@@ -37,7 +37,7 @@
             <div class="statusbar">
                 <% pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)] %>
                 <%=dayjs().add(paper.displayFor, 'minutes').format('h:mm A')%> <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;
-                ~<%=dayjs().diff(display.status.updatedAt, 'minute') + display.displayFor/2%>min ago:
+                ~<%=dayjs().diff(display.status.updatedAt, 'minute') +  Math.floor(paper.displayFor/2) %>min ago:
                 <%=display.status.wifi%>% <i class="fa-regular fa-<%=pick(display.status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])%>"></i>&emsp;
                 <%=display.status.battery%>% <i class="fa-regular fa-rotate-270 fa-battery-<%=pick(display.status.battery, ['empty', 'low', 'quarters', 'half', 'three-quarters', 'full'])%>"></i>&emsp;
             </div>
