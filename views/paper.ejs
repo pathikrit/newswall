@@ -40,6 +40,7 @@
                 <%=dayjs.duration(display.status.updatedAt.diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>:
                 <%=display.status.wifi%>% <i class="fa-regular fa-<%=pick(display.status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])%>"></i>&emsp;
                 <%=display.status.battery%>% <i class="fa-regular fa-rotate-270 fa-battery-<%=pick(display.status.battery, ['empty', 'low', 'quarters', 'half', 'three-quarters', 'full'])%>"></i>&emsp;
+                <% if (display.status.batteryRemaining) { %> (battery will die <%=display.status.batteryRemaining.humanize(true)%>)<% } %>
             </div>
         <% } %>
     </div>

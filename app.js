@@ -103,7 +103,10 @@ function updateDeviceStatus(joanApiClient) {
 			log.error('Invalid # of devices found')
 			return
 		}
-		app.locals.display = Object.assign(config.display, {status: Object.assign(res.results[0], {updatedAt: dayjs()})})
+		const prev = app.locals.display.status
+		const next = Object.assign(res.results[0], {updatedAt: dayjs()})
+		const batteryRemaining = prev && dayjs.duration(next.updatedAt.diff(prev.updatedAt)/(prev.battery - next.battery))
+		app.locals.display = Object.assign(config.display, {status: Object.assign(next, {batteryRemaining: batteryRemaining})})
 	})
 }
 
