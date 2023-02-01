@@ -1,5 +1,9 @@
 const config = require('./config')
-const dayjs = require('dayjs').extend(require('dayjs/plugin/duration')).extend(require('dayjs/plugin/relativeTime'))
+const dayjs = require('dayjs')
+	.extend(require('dayjs/plugin/duration'))
+	.extend(require('dayjs/plugin/relativeTime'))
+	.extend(require('dayjs/plugin/utc'))
+	.extend(require('dayjs/plugin/timezone'))
 const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
@@ -95,10 +99,11 @@ function updateDeviceStatus(joanApiClient) {
 	log.info('Updating status ...')
 	joanApiClient.devices().then(res => {
 		log.debug(res)
-		if (res.count !== 1)
+		if (res.count !== 1) {
 			log.error('Invalid # of devices found')
-		else
-			app.locals.display = Object.assign(config.display, {status: Object.assign(res.results[0], {updatedAt: dayjs()})})
+			return
+		}
+		app.locals.display = Object.assign(config.display, {status: Object.assign(res.results[0], {updatedAt: dayjs()})})
 	})
 }
 
@@ -124,7 +129,9 @@ app.locals.display = config.display
 
 /** Invoking this actually starts everything! */
 function run() {
+	// Setup timezones
 	process.env.TZ = config.timezone
+	dayjs.tz.setDefault(config.timezone)
 
 	// Uncomment this line to trigger a rerender of images on deployment
 	// If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
