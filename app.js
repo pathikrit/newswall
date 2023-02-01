@@ -1,5 +1,5 @@
 const config = require('./config')
-const dayjs = require('dayjs')
+const dayjs = require('dayjs').extend(require('dayjs/plugin/duration')).extend(require('dayjs/plugin/relativeTime'))
 const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
