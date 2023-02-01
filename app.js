@@ -99,14 +99,14 @@ function updateDeviceStatus(joanApiClient) {
 	log.info('Updating status ...')
 	joanApiClient.devices().then(res => {
 		log.debug(res)
-		if (res.count !== 1) {
-			log.error('Invalid # of devices found')
-			return
+		if (res.count === 1) { //TODO: Handle multiple displays
+			const prev = app.locals.display.status
+			const next = Object.assign(res.results[0], {updatedAt: dayjs()})
+			const batteryRemaining = prev && next.updatedAt.diff(prev.updatedAt) / (prev.battery - next.battery)
+			app.locals.display = Object.assign(config.display, {status: Object.assign(next, {batteryRemaining: batteryRemaining})})
+		} else {
+			log.error(res.count ? 'Multiple devices found' : 'No devices found')
 		}
-		const prev = app.locals.display.status
-		const next = Object.assign(res.results[0], {updatedAt: dayjs()})
-		const batteryRemaining = prev && dayjs.duration(next.updatedAt.diff(prev.updatedAt)/(prev.battery - next.battery))
-		app.locals.display = Object.assign(config.display, {status: Object.assign(next, {batteryRemaining: batteryRemaining})})
 	})
 }
 
