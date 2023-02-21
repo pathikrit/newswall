@@ -27,6 +27,12 @@
     <li>
         <a href="/latest"><code>/latest</code></a>: Cycles through front pages of newspapers on each refresh.
         <i>You should point your e-ink device to this.</i>
+        <br/>This server is <a href="https://github.com/pathikrit/newswall/blob/master/db.js" target="_blank">configured</a> to support the following devices:
+        <ol>
+            <% db.devices.forEach((device) => { %>
+            <li><a href="/latest/<%=device.id%>"><i><%=device.name%></i></a></li>
+            <% }) %>
+        </ol>
     </li>
     <li><a href="/archive"><code>/archive</code></a>: Browse the raw newspaper files on this server.
 </ul>
