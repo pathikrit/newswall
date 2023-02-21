@@ -18,9 +18,9 @@ Object.defineProperty(Array.prototype, 'random', {
 	}
 })
 
-/** Returns last n days (including today) */
-function recentDays(n = 3) {
-	return Array.from(Array(n).keys()).map(i => dayjs().subtract(i, 'days').format('YYYY-MM-DD'))
+/** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC+14 */
+function recentDays(n, timezone = 'Etc/GMT-14') {
+	return Array.from(Array(n).keys()).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
 }
 
 /** Downloads all newspapers for all recent days; trashes old ones */
@@ -31,7 +31,7 @@ function downloadAll() {
 	})
 
 	log.info('Checking for new papers ...')
-	for (const date of recentDays())
+	for (const date of recentDays(3))
 		for (const newspaper of db.newspapers)
 			download(newspaper, date)
 }
@@ -75,7 +75,7 @@ function pdfToImage(pdf, png) {
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
 function nextPaper(currentDevice, currentPaper) {
 	const searchTerm = currentDevice?.newspapers?.length > 0 ? (currentDevice.newspapers.length === 1 ? currentDevice.newspapers[0].id : `{${currentDevice.newspapers.map(p => p.id).join(',')}}`) : '*'
-	for (const date of recentDays()) { // TODO: Handle device.timezone?
+	for (const date of recentDays(3, currentDevice?.timezone)) {
 		const globExpr = path.join(config.newsstand, date, `${searchTerm}.png`)
 		const ids = glob.sync(globExpr).map(image => path.parse(image).name)
 		// Find something that is not current or a random one

@@ -37,7 +37,7 @@
             <%# Display next refresh time, WiFi strength and battery level in the bottom left -%>
             <div class="statusbar">
                 <% pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)] %>
-                <%=dayjs().add(paper.displayFor, 'minutes').format('h:mm A')%> <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;
+                <%=dayjs().add(paper.displayFor, 'minutes').tz(device.timezone).format('h:mm A')%> <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;
                 <%=dayjs.duration(device.status.updatedAt.diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>:
                 <%=device.status.wifi%>% <i class="fa-regular fa-<%=pick(device.status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])%>"></i>&emsp;
                 <%=device.status.battery%>% <i class="fa-regular fa-rotate-270 fa-battery-<%=pick(device.status.battery, ['empty', 'low', 'quarters', 'half', 'three-quarters', 'full'])%>"></i>
