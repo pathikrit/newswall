@@ -35,7 +35,7 @@
     <% if (db.newspapers.length > 1) { %>
         <div>
             <% db.newspapers.forEach((paper) => { %>
-                <input type="radio" id="<%=paper.id%>" name="newspaper" value="<%=paper.id%>>" onclick="document.getElementById('emulator').src = '/latest?papers=<%=paper.id%>'">
+                <input type="radio" id="<%=paper.id%>" name="newspaper" value="<%=paper.id%>>" onclick="document.getElementById('emulator').src = '/latest?paper=<%=paper.id%>'">
                 <label for="<%=paper.id%>"><%=paper.name%></label>
             <% }) %>
         </div>

@@ -74,8 +74,9 @@ function pdfToImage(pdf, png) {
 
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
 function nextPaper(papers, current) {
+	const searchTerm = papers && papers.length > 0 ? (papers.length === 1 ? papers[0].id : `{${papers.map(p => p.id).join(',')}}`) : '*'
 	for (const date of recentDays()) {
-		const globExpr = path.join(config.newsstand, date, `${papers ? `{${papers.map(p => p.id).join(',')}}` : '*'}.png`)
+		const globExpr = path.join(config.newsstand, date, `${searchTerm}.png`)
 		const ids = glob.sync(globExpr).map(image => path.parse(image).name)
 		// Find something that is not current or a random one
 		const id = ids.filter(id => current && id !== current).random() || ids.random()
@@ -115,10 +116,10 @@ const app = express()
 	.use('/my', express.static('my_frame.jpg'))
 	// Main pages
 	.get('/', (req, res) => res.render('index', {db: db}))
-	.get('/latest', (req, res) => res.redirect('/latest/all'))
-	.get('/latest/:deviceId', (req, res) => {
+	.get('/latest/:deviceId?', (req, res) => {
 		const device = db.devices.find(device => device.id === req.params.deviceId)
-		const paper = nextPaper(device?.newspapers, req.query.prev)
+		const paperParam = req.query.paper ? [{id: req.query.paper}] : undefined
+		const paper = nextPaper(device?.newspapers || paperParam, req.query.prev)
 		log.info(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
 		paper ? res.render('paper', {paper: paper, device: device}) : res.sendStatus(StatusCodes.NOT_FOUND)
 	})
