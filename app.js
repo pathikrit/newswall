@@ -73,15 +73,15 @@ function pdfToImage(pdf, png) {
 }
 
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
-function nextPaper(papers, current) {
-	const searchTerm = papers && papers.length > 0 ? (papers.length === 1 ? papers[0].id : `{${papers.map(p => p.id).join(',')}}`) : '*'
-	for (const date of recentDays()) {
+function nextPaper(currentDevice, currentPaper) {
+	const searchTerm = currentDevice?.newspapers?.length > 0 ? (currentDevice.newspapers.length === 1 ? currentDevice.newspapers[0].id : `{${currentDevice.newspapers.map(p => p.id).join(',')}}`) : '*'
+	for (const date of recentDays()) { // TODO: Handle device.timezone?
 		const globExpr = path.join(config.newsstand, date, `${searchTerm}.png`)
 		const ids = glob.sync(globExpr).map(image => path.parse(image).name)
 		// Find something that is not current or a random one
-		const id = ids.filter(id => current && id !== current).random() || ids.random()
+		const id = ids.filter(id => currentPaper && id !== currentPaper).random() || ids.random()
 		const paper = db.newspapers.find(item => item.id === id)
-		if (paper) return Object.assign(paper, {date: date, displayFor: papers?.find(p => p.id === paper.id)?.displayFor || 60})
+		if (paper) return Object.assign(paper, {date: date, displayFor: currentDevice?.newspapers?.find(p => p.id === paper.id)?.displayFor || 60})
 		if (id) log.error(`Unknown paper found: ${id}`)
 	}
 }
@@ -92,14 +92,14 @@ function scheduleAndRun(cron, job) {
 	return job()
 }
 
-/** Fetches the device's WiFi and battery levels to overlay on the paper */
+/** Fetches the device's wifi and battery levels to overlay on the paper */
 function updateDeviceStatus(joanApiClient) {
 	log.info('Updating status ...')
 	joanApiClient.devices().then(res => {
 		log.debug(res)
 		res.results.forEach(device => {
 			const myDevice = db.devices.find(d => d.id === device.uuid)
-			if (myDevice) myDevice.status = Object.assign(res.results[0], {updatedAt: dayjs()})
+			if (myDevice) myDevice.status = Object.assign(device, {updatedAt: dayjs()})
 			else log.error('Device in API not found in database', device)
 		})
 	})
@@ -118,8 +118,8 @@ const app = express()
 	.get('/', (req, res) => res.render('index', {db: db}))
 	.get('/latest/:deviceId?', (req, res) => {
 		const device = db.devices.find(device => device.id === req.params.deviceId)
-		const paperParam = req.query.paper ? [{id: req.query.paper}] : undefined
-		const paper = nextPaper(device?.newspapers || paperParam, req.query.prev)
+		const paperParam = req.query.paper ? {newspapers: [{id: req.query.paper}]} : undefined
+		const paper = nextPaper(device || paperParam, req.query.prev)
 		log.info(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
 		paper ? res.render('paper', {paper: paper, device: device}) : res.sendStatus(StatusCodes.NOT_FOUND)
 	})
