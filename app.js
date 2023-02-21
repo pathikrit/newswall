@@ -1,4 +1,5 @@
 const config = require('./config')
+const db = require('./db.js') // TODO: use a real database
 const dayjs = require('dayjs')
 	.extend(require('dayjs/plugin/duration'))
 	.extend(require('dayjs/plugin/relativeTime'))
@@ -8,7 +9,7 @@ const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
 const {StatusCodes} = require('http-status-codes')
-const log = console // todo: find a real logging library
+const log = console // TODO: find a real logging library
 
 // Add a util array.random()
 Object.defineProperty(Array.prototype, 'random', {
@@ -31,7 +32,7 @@ function downloadAll() {
 
 	log.info('Checking for new papers ...')
 	for (const date of recentDays())
-		for (const newspaper of config.newspapers)
+		for (const newspaper of db.newspapers)
 			download(newspaper, date)
 }
 
@@ -44,11 +45,8 @@ function download(newspaper, date) {
 	const name = `${newspaper.name} for ${date}`
 
 	if (fs.existsSync(pdfPath)) {
-		if (fs.existsSync(pngPath)) {
-			log.debug(`Already downloaded ${name}`)
-		} else {
-			pdfToImage(pdfPath, pngPath)
-		}
+		if (fs.existsSync(pngPath)) log.debug(`Already downloaded ${name}`)
+		else pdfToImage(pdfPath, pngPath)
 		return
 	}
 
@@ -75,15 +73,15 @@ function pdfToImage(pdf, png) {
 }
 
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
-function nextPaper(papers, current) {
-	const searchTerm = papers && papers.includes(',') ? `{${papers}}` : papers
-	for (const date of recentDays()) {
-		const globExpr = path.join(config.newsstand, date, `${searchTerm || '*'}.png`)
+function nextPaper(currentDevice, currentPaper) {
+	const searchTerm = currentDevice?.newspapers?.length > 0 ? (currentDevice.newspapers.length === 1 ? currentDevice.newspapers[0].id : `{${currentDevice.newspapers.map(p => p.id).join(',')}}`) : '*'
+	for (const date of recentDays()) { // TODO: Handle device.timezone?
+		const globExpr = path.join(config.newsstand, date, `${searchTerm}.png`)
 		const ids = glob.sync(globExpr).map(image => path.parse(image).name)
 		// Find something that is not current or a random one
-		const id = ids.filter(id => current && id !== current).random() || ids.random()
-		const paper = config.newspapers.find(item => item.id === id)
-		if (paper) return Object.assign(paper, {date: date})
+		const id = ids.filter(id => currentPaper && id !== currentPaper).random() || ids.random()
+		const paper = db.newspapers.find(item => item.id === id)
+		if (paper) return Object.assign(paper, {date: date, displayFor: currentDevice?.newspapers?.find(p => p.id === paper.id)?.displayFor || 60})
 		if (id) log.error(`Unknown paper found: ${id}`)
 	}
 }
@@ -94,15 +92,16 @@ function scheduleAndRun(cron, job) {
 	return job()
 }
 
-/** Fetches the device's WiFi and battery levels to overlay on the paper */
+/** Fetches the device's wifi and battery levels to overlay on the paper */
 function updateDeviceStatus(joanApiClient) {
 	log.info('Updating status ...')
 	joanApiClient.devices().then(res => {
 		log.debug(res)
-		if (res.count === 1)
-			app.locals.display = Object.assign(config.display, {status: Object.assign(res.results[0], {updatedAt: dayjs()})})
-		else
-			log.error(res.count ? 'Multiple devices found' : 'No devices found') //TODO: Handle multiple displays
+		res.results.forEach(device => {
+			const myDevice = db.devices.find(d => d.id === device.uuid)
+			if (myDevice) myDevice.status = Object.assign(device, {updatedAt: dayjs()})
+			else log.error('Device in API not found in database', device)
+		})
 	})
 }
 
@@ -116,11 +115,13 @@ const app = express()
 	.use('/archive', express.static(config.newsstand))
 	.use('/my', express.static('my_frame.jpg'))
 	// Main pages
-	.get('/', (req, res) => res.render('index', {papers: config.newspapers}))
-	.get('/latest', (req, res) => {
-		const paper = nextPaper(req.query.papers, req.query.prev)
+	.get('/', (req, res) => res.render('index', {db: db}))
+	.get('/latest/:deviceId?', (req, res) => {
+		const device = db.devices.find(device => device.id === req.params.deviceId)
+		const paperParam = req.query.paper ? {newspapers: [{id: req.query.paper}]} : undefined
+		const paper = nextPaper(device || paperParam, req.query.prev)
 		log.info(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
-		paper ? res.render('paper', {paper: paper}) : res.sendStatus(StatusCodes.NOT_FOUND)
+		paper ? res.render('paper', {paper: paper, device: device}) : res.sendStatus(StatusCodes.NOT_FOUND)
 	})
 // Wire up globals to ejs
 app.locals.dayjs = dayjs
@@ -128,10 +129,6 @@ app.locals.display = config.display
 
 /** Invoking this actually starts everything! */
 function run() {
-	// Setup timezones
-	process.env.TZ = config.timezone
-	dayjs.tz.setDefault(config.timezone)
-
 	// Uncomment this line to trigger a rerender of images on deployment
 	// If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
 	// glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
