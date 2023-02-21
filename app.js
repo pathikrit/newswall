@@ -116,6 +116,8 @@ const app = express()
 	.use('/my', express.static('my_frame.jpg'))
 	// Main pages
 	.get('/', (req, res) => res.render('index', {db: db}))
+	.get('/devices', (req, res) => res.send(db.devices))
+	.get('/newspapers', (req, res) => res.send(db.newspapers))
 	.get('/latest/:deviceId?', (req, res) => {
 		const device = db.devices.find(device => device.id === req.params.deviceId)
 		const paperParam = req.query.paper ? {newspapers: [{id: req.query.paper}]} : undefined

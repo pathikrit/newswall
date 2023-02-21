@@ -32,7 +32,6 @@ module.exports = {
 			name: 'USA Today',
 			url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/USAT.pdf`,
 			scale: 1.03,
-			displayFor: 10
 		},
 		{
 			id: 'AsianAge',
