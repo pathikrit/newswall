@@ -33,7 +33,7 @@
         }
     </script>
 </head>
-<body>
+<body onload=emulate('/latest')>
 <h1>Newswall <a href="https://github.com/pathikrit/newswall" target="_blank"><i class="fa-brands fa-github"></i></a></h1>
 <p>This is a little node.js website to render newspapers for
     <a href="https://www.visionect.com/shop/place-play-32/ref/pathikrit/" target="_blank">e-ink displays</a>
@@ -61,8 +61,8 @@
             <label for="<%=device.id%>"><%=device.name%></label>
         <% }) %>
     </div>
-    <div id="url" class="url">/latest</div>
-    <div><iframe id="emulator" class="emulator" src="/latest" scrolling="no"></iframe></div>
+    <div id="url" class="url"></div>
+    <div><iframe id="emulator" class="emulator" scrolling="no"></iframe></div>
 </div>
 </body>
 </html>
