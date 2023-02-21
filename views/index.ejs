@@ -27,27 +27,28 @@
     <li>
         <a href="/latest"><code>/latest</code></a>: Cycles through front pages of newspapers on each refresh.
         <i>You should point your e-ink device to this.</i>
-        <br/>This server is <a href="https://github.com/pathikrit/newswall/blob/master/db.js" target="_blank">configured</a> to support the following <a href="/devices" target="_blank">devices</a> and <a href="/newspapers" target="_blank">newspapers</a>:
-        <ol>
-            <% db.devices.forEach((device) => { %>
-            <li><a href="/latest/<%=device.id%>"><i><%=device.name%></i></a></li>
-            <% }) %>
-        </ol>
     </li>
+    <li><a href="/newspapers"><code>/newspapers</code></a>: List of supported newspapers
+    <li><a href="/devices"><code>/devices</code></a>: List of registered devices
     <li><a href="/archive"><code>/archive</code></a>: Browse the raw newspaper files on this server.
 </ul>
 <p>Most of the papers come from <a href="https://www.freedomforum.org/todaysfrontpages/" target="_blank">The Freedom Forum</a> - please consider <a href="https://www.freedomforum.org/support/" target="_blank">supporting</a> them.</p>
 <div style="text-align: center">
     <h2>Emulator</h2>
-    <% if (db.newspapers.length > 1) { %>
-        <div>
-            <% db.newspapers.forEach((paper) => { %>
-                <input type="radio" id="<%=paper.id%>" name="newspaper" value="<%=paper.id%>>" onclick="document.getElementById('emulator').src = '/latest?paper=<%=paper.id%>'">
-                <label for="<%=paper.id%>"><%=paper.name%></label>
-            <% }) %>
-        </div>
-        <br/>
-    <% } %>
+    <div>
+        <% db.newspapers.forEach((paper) => { %>
+            <input type="radio" id="<%=paper.id%>" name="newspaper" value="<%=paper.id%>>" onclick="document.getElementById('emulator').src = '/latest?paper=<%=paper.id%>'">
+            <label for="<%=paper.id%>"><%=paper.name%></label>
+        <% }) %>
+    </div>
+    <br/>
+    <div>
+        <% db.devices.forEach((device) => { %>
+            <input type="radio" id="<%=device.id%>" name="newspaper" value="<%=device.id%>>" onclick="document.getElementById('emulator').src = '/latest/<%=device.id%>'">
+            <label for="<%=device.id%>"><%=device.name%></label>
+        <% }) %>
+    </div>
+    <br/>
     <iframe id="emulator" class="emulator" src="/latest" scrolling="no"></iframe>
 </div>
 </body>
