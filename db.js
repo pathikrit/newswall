@@ -1,4 +1,4 @@
-module.exports = {
+db = {
 	// List of newspapers we support
 	// and a function for each that given a date returns the url of the pdf of the front page of that newspaper for that date
 	// The Freedom Forum has a large list of papers: https://www.freedomforum.org/todaysfrontpages/
@@ -42,8 +42,8 @@ module.exports = {
 	],
 
 	// Each device has the following attributes:
-	// id: This is the id from the URL https://portal.getjoan.com/manage/devices/2a002800-0c47-3133-3633-333400000000
-	// timezone: you may not want to see a newspaper in the future
+	// id: This is the joan device id e.g. from this url https://portal.getjoan.com/manage/devices/2a002800-0c47-3133-3633-333400000000
+	// timezone: Since we always try to show latest newspapers, you may not want to see newspapers from tomorrow based on your timezone
 	// displayFor: Configure this (in minutes) to display this paper before moving onto the next one
 	devices: [
 		{
@@ -74,4 +74,20 @@ module.exports = {
 			]
 		}
 	]
+}
+
+module.exports = {
+	newspapers: {
+		list: id => id ? db.newspapers.find(paper => paper.id === id) : db.newspapers
+	},
+
+	devices: {
+		list: id => id ? db.devices.find(device => device.id === id) : db.devices,
+
+		updateStatus: (deviceId, status, notFoundFn) => {
+			const device = db.devices.find(device => device.id === deviceId)
+			if (device) device.status = status
+			else notFoundFn()
+		}
+	}
 }

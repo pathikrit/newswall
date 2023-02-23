@@ -50,13 +50,13 @@
 <div style="text-align: center">
     <h2>Emulator</h2>
     <div>
-        <% db.newspapers.forEach((paper) => { %>
+        <% db.newspapers.list().forEach((paper) => { %>
             <input type="radio" id="<%=paper.id%>" name="newspaper" value="<%=paper.id%>>" onclick=emulate('/latest?paper=<%=paper.id%>')>
             <label for="<%=paper.id%>"><%=paper.name%></label>
         <% }) %>
     </div>
     <div>
-        <% db.devices.forEach((device) => { %>
+        <% db.devices.list().forEach((device) => { %>
             <input type="radio" id="<%=device.id%>" name="newspaper" value="<%=device.id%>>" onclick=emulate('/latest/<%=device.id%>')>
             <label for="<%=device.id%>"><%=device.name%></label>
         <% }) %>

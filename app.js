@@ -32,7 +32,7 @@ function downloadAll() {
 
 	log.info('Checking for new papers ...')
 	for (const date of recentDays(3))
-		for (const newspaper of db.newspapers)
+		for (const newspaper of db.newspapers.list())
 			download(newspaper, date)
 }
 
@@ -78,9 +78,10 @@ function nextPaper(currentDevice, currentPaper) {
 	for (const date of recentDays(3, currentDevice?.timezone)) {
 		const globExpr = path.join(config.newsstand, date, `${searchTerm}.png`)
 		const ids = glob.sync(globExpr).map(image => path.parse(image).name)
+		if (ids.length === 0) continue
 		// Find something that is not current or a random one
 		const id = ids.filter(id => currentPaper && id !== currentPaper).random() || ids.random()
-		const paper = db.newspapers.find(item => item.id === id)
+		const paper = db.newspapers.list(id)
 		if (paper) return Object.assign(paper, {date: date, displayFor: currentDevice?.newspapers?.find(p => p.id === paper.id)?.displayFor || 60})
 		if (id) log.error(`Unknown paper found: ${id}`)
 	}
@@ -98,9 +99,8 @@ function updateDeviceStatus(joanApiClient) {
 	joanApiClient.devices().then(res => {
 		log.debug(res)
 		res.results.forEach(device => {
-			const myDevice = db.devices.find(d => d.id === device.uuid)
-			if (myDevice) myDevice.status = Object.assign(device, {updatedAt: dayjs()})
-			else log.error('Device in API not found in database', device)
+			const status = Object.assign(device, {updatedAt: dayjs()}) //TODO: updatedAt should come from joan API
+			db.devices.updateStatus(device.uuid, status, () => log.error('Device in API not found in database', device))
 		})
 	})
 }
@@ -117,7 +117,7 @@ const app = express()
 	// Main pages
 	.get('/', (req, res) => res.render('index', {db: db}))
 	.get('/latest/:deviceId?', (req, res) => {
-		const device = db.devices.find(device => device.id === req.params.deviceId)
+		const device = db.devices.list(req.params.deviceId)
 		const paperParam = req.query.paper ? {newspapers: [{id: req.query.paper}]} : undefined
 		const paper = nextPaper(device || paperParam, req.query.prev)
 		log.info(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
