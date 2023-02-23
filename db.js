@@ -84,10 +84,10 @@ module.exports = {
 	devices: {
 		list: id => id ? db.devices.find(device => device.id === id) : db.devices,
 
-		updateStatus: (deviceId, status, notFoundFn) => {
+		updateStatus: (deviceId, status) => {
 			const device = db.devices.find(device => device.id === deviceId)
 			if (device) device.status = status
-			else notFoundFn()
+			return device
 		}
 	}
 }

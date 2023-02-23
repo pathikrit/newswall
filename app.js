@@ -100,7 +100,7 @@ function updateDeviceStatus(joanApiClient) {
 		log.debug(res)
 		res.results.forEach(device => {
 			const status = Object.assign(device, {updatedAt: dayjs()}) //TODO: updatedAt should come from joan API
-			db.devices.updateStatus(device.uuid, status, () => log.error('Device in API not found in database', device))
+			if (!db.devices.updateStatus(device.uuid, status)) log.error('Device in API not found in database', device)
 		})
 	})
 }
