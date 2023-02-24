@@ -1,4 +1,4 @@
-db = {
+module.exports = {
 	// List of newspapers we support
 	// and a function for each that given a date returns the url of the pdf of the front page of that newspaper for that date
 	// The Freedom Forum has a large list of papers: https://www.freedomforum.org/todaysfrontpages/
@@ -74,20 +74,4 @@ db = {
 			]
 		}
 	]
-}
-
-module.exports = {
-	newspapers: {
-		list: id => id ? db.newspapers.find(paper => paper.id === id) : db.newspapers
-	},
-
-	devices: {
-		list: id => id ? db.devices.find(device => device.id === id) : db.devices,
-
-		updateStatus: (deviceId, status) => {
-			const device = db.devices.find(device => device.id === deviceId)
-			if (device) device.status = status
-			return device
-		}
-	}
 }

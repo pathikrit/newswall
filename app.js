@@ -1,5 +1,4 @@
-const config = require('./config')
-const db = require('./db.js') // TODO: use a real database
+require('dotenv').config()
 const dayjs = require('dayjs')
 	.extend(require('dayjs/plugin/duration'))
 	.extend(require('dayjs/plugin/relativeTime'))
@@ -10,6 +9,51 @@ const glob = require('glob')
 const path = require('path')
 const {StatusCodes} = require('http-status-codes')
 const log = console // TODO: find a real logging library
+
+config = {
+	port:  process.env.PORT || 3000,
+
+	// Directory to cache newspaper downloads
+	newsstand: process.env.NODE_ENV === 'production' ? '/var/lib/data/newsstand' : path.resolve('./.newspapers'),
+
+	// How many days of papers to keep
+	archiveLength: 35,
+
+	// Every hour check for new newspapers
+	refreshCron: '0 * * * *',
+
+	// Although the Visionect 32-inch e-ink display is 2560x1440 we choose a slightly bigger width of 1600px when converting from pdf to png
+	// since it makes it easier to zoom/crop useless white margins around the edges of the newspapers
+	display: {
+		height: 2560,
+		width: 1440,
+		pdf2ImgOpts: {width: 1600}
+	},
+
+	// Used to display battery and wifi strength on display; remove this if you don't want it
+	joan: {
+		client_id: process.env.joan_client_id,
+		client_secret: process.env.joan_client_secret
+	}
+}
+
+class db {
+	static data = require('./db.js') // TODO: use a real database
+
+	static newspapers = {
+		list: id => id ? this.data.newspapers.find(paper => paper.id === id) : this.data.newspapers
+	}
+
+	static devices = {
+		list: id => id ? this.data.devices.find(device => device.id === id) : this.data.devices,
+
+		updateStatus: (deviceId, status) => {
+			const device = db.devices.list(deviceId)
+			if (device) device.status = status
+			return device
+		}
+	}
+}
 
 // Add a util array.random()
 Object.defineProperty(Array.prototype, 'random', {
