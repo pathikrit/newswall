@@ -45,14 +45,14 @@ Object.defineProperty(Array.prototype, 'random', {
 })
 
 class db {
-	static data = require('./db.js') // TODO: use a real database
+	static #data = require('./db.js') // TODO: use a real database
 
 	static newspapers = {
-		list: id => id ? this.data.newspapers.find(paper => paper.id === id) : this.data.newspapers
+		list: id => id ? this.#data.newspapers.find(paper => paper.id === id) : this.#data.newspapers
 	}
 
 	static devices = {
-		list: id => id ? this.data.devices.find(device => device.id === id) : this.data.devices,
+		list: id => id ? this.#data.devices.find(device => device.id === id) : this.#data.devices,
 
 		updateStatus: (deviceId, status) => Object.assign(db.devices.list(deviceId), {status: status})
 	}
