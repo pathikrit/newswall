@@ -37,6 +37,13 @@ config = {
 	}
 }
 
+// Add a util array.random()
+Object.defineProperty(Array.prototype, 'random', {
+	value: function () {
+		return this[~~(this.length * Math.random())]
+	}
+})
+
 class db {
 	static data = require('./db.js') // TODO: use a real database
 
@@ -47,20 +54,9 @@ class db {
 	static devices = {
 		list: id => id ? this.data.devices.find(device => device.id === id) : this.data.devices,
 
-		updateStatus: (deviceId, status) => {
-			const device = db.devices.list(deviceId)
-			if (device) device.status = status
-			return device
-		}
+		updateStatus: (deviceId, status) => Object.assign(db.devices.list(deviceId), {status: status})
 	}
 }
-
-// Add a util array.random()
-Object.defineProperty(Array.prototype, 'random', {
-	value: function () {
-		return this[~~(this.length * Math.random())]
-	}
-})
 
 /** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC+14 */
 function recentDays(n, timezone = 'Etc/GMT-14') {
