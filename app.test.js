@@ -3,8 +3,8 @@ const app = require('./app')
 const {StatusCodes} = require('http-status-codes')
 
 describe('server', () => {
-	shouldServe = path => it(`should serve ${path}`, () => test(app.server).get(path).expect(StatusCodes.OK))
-	shouldNotServe = path => it(`should not serve ${path}`, () => test(app.server).get(path).expect(StatusCodes.NOT_FOUND))
+	shouldServe = path => it(`should serve ${path}`, () => test(app).get(path).expect(StatusCodes.OK))
+	shouldNotServe = path => it(`should not serve ${path}`, () => test(app).get(path).expect(StatusCodes.NOT_FOUND))
 
 	shouldServe('/')
 	shouldServe('/latest')
