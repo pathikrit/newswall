@@ -17,4 +17,5 @@ jobs:
         node-version: 19.x
         cache: 'npm'
     - run: yarn install --frozen-lockfile
+    - run: nohup node app.js &
     - run: npm test

@@ -185,6 +185,7 @@ function run() {
 	app.listen(config.port, () => log.info(`Starting server on port ${config.port} ...`))
 }
 
+// Just export the app if this is a test so test framework can start it
 if (process.env.NODE_ENV === 'test')
 	module.exports = app
 else
