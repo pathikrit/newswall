@@ -185,4 +185,7 @@ function run() {
 	app.listen(config.port, () => log.info(`Starting server on port ${config.port} ...`))
 }
 
-run() //Yolo!
+if (process.env.NODE_ENV === 'test')
+	module.exports = app
+else
+	run() //Yolo!
