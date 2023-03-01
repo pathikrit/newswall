@@ -2,6 +2,15 @@ const test = require('supertest')
 const app = require('./app')
 const {StatusCodes} = require('http-status-codes')
 
+function sleep(seconds) {
+  jest.setTimeout(2*seconds*1000)
+  return new Promise((resolve) => {
+    setTimeout(resolve, seconds * 1000)
+  })
+}
+
+beforeAll(async () => await sleep(4))
+
 describe('server', () => {
   shouldServe = path => it(`should serve ${path}`, () => test(app).get(path).expect(StatusCodes.OK))
   shouldNotServe = path => it(`should not serve ${path}`, () => test(app).get(path).expect(StatusCodes.NOT_FOUND))

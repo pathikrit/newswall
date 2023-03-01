@@ -17,5 +17,4 @@ jobs:
         node-version: 19.x
         cache: 'npm'
     - run: yarn install --frozen-lockfile
-    - run: nohup node app.js & # TODO: This is a hack to start the server outside npm test to schedule jobs
     - run: npm test

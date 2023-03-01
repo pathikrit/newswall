@@ -184,8 +184,8 @@ const app = express()
 app.locals.dayjs = dayjs
 app.locals.display = config.display
 
-/** Invoking this actually starts everything! */
-function run() {
+/** Kick off jobs */
+function kickOffJobs() {
   // Uncomment this line to trigger a rerender of images on deployment
   // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
   // glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
@@ -199,13 +199,12 @@ function run() {
   } else {
     log.warn('No Joan API secrets found')
   }
-
-  // Start the server
-  app.listen(config.port, () => log.info(`Starting server on port ${config.port} ...`))
 }
+
+kickOffJobs()
 
 // Just export the app if this is a test so test framework can start it
 if (process.env.NODE_ENV === 'test')
   module.exports = app
-else
-  run() //Yolo!
+else // Start the server!
+  app.listen(config.port, () => log.info(`Starting server on port ${config.port} ...`))

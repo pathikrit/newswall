@@ -25,6 +25,6 @@
   },
   "engineStrict": true,
   "scripts": {
-    "test": "jest"
+    "test": "jest --forceExit"
   }
 }
