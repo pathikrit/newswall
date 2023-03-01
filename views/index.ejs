@@ -66,13 +66,13 @@
     <h2>Emulator</h2>
     <div>
         <% db.newspapers.list().forEach((paper) => { %>
-            <input type="checkbox" id="<%=paper.id%>" name="newspapers" value="<%= paper.id %>" onclick=emulate('newspapers')>
+            <input type="checkbox" id="<%=paper.id%>" name="newspapers" value="<%=paper.id%>" onclick=emulate('newspapers')>
             <label for="<%=paper.id%>"><%=paper.name%></label>
         <% }) %>
     </div>
     <div>
         <% db.devices.list().forEach((device) => { %>
-            <input type="radio" id="<%=device.id%>" name="devices" value="<%= device.id %>>" onclick=emulate('devices')>
+            <input type="radio" id="<%=device.id%>" name="devices" value="<%=device.id%>" onclick=emulate('devices')>
             <label for="<%=device.id%>"><%=device.name%></label>
         <% }) %>
     </div>
