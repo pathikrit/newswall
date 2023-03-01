@@ -202,7 +202,6 @@ function kickOffJobs() {
 }
 
 kickOffJobs()
-
 // Just export the app if this is a test so test framework can start it
 if (process.env.NODE_ENV === 'test')
   module.exports = app
