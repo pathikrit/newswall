@@ -157,10 +157,10 @@ const app = express()
 	// Main pages
 	.get('/', (req, res) => res.render('index', {db: db}))
 	.get('/latest/:deviceId?', (req, res) => {
-		const device = db.devices.list(req.params.deviceId)
-		const paperParam = req.query.paper ? {newspapers: [{id: req.query.paper}]} : undefined
+		const device = req.params.deviceId ? db.devices.list(req.params.deviceId) : undefined
+		const paperParam = req.query.papers ? {newspapers: req.query.papers.split(',').map(paper => {return {id: paper}})} : undefined
 		const paper = nextPaper(device || paperParam, req.query.prev)
-		log.info(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
+		log.info(`GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; DeviceId=[${req.params.deviceId}]; Device=[${device?.name}] Next=[${paper ? `${paper.id} for ${paper.date}` : 'NOT FOUND'}]`)
 		paper ? res.render('paper', {paper: paper, device: device}) : res.sendStatus(StatusCodes.NOT_FOUND)
 	})
 // Wire up globals to ejs

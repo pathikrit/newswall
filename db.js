@@ -43,7 +43,7 @@ module.exports = {
 
 	// Each device has the following attributes:
 	// id: This is the joan device id e.g. from this url https://portal.getjoan.com/manage/devices/2a002800-0c47-3133-3633-333400000000
-	// timezone: Since we always try to show latest newspapers, you may not want to see newspapers from tomorrow based on your timezone
+	// timezone: Since we always try to show the latest newspapers, you may not want to see newspapers from tomorrow based on your timezone
 	// displayFor: Configure this (in minutes) to display this paper before moving onto the next one
 	devices: [
 		{

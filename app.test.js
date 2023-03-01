@@ -8,8 +8,11 @@ describe('server', () => {
 
 	shouldServe('/')
 	shouldServe('/latest')
+	shouldServe('/archive')
 	shouldServe('/latest?papers=NYT')
-	shouldServe('/latest?papers=-1')
+	shouldServe('/latest?papers=NYT,WSJ')
+	shouldServe('/latest?papers=NYT,-1')
+	shouldNotServe('/latest?papers=-1')
 	shouldServe('/latest/2a002800-0c47-3133-3633-333400000000')
 	shouldServe('/latest/-1')
 	shouldNotServe('/foo')
