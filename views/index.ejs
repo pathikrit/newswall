@@ -3,6 +3,7 @@
 <head>
     <title>Newswall</title>
     <link rel="stylesheet" href="https://kit.fontawesome.com/a22be8527e.css" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js" integrity="sha512-STof4xm1wgkfm7heWqFJVn58Hm3EtS31XFaagaa8VMReCXAkQnJZ+jEy8PCC/iT18dFy95WcExNHFTqLyp72eQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         li {
             margin: 5px;
@@ -13,7 +14,7 @@
             filter: grayscale(100);
             border: 50px solid black;
             overflow: hidden;
-            box-shadow: 5px 5px 5px 0px rgba(0,0,0,0.5);
+            box-shadow: 5px 5px 5px 0px rgba(0, 0, 0, 0.5);
         }
         div + div {
             margin: 10px;
@@ -27,13 +28,27 @@
         }
     </style>
     <script>
-        function emulate(url) {
-            document.getElementById('url').innerHTML = `<a href="${url}" target="_blank">${window.location.protocol + '//' + window.location.host + url}</a>`
-            document.getElementById('emulator').src = url
+      function emulate(mode) {
+        let url = '/latest'
+        switch (mode) {
+          case 'newspapers':
+            $('input[name=devices]').prop('checked', false)
+            const papers = $('input[name=newspapers]:checked').map(function () {return this.value}).get()
+            url = `/latest?papers=${papers.join(',')}`
+            break
+
+          case 'devices':
+            $('input[name=newspapers]').prop('checked', false)
+            const devices = $('input[name=devices]:checked').map(function () {return this.value}).get()
+            url = `/latest/${devices}`
+            break
         }
+        $('#url').html(`<a href="${url}" target="_blank">${window.location.protocol + '//' + window.location.host + url}</a>`)
+        $('#emulator').prop('src', url)
+      }
     </script>
 </head>
-<body onload=emulate('/latest')>
+<body onload=emulate()>
 <h1>Newswall <a href="https://github.com/pathikrit/newswall" target="_blank"><i class="fa-brands fa-github"></i></a></h1>
 <p>This is a little node.js website to render newspapers for
     <a href="https://www.visionect.com/shop/place-play-32/ref/pathikrit/" target="_blank">e-ink displays</a>
@@ -51,13 +66,13 @@
     <h2>Emulator</h2>
     <div>
         <% db.newspapers.list().forEach((paper) => { %>
-            <input type="radio" id="<%=paper.id%>" name="newspaper" value="<%=paper.id%>>" onclick=emulate('/latest?papers=<%=paper.id%>')>
+            <input type="checkbox" id="<%=paper.id%>" name="newspapers" value="<%= paper.id %>" onclick=emulate('newspapers')>
             <label for="<%=paper.id%>"><%=paper.name%></label>
         <% }) %>
     </div>
     <div>
         <% db.devices.list().forEach((device) => { %>
-            <input type="radio" id="<%=device.id%>" name="newspaper" value="<%=device.id%>>" onclick=emulate('/latest/<%=device.id%>')>
+            <input type="radio" id="<%=device.id%>" name="devices" value="<%= device.id %>>" onclick=emulate('devices')>
             <label for="<%=device.id%>"><%=device.name%></label>
         <% }) %>
     </div>
