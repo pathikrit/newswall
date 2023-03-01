@@ -192,10 +192,12 @@ function run() {
 
   // Schedule jobs
   scheduleAndRun(config.refreshCron, downloadAll)
-  if (config.joan) {
+  if (config.joan?.client_id && config.joan?.client_secret) {
     const {JoanApiClient} = require('node-joan')
     const joanApiClient = new JoanApiClient(config.joan.client_id, config.joan.client_secret)
     scheduleAndRun(config.refreshCron, () => updateDeviceStatus(joanApiClient))
+  } else {
+    log.warn('No Joan API secrets found')
   }
 
   // Start the server
