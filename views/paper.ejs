@@ -32,6 +32,7 @@
 </head>
 <body>
     <div class="paper-container">
+        <% if (process.env.NODE_ENV === 'test' && paper.id) {%> <!-- Showing <%=paper.id%> for <%=paper.date%>> <% } %>
         <img src="/archive/<%=paper.date%>/<%=paper.id%>.png" style="transform: scale(<%=paper.scale%>)" alt="<%=paper.name%> for <%=paper.date%>">
         <% if (device?.status ) { %>
             <%# Display next refresh time, WiFi strength and battery level in the bottom left -%>
