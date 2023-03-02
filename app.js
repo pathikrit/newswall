@@ -197,6 +197,7 @@ const app = express()
   })
 // Wire up globals to ejs
 app.locals.dayjs = dayjs
+app.locals.env = env
 app.locals.display = config.display
 
 /** Kick off jobs */

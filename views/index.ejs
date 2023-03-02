@@ -16,10 +16,14 @@
       overflow: hidden;
       box-shadow: 15px 15px 15px 5px rgba(0, 0, 0, 0.5);
       margin-bottom: 100px;
+      background-color: <%= env.isProd ? 'white' : 'red' %>;
     }
     .url {
       outline: solid;
       width: <%=display.width/2%>px;
+    }
+    body {
+      background-color: #f9f7f1;
     }
   </style>
   <script>
@@ -57,7 +61,7 @@
   <p><small>Most of the papers come from <a href="https://www.freedomforum.org/todaysfrontpages/" target="_blank">The Freedom Forum</a> - please consider <a href="https://www.freedomforum.org/support/" target="_blank">supporting</a> them.</small></p>
 
   <h2>Emulator</h2>
-  <form class="card p-2 m-3 bg-light">
+  <form class="card p-2 m-3 bg-body-secondary">
     <% [db.newspapers.list(), db.devices.list()].forEach(items => { %>
     <div class="input-group">
       <% items.forEach(item => { %>
