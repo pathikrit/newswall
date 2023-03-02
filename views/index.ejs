@@ -61,15 +61,17 @@
   <p><small>Most of the papers come from <a href="https://www.freedomforum.org/todaysfrontpages/" target="_blank">The Freedom Forum</a> - please consider <a href="https://www.freedomforum.org/support/" target="_blank">supporting</a> them.</small></p>
   <h3>Emulator</h3>
   <form class="card p-2 bg-body-secondary">
-    <% [db.newspapers.list(), db.devices.list()].forEach(items => { %>
+    <% Object.keys(db).forEach(table => { %>
+    <h5 class="form-label text-capitalize"><%=table%></h5>
     <div class="input-group">
-      <% items.forEach(item => { %>
+      <% db[table].list().forEach(item => { %>
       <div class="form-check form-check-inline">
-        <input class="form-check-input" type="<%=item.url ? 'checkbox' : 'radio'%>" id="<%=item.id%>" name="<%=item.url ? 'newspapers' : 'devices'%>" value="<%=item.id%>" onclick=emulate(this.name)>
+        <input class="form-check-input" type="<%=item.url ? 'checkbox' : 'radio'%>" id="<%=item.id%>" name="<%=table%>" value="<%=item.id%>" onclick=emulate(this.name)>
         <label class="form-check-label" for="<%=item.id%>"><%=item.name%></label>
       </div>
       <% }) %>
     </div>
+    <hr>
     <% }) %>
     <div class="input-group">
       <p id="url" class="m-2 p-1 font-monospace url"></p>
