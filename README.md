@@ -14,6 +14,11 @@ yarn && node --watch app.js
 ```
 Then open <http://localhost:3000> in your browser.
 
+3. Run [tests](/app.test.js):
+```shell
+yarn test
+```
+
 My Setup
 ---
 I use the [32-inch Visionect display](https://www.visionect.com/shop/place-play-32/ref/pathikrit/)

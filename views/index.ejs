@@ -4,27 +4,19 @@
     <title>Newswall</title>
     <link rel="stylesheet" href="https://kit.fontawesome.com/a22be8527e.css" crossorigin="anonymous">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js" integrity="sha512-STof4xm1wgkfm7heWqFJVn58Hm3EtS31XFaagaa8VMReCXAkQnJZ+jEy8PCC/iT18dFy95WcExNHFTqLyp72eQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
     <style>
-        li {
-            margin: 5px;
-        }
         .emulator {
             height: <%=display.height%>px;
             width: <%=display.width%>px;
             filter: grayscale(100);
-            border: 50px solid black;
+            outline: 50px solid;
             overflow: hidden;
-            box-shadow: 5px 5px 5px 0px rgba(0, 0, 0, 0.5);
-        }
-        div + div {
-            margin: 10px;
+            /*box-shadow: 5px 5px 5px 0px rgba(0, 0, 0, 0.5);*/
         }
         .url {
-            border-style: solid;
-            font-family: monospace;
-            width: <%=display.width/2%>px;
-            text-align: left;
-            margin: auto;
+            outline: solid;
         }
     </style>
     <script>
@@ -49,35 +41,42 @@
     </script>
 </head>
 <body onload=emulate()>
-<h1>Newswall <a href="https://github.com/pathikrit/newswall" target="_blank"><i class="fa-brands fa-github"></i></a></h1>
-<p>This is a little node.js website to render newspapers for
-    <a href="https://www.visionect.com/shop/place-play-32/ref/pathikrit/" target="_blank">e-ink displays</a>
-    (original idea by <a href="https://onezero.medium.com/the-morning-paper-revisited-35b407822494" target="_blank">Max Braun</a>)</p>
-<p><img alt="My Frame" src="/my" height="600" width="338"></p>
-<ul>
-    <li>
-        <a href="/latest"><code>/latest</code></a>: Cycles through front pages of <a href="https://github.com/pathikrit/newswall/blob/master/db.js" target="_blank"> supported newspapers</a> on each refresh.
-        <i>You should point your e-ink device to this.</i>
-    </li>
-    <li><a href="/archive"><code>/archive</code></a>: Browse the raw newspaper files on this server.
-</ul>
-<p>Most of the papers come from <a href="https://www.freedomforum.org/todaysfrontpages/" target="_blank">The Freedom Forum</a> - please consider <a href="https://www.freedomforum.org/support/" target="_blank">supporting</a> them.</p>
-<div style="text-align: center">
+<div class="container">
+    <h1>Newswall <a href="https://github.com/pathikrit/newswall" target="_blank"><i class="fa-brands fa-github"></i></a></h1>
+    <p class="lead">a little node.js website to render newspapers for
+        <a href="https://www.visionect.com/shop/place-play-32/ref/pathikrit/" target="_blank">e-ink displays</a>
+        (original idea by <a href="https://onezero.medium.com/the-morning-paper-revisited-35b407822494" target="_blank">Max Braun</a>)</p>
+    <p><img class="border img-thumbnail" alt="My Frame" src="/my" height="600" width="338"></p>
+    <ul>
+        <li>
+            <a href="/latest"><code>/latest</code></a>: Cycles through front pages of <a href="https://github.com/pathikrit/newswall/blob/master/db.js" target="_blank"> supported newspapers</a> on each refresh.
+            <em>You should point your e-ink device to this.</em>
+        </li>
+        <li><a href="/archive"><code>/archive</code></a>: Browse the raw newspaper files on this server.
+    </ul>
+    <p><small>Most of the papers come from <a href="https://www.freedomforum.org/todaysfrontpages/" target="_blank">The Freedom Forum</a> - please consider <a href="https://www.freedomforum.org/support/" target="_blank">supporting</a> them.</small></p>
+
     <h2>Emulator</h2>
-    <div>
-        <% db.newspapers.list().forEach((paper) => { %>
-            <input type="checkbox" id="<%=paper.id%>" name="newspapers" value="<%=paper.id%>" onclick=emulate('newspapers')>
-            <label for="<%=paper.id%>"><%=paper.name%></label>
-        <% }) %>
-    </div>
-    <div>
-        <% db.devices.list().forEach((device) => { %>
-            <input type="radio" id="<%=device.id%>" name="devices" value="<%=device.id%>" onclick=emulate('devices')>
-            <label for="<%=device.id%>"><%=device.name%></label>
-        <% }) %>
-    </div>
-    <div id="url" class="url"></div>
-    <div><iframe id="emulator" class="emulator" scrolling="no"></iframe></div>
+    <form>
+        <div class="input-group">
+            <% db.newspapers.list().forEach((paper) => { %>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="<%=paper.id%>" name="newspapers" value="<%=paper.id%>" onclick=emulate('newspapers')>
+                    <label class="form-check-label" for="<%=paper.id%>"><%=paper.name%></label>
+                </div>
+            <% }) %>
+        </div>
+        <div class="input-group">
+            <% db.devices.list().forEach((device) => { %>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="<%=device.id%>" name="devices" value="<%=device.id%>" onclick=emulate('devices')>
+                    <label class="form-check-label" for="<%=device.id%>"><%=device.name%></label>
+                </div>
+            <% }) %>
+        </div>
+    </form>
+    <div id="url" class="font-monospace url"></div>
+    <div class="p-5"><iframe id="emulator" class="shadow emulator" scrolling="no"></iframe></div>
 </div>
 </body>
 </html>
