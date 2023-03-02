@@ -22,6 +22,15 @@ config = {
   // Every hour check for new newspapers
   refreshCron: '0 * * * *',
 
+  // Settings for rotating papers in the frontend
+  rotation: {
+    // By default, rotate every 60 mins
+    default: 60,
+
+    // 10x speedup in dev rotation for easier debugging
+    speedUp: process.env.NODE_ENV === 'production' ? 1 : 10
+  },
+
   // Although the Visionect 32-inch e-ink display is 2560x1440 we choose a slightly bigger width of 1600px when converting from pdf to png
   // since it makes it easier to zoom/crop useless white margins around the edges of the newspapers
   display: {
@@ -122,7 +131,8 @@ function nextPaper(currentDevice, currentPaper) {
     // Find something that is not current or a random one
     const id = ids.filter(id => currentPaper && id !== currentPaper).random() || ids.random()
     const paper = db.newspapers.list(id)
-    if (paper) return Object.assign(paper, {date: date, displayFor: currentDevice?.newspapers?.find(p => p.id === paper.id)?.displayFor || 60})
+    const displayFor = (currentDevice?.newspapers?.find(p => p.id === paper.id)?.displayFor || config.rotation.default)/config.rotation.speedUp
+    if (paper) return Object.assign(paper, {date: date, displayFor: displayFor})
     if (id) log.error(`Unknown paper found: ${id}`)
   }
 }
