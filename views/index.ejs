@@ -23,14 +23,13 @@
   <script>
     function emulate(mode) {
       let url = '/latest'
-      for (const m of ['newspapers', 'devices']) {
-        if (mode === m) {
-          const items = $(`input[name=${mode}]:checked`).map(function () {return this.value}).get()
-          if (items.length) {
-            url += mode === 'newspapers' ? `?papers=${items.join(',')}` : `/${items}`
-          }
+      const urls = {newspapers: '?prefix=', devices: '/'}
+      for (const i in urls) {
+        if (mode === i) {
+          const items = $(`input[name=${i}]:checked`).map(function () {return this.value}).get()
+          if (items.length) url += urls[i] + items.join(',')
         } else {
-          $(`input[name=${m}]`).prop('checked', false)
+          $(`input[name=${i}]`).prop('checked', false)
         }
       }
       $('#url').html(`<a href="${url}" target="_blank">${window.location.protocol + '//' + window.location.host + url}</a>`)
