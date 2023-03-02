@@ -11,9 +11,11 @@
       height: <%=display.height%>px;
       width: <%=display.width%>px;
       filter: grayscale(100);
-      outline: 50px solid;
+      border: 60px solid;
+      box-sizing: content-box;
       overflow: hidden;
-      box-shadow: 55px 55px 55px 0px rgba(0, 0, 0, 0.5);
+      box-shadow: 15px 15px 15px 5px rgba(0, 0, 0, 0.5);
+      margin-bottom: 100px;
     }
     .url {
       outline: solid;
@@ -54,22 +56,22 @@
   <p><small>Most of the papers come from <a href="https://www.freedomforum.org/todaysfrontpages/" target="_blank">The Freedom Forum</a> - please consider <a href="https://www.freedomforum.org/support/" target="_blank">supporting</a> them.</small></p>
 
   <h2>Emulator</h2>
-  <form>
+  <form class="card p-2 bg-light">
     <% [db.newspapers.list(), db.devices.list()].forEach(items => { %>
-      <div class="input-group">
-        <% items.forEach(item => { %>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="<%=item.url ? 'checkbox' : 'radio'%>" id="<%=item.id%>" name="<%=item.url ? 'newspapers' : 'devices'%>" value="<%=item.id%>" onclick=emulate(this.name)>
-            <label class="form-check-label" for="<%=item.id%>"><%=item.name%></label>
-          </div>
-        <% }) %>
+    <div class="input-group">
+      <% items.forEach(item => { %>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="<%=item.url ? 'checkbox' : 'radio'%>" id="<%=item.id%>" name="<%=item.url ? 'newspapers' : 'devices'%>" value="<%=item.id%>" onclick=emulate(this.name)>
+        <label class="form-check-label" for="<%=item.id%>"><%=item.name%></label>
       </div>
+      <% }) %>
+    </div>
     <% }) %>
-      <div class="input-group">
-        <p id="url" class="m-2 font-monospace url"></p> <button type="button" class="btn btn-dark" onclick="emulate()">Reset</button>
-      </div>
+    <div class="input-group">
+      <p id="url" class="m-2 font-monospace url"></p> <button type="button" class="btn btn-dark rounded-pill" onclick="emulate()">Reset</button>
+    </div>
   </form>
-  <div class="p-5"><iframe id="emulator" class="emulator" scrolling="no"></iframe></div>
+  <iframe id="emulator" class="emulator" scrolling="no"></iframe>
 </div>
 </body>
 </html>
