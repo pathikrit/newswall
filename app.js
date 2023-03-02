@@ -8,13 +8,18 @@ const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
 const {StatusCodes} = require('http-status-codes')
-const log = console // TODO: find a real logging library
+const log = console
+
+env = {
+  isProd: process.env.NODE_ENV === 'production',
+  isTest: process.env.NODE_ENV === 'test'
+}
 
 config = {
   port:  process.env.PORT || 3000,
 
   // Directory to cache newspaper downloads
-  newsstand: process.env.NODE_ENV === 'production' ? '/var/lib/data/newsstand' : path.resolve('./.newspapers'),
+  newsstand: env.isProd ? '/var/lib/data/newsstand' : path.resolve('./.newspapers'),
 
   // How many days of papers to keep
   archiveLength: 35,
@@ -27,8 +32,8 @@ config = {
     // By default, rotate every 60 mins
     default: 60,
 
-    // 10x speedup in dev rotation for easier debugging
-    speedUp: process.env.NODE_ENV === 'production' ? 1 : 10
+    // In non-prod, 10x speedup for easier debugging
+    speedUp: env.isProd ? 1 : 10
   },
 
   // Although the Visionect 32-inch e-ink display is 2560x1440 we choose a slightly bigger width of 1600px when converting from pdf to png
@@ -213,7 +218,7 @@ function kickOffJobs() {
 
 kickOffJobs()
 // Just export the app if this is a test so test framework can start it
-if (process.env.NODE_ENV === 'test')
+if (env.isTest)
   module.exports = app
 else // Start the server!
   app.listen(config.port, () => log.info(`Starting server on port ${config.port} ...`))

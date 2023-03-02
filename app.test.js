@@ -13,7 +13,7 @@ describe('server', () => {
   shouldServe = (path, bodyCheck) => it(`should serve ${path}`, () => test(app).get(path).expect(StatusCodes.OK).then(response => bodyCheck && bodyCheck(response.res.text)))
   shouldNotServe = path => it(`should not serve ${path}`, () => test(app).get(path).expect(StatusCodes.NOT_FOUND))
 
-  displayingPaper = paper => html => html.includes(`<!-- Showing ${paper || ''}`)
+  displayingPaper = paper => html => html.includes(`alt="Showing ${paper || ''}`)
 
   shouldServe('/')
   shouldServe('/archive')
