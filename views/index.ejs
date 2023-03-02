@@ -25,7 +25,7 @@
   <script>
     function emulate(mode) {
       let url = '/latest'
-      const urls = {newspapers: '?prefix=', devices: '/'}
+      const urls = {newspapers: '?papers=', devices: '/'}
       for (const i in urls) {
         if (mode === i) {
           const items = $(`input[name=${i}]:checked`).map(function () {return this.value}).get()
@@ -41,10 +41,11 @@
 </head>
 <body onload=emulate()>
 <div class="container">
-  <h1>Newswall <a href="https://github.com/pathikrit/newswall" target="_blank"><i class="fa-brands fa-github"></i></a></h1>
+  <h1>Newswall <a class="link-dark" href="https://github.com/pathikrit/newswall" target="_blank"><i class="fa-brands fa-github"></i></a></h1>
   <p class="lead">a little node.js website to render newspapers for
     <a href="https://www.visionect.com/shop/place-play-32/ref/pathikrit/" target="_blank">e-ink displays</a>
-    (original idea by <a href="https://onezero.medium.com/the-morning-paper-revisited-35b407822494" target="_blank">Max Braun</a>)</p>
+    (original idea by <a href="https://onezero.medium.com/the-morning-paper-revisited-35b407822494" target="_blank">Max Braun</a>)
+  </p>
   <img class="img-thumbnail" alt="My Frame" src="/my" height="600" width="338">
   <ul>
     <li>
@@ -56,7 +57,7 @@
   <p><small>Most of the papers come from <a href="https://www.freedomforum.org/todaysfrontpages/" target="_blank">The Freedom Forum</a> - please consider <a href="https://www.freedomforum.org/support/" target="_blank">supporting</a> them.</small></p>
 
   <h2>Emulator</h2>
-  <form class="card p-2 bg-light">
+  <form class="card p-2 m-3 bg-light">
     <% [db.newspapers.list(), db.devices.list()].forEach(items => { %>
     <div class="input-group">
       <% items.forEach(item => { %>
