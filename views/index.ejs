@@ -13,10 +13,7 @@
             filter: grayscale(100);
             outline: 50px solid;
             overflow: hidden;
-            /*box-shadow: 5px 5px 5px 0px rgba(0, 0, 0, 0.5);*/
-        }
-        .url {
-            outline: solid;
+            box-shadow: 55px 55px 55px 0px rgba(0, 0, 0, 0.5);
         }
     </style>
     <script>
@@ -26,13 +23,13 @@
           case 'newspapers':
             $('input[name=devices]').prop('checked', false)
             const papers = $('input[name=newspapers]:checked').map(function () {return this.value}).get()
-            url = `/latest?papers=${papers.join(',')}`
+            url = papers.length === 0 ? '/latest' : `/latest?papers=${papers.join(',')}`
             break
 
           case 'devices':
             $('input[name=newspapers]').prop('checked', false)
             const devices = $('input[name=devices]:checked').map(function () {return this.value}).get()
-            url = `/latest/${devices}`
+            url = devices.length === 0 ? '/latest' : `/latest/${devices}`
             break
         }
         $('#url').html(`<a href="${url}" target="_blank">${window.location.protocol + '//' + window.location.host + url}</a>`)
@@ -75,8 +72,8 @@
             <% }) %>
         </div>
     </form>
-    <div id="url" class="font-monospace url"></div>
-    <div class="p-5"><iframe id="emulator" class="shadow emulator" scrolling="no"></iframe></div>
+    <div id="url" class="m-2 font-monospace" style="outline: solid"></div>
+    <div class="p-5"><iframe id="emulator" class="emulator" scrolling="no"></iframe></div>
 </div>
 </body>
 </html>
