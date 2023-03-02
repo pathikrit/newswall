@@ -15,16 +15,22 @@
       overflow: hidden;
       box-shadow: 55px 55px 55px 0px rgba(0, 0, 0, 0.5);
     }
+    .url {
+      outline: solid;
+      width: <%=display.width/2%>px;
+    }
   </style>
   <script>
     function emulate(mode) {
       let url = '/latest'
-      const validModes = ['newspapers', 'devices']
-      if (validModes.includes(mode)) {
-        $(`input[name=${validModes.find(v => v !== mode)}]`).prop('checked', false)
-        const items = $(`input[name=${mode}]:checked`).map(function () {return this.value}).get()
-        if (items.length) {
-          url = mode === 'newspapers' ? `/latest?papers=${items.join(',')}` : `/latest/${items}`
+      for (const m of ['newspapers', 'devices']) {
+        if (mode === m) {
+          const items = $(`input[name=${mode}]:checked`).map(function () {return this.value}).get()
+          if (items.length) {
+            url += mode === 'newspapers' ? `?papers=${items.join(',')}` : `/${items}`
+          }
+        } else {
+          $(`input[name=${m}]`).prop('checked', false)
         }
       }
       $('#url').html(`<a href="${url}" target="_blank">${window.location.protocol + '//' + window.location.host + url}</a>`)
@@ -60,8 +66,10 @@
         <% }) %>
       </div>
     <% }) %>
+      <div class="input-group">
+        <p id="url" class="m-2 font-monospace url"></p> <button type="button" class="btn btn-dark" onclick="emulate()">Reset</button>
+      </div>
   </form>
-  <div id="url" class="m-2 font-monospace" style="outline: solid"></div>
   <div class="p-5"><iframe id="emulator" class="emulator" scrolling="no"></iframe></div>
 </div>
 </body>
