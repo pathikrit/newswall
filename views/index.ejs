@@ -19,18 +19,13 @@
     <script>
       function emulate(mode) {
         let url = '/latest'
-        switch (mode) {
-          case 'newspapers':
-            $('input[name=devices]').prop('checked', false)
-            const papers = $('input[name=newspapers]:checked').map(function () {return this.value}).get()
-            url = papers.length === 0 ? '/latest' : `/latest?papers=${papers.join(',')}`
-            break
-
-          case 'devices':
-            $('input[name=newspapers]').prop('checked', false)
-            const devices = $('input[name=devices]:checked').map(function () {return this.value}).get()
-            url = devices.length === 0 ? '/latest' : `/latest/${devices}`
-            break
+        const validModes = ['newspapers', 'devices']
+        if (validModes.includes(mode)) {
+          $(`input[name=${validModes.find(v => v !== mode)}]`).prop('checked', false)
+          const items = $(`input[name=${mode}]:checked`).map(function () {return this.value}).get()
+          if (items.length) {
+            url = mode === 'newspapers' ? `/latest?papers=${items.join(',')}` : `/latest/${items}`
+          }
         }
         $('#url').html(`<a href="${url}" target="_blank">${window.location.protocol + '//' + window.location.host + url}</a>`)
         $('#emulator').prop('src', url)
@@ -56,18 +51,18 @@
     <h2>Emulator</h2>
     <form>
         <div class="input-group">
-            <% db.newspapers.list().forEach((paper) => { %>
+            <% db.newspapers.list().forEach(item => { %>
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="<%=paper.id%>" name="newspapers" value="<%=paper.id%>" onclick=emulate('newspapers')>
-                    <label class="form-check-label" for="<%=paper.id%>"><%=paper.name%></label>
+                    <input class="form-check-input" type="checkbox" id="<%=item.id%>" name="newspapers" value="<%=item.id%>" onclick=emulate('newspapers')>
+                    <label class="form-check-label" for="<%=item.id%>"><%=item.name%></label>
                 </div>
             <% }) %>
         </div>
         <div class="input-group">
-            <% db.devices.list().forEach((device) => { %>
+            <% db.devices.list().forEach(item => { %>
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" id="<%=device.id%>" name="devices" value="<%=device.id%>" onclick=emulate('devices')>
-                    <label class="form-check-label" for="<%=device.id%>"><%=device.name%></label>
+                    <input class="form-check-input" type="radio" id="<%=item.id%>" name="devices" value="<%=item.id%>" onclick=emulate('devices')>
+                    <label class="form-check-label" for="<%=item.id%>"><%=item.name%></label>
                 </div>
             <% }) %>
         </div>
