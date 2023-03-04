@@ -44,10 +44,11 @@ config = {
     pdf2ImgOpts: {width: 1600}
   },
 
-  // Used to display battery and wifi strength on display; remove this if you don't want it
-  joan: {
-    client_id: process.env.joan_client_id,
-    client_secret: process.env.joan_client_secret
+  // VSS Settings: See https://github.com/pathikrit/node-visionect
+  visionect: {
+    apiServer: 'https://pathikrit-1.dk.visionect.com:8081',
+    apiKey: process.env.visionectApiKey,
+    apiSecret: process.env.visionectApiSecret
   }
 }
 
@@ -149,13 +150,19 @@ function scheduleAndRun(cron, job) {
 }
 
 /** Fetches the device's wifi and battery levels to overlay on the paper */
-function updateDeviceStatus(joanApiClient) {
+function updateDeviceStatus(visionect) {
   log.info('Updating status ...')
-  joanApiClient.devices().then(res => {
+  visionect.devices.get().then(res => {
     log.debug(res)
-    res.results.forEach(device => {
-      const status = Object.assign(device, {updatedAt: dayjs()}) //TODO: updatedAt should come from joan API
-      if (!db.devices.updateStatus(device.uuid, status)) log.error('Device in API not found in database', device)
+    res.forEach(device => {
+      const updated = db.devices.updateStatus(device.Uuid, {
+        wifi: parseInt(device.Status?.RSSI),
+        battery: parseInt(device.Status?.Battery),
+        temperature: parseInt(device.Status?.Temperature),
+        updatedAt: dayjs(), //TODO: updatedAt should come from joan API
+        _apiResponse: device
+      })
+      if (!updated) log.error('Device in API not found in database', device)
     })
   })
 }
@@ -208,12 +215,12 @@ function kickOffJobs() {
 
   // Schedule jobs
   scheduleAndRun(config.refreshCron, downloadAll)
-  if (config.joan?.client_id && config.joan?.client_secret) {
-    const {JoanApiClient} = require('node-joan')
-    const joanApiClient = new JoanApiClient(config.joan.client_id, config.joan.client_secret)
-    scheduleAndRun(config.refreshCron, () => updateDeviceStatus(joanApiClient))
+  if (config.visionect?.apiKey && config.visionect?.apiSecret) {
+    const VisionectApiClient = require('node-visionect')
+    const visionect = new VisionectApiClient(config.visionect.apiServer, config.visionect.apiKey, config.visionect.apiSecret)
+    scheduleAndRun(config.refreshCron, () => updateDeviceStatus(visionect))
   } else {
-    log.warn('No Joan API secrets found')
+    log.warn('No Visionect API key found')
   }
 }
 
