@@ -21,6 +21,9 @@ config = {
   // Directory to cache newspaper downloads
   newsstand: env.isProd ? '/var/lib/data/newsstand' : path.resolve('./.newspapers'),
 
+  // The production site url
+  myUrl: process.env.RENDER_EXTERNAL_URL,
+
   // How many days of papers to keep
   archiveLength: 35,
 
@@ -166,7 +169,7 @@ function updateDevices() {
             Name: 'HTML',
             Fields: {
               ReloadTimeout: (config.rotation.default * 60).toString(),
-              url: `https://newswall.onrender.com/latest/${device.id}`
+              url: `${config.myUrl}/latest/${device.id}`
             }
           }
         })
