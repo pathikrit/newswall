@@ -21,6 +21,9 @@ config = {
   // Directory to cache newspaper downloads
   newsstand: env.isProd ? '/var/lib/data/newsstand' : path.resolve('./.newspapers'),
 
+  // The production site url
+  myUrl: process.env.RENDER_EXTERNAL_URL,
+
   // How many days of papers to keep
   archiveLength: 35,
 
@@ -44,10 +47,11 @@ config = {
     pdf2ImgOpts: {width: 1600}
   },
 
-  // Used to display battery and wifi strength on display; remove this if you don't want it
-  joan: {
-    client_id: process.env.joan_client_id,
-    client_secret: process.env.joan_client_secret
+  // VSS Settings: See https://github.com/pathikrit/node-visionect
+  visionect: {
+    apiServer: 'https://pathikrit-1.dk.visionect.com:8081',
+    apiKey: process.env.visionectApiKey,
+    apiSecret: process.env.visionectApiSecret
   }
 }
 
@@ -57,6 +61,8 @@ Object.defineProperty(Array.prototype, 'random', {
     return this[~~(this.length * Math.random())]
   }
 })
+
+wait = (seconds) => new Promise(resolve => setTimeout(resolve, 1000*seconds))
 
 class db {
   static #data = require('./db.js') // TODO: use a real database
@@ -148,14 +154,45 @@ function scheduleAndRun(cron, job) {
   return job()
 }
 
-/** Fetches the device's wifi and battery levels to overlay on the paper */
-function updateDeviceStatus(joanApiClient) {
-  log.info('Updating status ...')
-  joanApiClient.devices().then(res => {
-    log.debug(res)
-    res.results.forEach(device => {
-      const status = Object.assign(device, {updatedAt: dayjs()}) //TODO: updatedAt should come from joan API
-      if (!db.devices.updateStatus(device.uuid, status)) log.error('Device in API not found in database', device)
+/** Uses VSS API to fetch device WiFi and Battery info AND also sync VSS device info with our configs */
+function setupVisionectUpdates() {
+  console.assert(!env.isTest, "VSS should not be messed around with from tests!")
+  const VisionectApiClient = require('node-visionect')
+  const visionect = new VisionectApiClient(config.visionect)
+
+  if (env.isProd) {
+    db.devices.list().forEach(device => {
+      logApi = (msg, promise) => promise.then(() => console.log(msg, device.id)).catch(err => console.error(`Failed to ${msg.toLowerCase()}`, device.id, err))
+
+      logApi('Update device', visionect.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}}))
+      logApi('Update session', visionect.sessions.patch(device.id, {
+        Backend: {
+            Name: 'HTML',
+            Fields: {
+              ReloadTimeout: (config.rotation.default * 60).toString(),
+              url: `${config.myUrl}/latest/${device.id}`
+            }
+          }
+        })
+      )
+      logApi('Restart session', wait(60).then(() => visionect.sessions.restart(device.id)))
+    })
+  }
+
+  scheduleAndRun(config.refreshCron, () => {
+    log.info('Updating status ...')
+    visionect.devices.get().then(res => {
+      log.debug(res.data)
+      res.data.forEach(device => {
+        const updated = db.devices.updateStatus(device.Uuid, {
+          wifi: parseInt(device.Status?.RSSI),
+          battery: parseInt(device.Status?.Battery),
+          temperature: parseInt(device.Status?.Temperature),
+          updatedAt: dayjs(), //TODO: updatedAt should come from joan API
+          _apiResponse: device
+        })
+        if (!updated) log.error('Device in API not found in database', device)
+      })
     })
   })
 }
@@ -196,30 +233,22 @@ const app = express()
     paper ? res.render('paper', {paper: paper, device: device}) : notFound('Any newspapers')
   })
 // Wire up globals to ejs
-app.locals.dayjs = dayjs
-app.locals.env = env
-app.locals.display = config.display
+app.locals = Object.assign(app.locals, {dayjs: dayjs, env: env, display: config.display})
 
-/** Kick off jobs */
-function kickOffJobs() {
-  // Uncomment this line to trigger a rerender of images on deployment
-  // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
-  // glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
-
-  // Schedule jobs
-  scheduleAndRun(config.refreshCron, downloadAll)
-  if (config.joan?.client_id && config.joan?.client_secret) {
-    const {JoanApiClient} = require('node-joan')
-    const joanApiClient = new JoanApiClient(config.joan.client_id, config.joan.client_secret)
-    scheduleAndRun(config.refreshCron, () => updateDeviceStatus(joanApiClient))
-  } else {
-    log.warn('No Joan API secrets found')
-  }
-}
-
-kickOffJobs()
-// Just export the app if this is a test so test framework can start it
-if (env.isTest)
+// Just download once and export the app if this is a test so test framework can start it
+if (env.isTest) {
+  downloadAll() //TODO: await download
   module.exports = app
-else // Start the server!
-  app.listen(config.port, () => log.info(`Starting server on port ${config.port} ...`))
+} else { // Start the server!
+  app.listen(config.port, () => {
+    log.info(`Started server on port ${config.port} ...`)
+
+    // Uncomment this line to trigger a rerender of images on deployment
+    // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
+    // glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
+
+    // Schedule jobs
+    scheduleAndRun(config.refreshCron, downloadAll)
+    setupVisionectUpdates()
+  })
+}

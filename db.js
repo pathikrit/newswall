@@ -50,6 +50,7 @@ module.exports = {
       id: '2a002800-0c47-3133-3633-333400000000',
       name: 'Hallway Device',
       timezone: 'America/New_York',
+      showFahrenheit: true,
       newspapers: [
         {
           id: 'NYT',
