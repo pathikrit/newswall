@@ -149,20 +149,46 @@ function scheduleAndRun(cron, job) {
   return job()
 }
 
-/** Fetches the device's wifi and battery levels to overlay on the paper */
-function updateDeviceStatus(visionect) {
-  log.info('Updating status ...')
-  visionect.devices.get().then(res => {
-    log.debug(res)
-    res.forEach(device => {
-      const updated = db.devices.updateStatus(device.Uuid, {
-        wifi: parseInt(device.Status?.RSSI),
-        battery: parseInt(device.Status?.Battery),
-        temperature: parseInt(device.Status?.Temperature),
-        updatedAt: dayjs(), //TODO: updatedAt should come from joan API
-        _apiResponse: device
+/** Uses VSS API to fetch device WiFi and Battery info AND also update VSS with our configs */
+function updateDevices() {
+  console.assert(!env.isTest, "VSS should not be messed around with from tests!")
+  const VisionectApiClient = require('node-visionect')
+  const visionect = new VisionectApiClient(config.visionect)
+
+  if (env.isProd) {
+    db.devices.list().forEach(device => {
+      visionect.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
+        .then(() => console.log('Updated device', device.id))
+        .catch(err => console.error('Failed to update device', device.id, err))
+
+      visionect.sessions.patch(device.id, {
+          Backend: {
+            Name: 'HTML',
+            Fields: {
+              ReloadTimeout: (config.rotation.default * 60).toString(),
+              url: `https://newswall.onrender.com/latest/${device.id}`
+            }
+          }
+        })
+        .then(() => console.log('Updated session', device.id))
+        .catch(err => console.error('Failed to update session', device.id, err))
+    })
+  }
+
+  scheduleAndRun(config.refreshCron, () => {
+    log.info('Updating status ...')
+    visionect.devices.get().then(res => {
+      log.debug(res.data)
+      res.data.forEach(device => {
+        const updated = db.devices.updateStatus(device.Uuid, {
+          wifi: parseInt(device.Status?.RSSI),
+          battery: parseInt(device.Status?.Battery),
+          temperature: parseInt(device.Status?.Temperature),
+          updatedAt: dayjs(), //TODO: updatedAt should come from joan API
+          _apiResponse: device
+        })
+        if (!updated) log.error('Device in API not found in database', device)
       })
-      if (!updated) log.error('Device in API not found in database', device)
     })
   })
 }
@@ -203,30 +229,22 @@ const app = express()
     paper ? res.render('paper', {paper: paper, device: device}) : notFound('Any newspapers')
   })
 // Wire up globals to ejs
-app.locals.dayjs = dayjs
-app.locals.env = env
-app.locals.display = config.display
+app.locals = Object.assign(app.locals, {dayjs: dayjs, env: env, display: config.display})
 
-/** Kick off jobs */
-function kickOffJobs() {
-  // Uncomment this line to trigger a rerender of images on deployment
-  // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
-  // glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
-
-  // Schedule jobs
-  scheduleAndRun(config.refreshCron, downloadAll)
-  if (config.visionect?.apiKey && config.visionect?.apiSecret) {
-    const VisionectApiClient = require('node-visionect')
-    const visionect = new VisionectApiClient(config.visionect.apiServer, config.visionect.apiKey, config.visionect.apiSecret)
-    scheduleAndRun(config.refreshCron, () => updateDeviceStatus(visionect))
-  } else {
-    log.warn('No Visionect API key found')
-  }
-}
-
-kickOffJobs()
-// Just export the app if this is a test so test framework can start it
-if (env.isTest)
+// Just download once and export the app if this is a test so test framework can start it
+if (env.isTest) {
+  downloadAll() //TODO: await download
   module.exports = app
-else // Start the server!
-  app.listen(config.port, () => log.info(`Starting server on port ${config.port} ...`))
+} else { // Start the server!
+  app.listen(config.port, () => {
+    log.info(`Started server on port ${config.port} ...`)
+
+    // Uncomment this line to trigger a rerender of images on deployment
+    // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
+    // glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
+
+    // Schedule jobs
+    scheduleAndRun(config.refreshCron, downloadAll)
+    updateDevices()
+  })
+}
