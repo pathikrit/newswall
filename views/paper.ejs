@@ -42,7 +42,7 @@
       <% if (device?.status?.updatedAt) {%><%=dayjs.duration(device.status.updatedAt.diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>:<% } %>
       <% if (device?.status?.wifi) {%><%=device.status.wifi%>% <i class="fa-regular fa-<%=pick(device.status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])%>"></i>&emsp;<% } %>
       <% if (device?.status?.battery) {%><%=device.status.battery%>% <i class="fa-regular fa-rotate-270 fa-battery-<%=pick(device.status.battery, ['empty', 'low', 'quarters', 'half', 'three-quarters', 'full'])%>"></i>&emsp;<% } %>
-      <% if (device?.status?.temperature) {%><%=device.status.temperature%>°C <% } %>
+      <% if (device?.status?.temperature) {%><%= Math.round(device.showFahrenheit ? device.status.temperature*1.8 + 32 : device.status.temperature)%>°<%= device.showFahrenheit ? 'F' : 'C'%><% } %>
     </div>
   </div>
 </body>
