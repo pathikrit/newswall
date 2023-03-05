@@ -2,6 +2,8 @@ const test = require('supertest')
 const appPromise = require('./app')
 const {StatusCodes} = require('http-status-codes')
 
+jest.setTimeout(60*1000) // Initial download might be slow
+
 describe('server', () => {
   shouldServe = (path, bodyCheck) => it(`should serve ${path}`, () => appPromise.then(app => test(app).get(path).expect(StatusCodes.OK).then(response => bodyCheck && bodyCheck(response.res.text))))
   shouldNotServe = path => it(`should not serve ${path}`, () => appPromise.then(app => test(app).get(path).expect(StatusCodes.NOT_FOUND)))

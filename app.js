@@ -63,6 +63,8 @@ Object.defineProperty(Array.prototype, 'random', {
 })
 
 const wait = (seconds) => new Promise(resolve => setTimeout(resolve, 1000*seconds))
+
+// Cartesian product util - see https://stackoverflow.com/questions/12303989/
 const cartesian = (...as) => as.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat())))
 
 class db {
@@ -234,7 +236,7 @@ app.locals = Object.assign(app.locals, {dayjs: dayjs, env: env, display: config.
 
 // Just download right away and then and export the app if this is a test so test framework can start the server
 if (env.isTest) {
-  module.exports = downloadAll().then(_ => app)
+  module.exports = downloadAll().then(() => app)
 } else { // Start the server!
   app.listen(config.port, () => {
     log.info(`Started server on port ${config.port} ...`)
