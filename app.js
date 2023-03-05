@@ -62,6 +62,8 @@ Object.defineProperty(Array.prototype, 'random', {
   }
 })
 
+wait = (seconds) => new Promise(resolve => setTimeout(resolve, 1000*seconds))
+
 class db {
   static #data = require('./db.js') // TODO: use a real database
 
@@ -152,20 +154,19 @@ function scheduleAndRun(cron, job) {
   return job()
 }
 
-/** Uses VSS API to fetch device WiFi and Battery info AND also update VSS with our configs */
-function updateDevices() {
+/** Uses VSS API to fetch device WiFi and Battery info AND also sync VSS device info with our configs */
+function setupVisionectUpdates() {
   console.assert(!env.isTest, "VSS should not be messed around with from tests!")
   const VisionectApiClient = require('node-visionect')
   const visionect = new VisionectApiClient(config.visionect)
 
   if (env.isProd) {
     db.devices.list().forEach(device => {
-      visionect.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
-        .then(() => console.log('Updated device', device.id))
-        .catch(err => console.error('Failed to update device', device.id, err))
+      logApi = (msg, promise) => promise.then(() => console.log(msg, device.id)).catch(err => console.error(`Failed to ${msg.toLowerCase()}`, device.id, err))
 
-      visionect.sessions.patch(device.id, {
-          Backend: {
+      logApi('Update device', visionect.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}}))
+      logApi('Update session', visionect.sessions.patch(device.id, {
+        Backend: {
             Name: 'HTML',
             Fields: {
               ReloadTimeout: (config.rotation.default * 60).toString(),
@@ -173,8 +174,8 @@ function updateDevices() {
             }
           }
         })
-        .then(() => console.log('Updated session', device.id))
-        .catch(err => console.error('Failed to update session', device.id, err))
+      )
+      logApi('Restart session', wait(60).then(() => visionect.sessions.restart(device.id)))
     })
   }
 
@@ -248,6 +249,6 @@ if (env.isTest) {
 
     // Schedule jobs
     scheduleAndRun(config.refreshCron, downloadAll)
-    updateDevices()
+    setupVisionectUpdates()
   })
 }
