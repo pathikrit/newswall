@@ -62,7 +62,8 @@ Object.defineProperty(Array.prototype, 'random', {
   }
 })
 
-wait = (seconds) => new Promise(resolve => setTimeout(resolve, 1000*seconds))
+const wait = (seconds) => new Promise(resolve => setTimeout(resolve, 1000*seconds))
+const cartesian = (...as) => as.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat())))
 
 class db {
   static #data = require('./db.js') // TODO: use a real database
@@ -91,9 +92,7 @@ function downloadAll() {
   })
 
   log.info('Checking for new papers ...')
-  for (const date of recentDays(3))
-    for (const newspaper of db.newspapers.list())
-      download(newspaper, date)
+  return Promise.all(cartesian(recentDays(3), db.newspapers.list()).map(arg => download(arg[1], arg[0])))
 }
 
 /** Download the newspaper for given date */
@@ -105,15 +104,13 @@ function download(newspaper, date) {
   const name = `${newspaper.name} for ${date}`
 
   if (fs.existsSync(pdfPath)) {
-    if (fs.existsSync(pngPath)) log.debug(`Already downloaded ${name}`)
-    else pdfToImage(pdfPath, pngPath)
-    return
+    return fs.existsSync(pngPath) ? Promise.resolve(log.debug(`Already downloaded ${name}`)) : pdfToImage(pdfPath, pngPath)
   }
 
   log.info(`Checking for ${name} ...`)
   const url = newspaper.url(dayjs(date))
   const Downloader = require('nodejs-file-downloader')
-  new Downloader({url: url, directory: directory, fileName: fileName})
+  return new Downloader({url: url, directory: directory, fileName: fileName})
     .download()
     .then(() => pdfToImage(pdfPath, pngPath))
     .catch(error => {
@@ -126,7 +123,7 @@ function download(newspaper, date) {
 
 function pdfToImage(pdf, png) {
   log.info(`Converting ${pdf} to ${png} ...`)
-  require('pdf-img-convert')
+  return require('pdf-img-convert')
     .convert(pdf, config.display.pdf2ImgOpts)
     .then(images => fs.writeFile(png, images[0], () => log.info(`Wrote ${png}`)))
     .catch(error => fs.rm(pdf, () => log.error(`Could not convert ${pdf} to png`, error))) // Corrupted pdf? Delete it
