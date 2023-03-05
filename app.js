@@ -232,10 +232,9 @@ const app = express()
 // Wire up globals to ejs
 app.locals = Object.assign(app.locals, {dayjs: dayjs, env: env, display: config.display})
 
-// Just download once and export the app if this is a test so test framework can start it
+// Just download right away and then and export the app if this is a test so test framework can start the server
 if (env.isTest) {
-  downloadAll() //TODO: await download
-  module.exports = app
+  module.exports = downloadAll().then(_ => app)
 } else { // Start the server!
   app.listen(config.port, () => {
     log.info(`Started server on port ${config.port} ...`)

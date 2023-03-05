@@ -1,17 +1,10 @@
 const test = require('supertest')
-const app = require('./app')
+const appPromise = require('./app')
 const {StatusCodes} = require('http-status-codes')
 
-sleep = seconds => new Promise(resolve => setTimeout(resolve, seconds * 1000))
-
-// Let the server finish downloading newspapers
-let sleepFor = 30
-jest.setTimeout(2*sleepFor*1000)
-beforeAll(async () => await sleep(sleepFor))
-
 describe('server', () => {
-  shouldServe = (path, bodyCheck) => it(`should serve ${path}`, () => test(app).get(path).expect(StatusCodes.OK).then(response => bodyCheck && bodyCheck(response.res.text)))
-  shouldNotServe = path => it(`should not serve ${path}`, () => test(app).get(path).expect(StatusCodes.NOT_FOUND))
+  shouldServe = (path, bodyCheck) => it(`should serve ${path}`, () => appPromise.then(app => test(app).get(path).expect(StatusCodes.OK).then(response => bodyCheck && bodyCheck(response.res.text))))
+  shouldNotServe = path => it(`should not serve ${path}`, () => appPromise.then(app => test(app).get(path).expect(StatusCodes.NOT_FOUND)))
 
   displayingPaper = paper => html => html.includes(`alt="Showing ${paper || ''}`)
 
