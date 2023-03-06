@@ -49,7 +49,6 @@ config = {
 
 //TODO:
 // a: refresh issue
-// b: updateDevice.remote/local
 // c: prod interceptor
 
 // Add a util array.random()
@@ -155,50 +154,56 @@ function setupVisionectUpdates() {
   console.assert(!env.isTest, "VSS should not be messed around with from tests!")
   const VisionectApiClient = require('node-visionect')
   const visionect = new VisionectApiClient(config.visionect)
-
-  if (env.isProd) {
-    db.devices.list().forEach(device => {
+  const sync = {
+    toVss: (device) => {
       logApi = (msg, promise) => promise.then(() => log.info(msg, device.id)).catch(err => log.error(`Failed to ${msg.toLowerCase()}`, device.id, err))
 
       logApi('Update device', visionect.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}}))
-      logApi('Update session', visionect.sessions.patch(device.id, {
-        Backend: {
-            Name: 'HTML',
-            Fields: {
-              ReloadTimeout: Math.ceil(config.refreshInterval.asSeconds()).toString(),
-              url: `${config.myUrl}/latest/${device.id}`
+
+      if (config.myUrl) {
+        logApi('Update session', visionect.sessions.patch(device.id, {
+            Backend: {
+              Name: 'HTML',
+              Fields: {
+                ReloadTimeout: Math.ceil(config.refreshInterval.asSeconds()).toString(),
+                url: `${config.myUrl}/latest/${device.id}`
+              }
             }
+          })
+        )
+      } else {
+        log.warn('Server url not found', config)
+      }
+
+      logApi('Restart session', wait(60).then(() => visionect.sessions.restart(device.id)))
+    },
+
+    toDb: (device) => {
+      int = (x) => _.isInteger(x) && x !== -999 && x !== 999 ? x : undefined
+
+      log.info(`Updating status for deviceId=${device.id} ...`)
+      visionect.devices.get(device.id, dayjs().subtract(config.refreshInterval).unix())
+        .then(res => {
+          const statuses = res.data.map(r => { return {
+            wifi: Math.min(Math.max(2*(100 - int(r.Status?.RSSI)), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
+            battery: int(r.Status?.Battery),
+            temperature: int(r.Status?.Temperature),
+            updatedAt: r?.Date?.length === 6 ? dayjs.utc(r.Date).subtract(1, 'month').toISOString() : undefined,
+          }}).filter(status => status.wifi && status.battery && status.temperature && status.updatedAt)
+          const latest = _.maxBy(statuses, r => dayjs(r.updatedAt))
+          if (latest) {
+            log.debug(`Setting status for deviceId=${device.id} to`, latest)
+            db.devices.updateStatus(device.id, latest)
+          } else {
+            log.warn(`No updates for deviceId=${device.id} in ${config.refreshInterval.humanize()}`, res, statuses)
           }
         })
-      )
-      logApi('Restart session', wait(60).then(() => visionect.sessions.restart(device.id)))
-    })
+        .catch(err => log.error('Did not find device in API', device, err))
+    }
   }
 
-  int = (x) => _.isInteger(x) && x !== -999 && x !== 999 ? x : undefined
-
-  updateDevice = (device) => {
-    log.info(`Updating status for deviceId=${device.id} ...`)
-    visionect.devices.get(device.id, dayjs().subtract(config.refreshInterval).unix())
-      .then(res => {
-        const statuses = res.data.map(r => { return {
-          wifi: Math.min(Math.max(2*(100 - int(r.Status?.RSSI)), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
-          battery: int(r.Status?.Battery),
-          temperature: int(r.Status?.Temperature),
-          updatedAt: r?.Date?.length === 6 ? dayjs.utc(r.Date).subtract(1, 'month').toISOString() : undefined,
-        }}).filter(status => status.wifi && status.battery && status.temperature && status.updatedAt)
-        const latest = _.maxBy(statuses, r => dayjs(r.updatedAt))
-        if (latest) {
-          log.debug(`Setting status for deviceId=${device.id} to`, latest)
-          db.devices.updateStatus(device.id, latest)
-        } else {
-          log.warn(`No updates for deviceId=${device.id} in ${config.refreshInterval.humanize()}`, res, statuses)
-        }
-      })
-      .catch(err => log.error('Did not find device in API', device, err))
-  }
-
-  scheduleAndRun(() => db.devices.list().forEach(updateDevice))
+  if (env.isProd) db.devices.list().forEach(sync.toVss)
+  scheduleAndRun(() => db.devices.list().forEach(sync.toDb))
 }
 
 /** Setup the express server */
