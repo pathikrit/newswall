@@ -26,20 +26,10 @@ config = {
   myUrl: process.env.RENDER_EXTERNAL_URL,
 
   // How many days of papers to keep
-  archiveLength: 35, //TODO: Use dayjs.duration
+  archiveLength: 35,
 
   // Every hour check for new papers and update device statuses
-  refreshCron: '0 * * * *',
-  refreshInterval: dayjs.duration({ hours: 1 }), //TODO: replace refreshCron and rotation.default with this
-
-  // Settings for rotating papers in the frontend
-  rotation: {
-    // By default, rotate every 60 mins
-    default: 60,
-
-    // In non-prod, 10x speedup for easier debugging
-    speedUp: env.isProd ? 1 : 10
-  },
+  refreshInterval: dayjs.duration(env.isProd ? { hours: 1 } : {minutes: 5}),
 
   // Although the Visionect 32-inch e-ink display is 2560x1440 we choose a slightly bigger width of 1600px when converting from pdf to png
   // since it makes it easier to zoom/crop useless white margins around the edges of the newspapers
@@ -56,6 +46,11 @@ config = {
     apiSecret: process.env.visionectApiSecret
   }
 }
+
+//TODO:
+// a: refresh issue
+// b: updateDevice.remote/local
+// c: prod interceptor
 
 // Add a util array.random()
 Object.defineProperty(Array.prototype, 'random', {
@@ -143,15 +138,15 @@ function nextPaper(currentDevice, currentPaper) {
     // Find something that is not current or a random one
     const id = ids.filter(id => currentPaper && id !== currentPaper).random() || ids.random()
     const paper = db.newspapers.list(id)
-    const displayFor = (currentDevice?.newspapers?.find(p => p.id === paper.id)?.displayFor || config.rotation.default)/config.rotation.speedUp
+    const displayFor = currentDevice?.newspapers?.find(p => p.id === paper.id)?.displayFor || config.refreshInterval.asMinutes()
     if (paper) return Object.assign(paper, {date: date, displayFor: displayFor})
     if (id) log.error(`Unknown paper found: ${id}`)
   }
 }
 
 /** Schedule the job (and kick one off right now) */
-function scheduleAndRun(cron, job) {
-  require('node-schedule').scheduleJob(cron, job)
+function scheduleAndRun(job) {
+  setTimeout(job, config.refreshInterval.asMilliseconds())
   return job()
 }
 
@@ -170,7 +165,7 @@ function setupVisionectUpdates() {
         Backend: {
             Name: 'HTML',
             Fields: {
-              ReloadTimeout: (config.rotation.default * 60).toString(),
+              ReloadTimeout: Math.ceil(config.refreshInterval.asSeconds()).toString(),
               url: `${config.myUrl}/latest/${device.id}`
             }
           }
@@ -183,24 +178,27 @@ function setupVisionectUpdates() {
   int = (x) => _.isInteger(x) && x !== -999 && x !== 999 ? x : undefined
 
   updateDevice = (device) => {
-    log.info(`Updating status for ${device.id} ...`)
+    log.info(`Updating status for deviceId=${device.id} ...`)
     visionect.devices.get(device.id, dayjs().subtract(config.refreshInterval).unix())
       .then(res => {
         const statuses = res.data.map(r => { return {
           wifi: Math.min(Math.max(2*(100 - int(r.Status?.RSSI)), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
           battery: int(r.Status?.Battery),
           temperature: int(r.Status?.Temperature),
-          updatedAt: r?.Date?.length === 6 ? dayjs.utc(r.Date).subtract(1, 'month') : undefined,
+          updatedAt: r?.Date?.length === 6 ? dayjs.utc(r.Date).subtract(1, 'month').toISOString() : undefined,
         }}).filter(status => status.wifi && status.battery && status.temperature && status.updatedAt)
-        log.debug(`Recent statuses for ${device.id}`, statuses)
-        const latest = _.maxBy(statuses, r => r.updatedAt)
-        if (latest) db.devices.updateStatus(device.id, latest)
-        else log.warn(`No updates for deviceId=${device.id} in ${config.refreshInterval.humanize()}`, res)
+        const latest = _.maxBy(statuses, r => dayjs(r.updatedAt))
+        if (latest) {
+          log.debug(`Setting status for deviceId=${device.id} to`, latest)
+          db.devices.updateStatus(device.id, latest)
+        } else {
+          log.warn(`No updates for deviceId=${device.id} in ${config.refreshInterval.humanize()}`, res, statuses)
+        }
       })
       .catch(err => log.error('Did not find device in API', device, err))
   }
 
-  scheduleAndRun(config.refreshCron, () => db.devices.list().forEach(updateDevice))
+  scheduleAndRun(() => db.devices.list().forEach(updateDevice))
 }
 
 /** Setup the express server */
@@ -246,14 +244,14 @@ if (env.isTest) {
   module.exports = downloadAll().then(() => app)
 } else { // Start the server!
   app.listen(config.port, () => {
-    log.info(`Started server on port ${config.port} ...`)
+    log.info(`Started server on port ${config.port} with refreshInterval = ${config.refreshInterval.humanize()} ...`)
 
     // Uncomment this line to trigger a rerender of images on deployment
     // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
     // glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
 
     // Schedule jobs
-    scheduleAndRun(config.refreshCron, downloadAll)
+    scheduleAndRun(downloadAll)
     setupVisionectUpdates()
   })
 }
