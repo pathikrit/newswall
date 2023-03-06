@@ -7,6 +7,7 @@ const dayjs = require('dayjs')
 const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
+const _ = require('lodash')
 const {StatusCodes} = require('http-status-codes')
 const log = console
 
@@ -25,10 +26,11 @@ config = {
   myUrl: process.env.RENDER_EXTERNAL_URL,
 
   // How many days of papers to keep
-  archiveLength: 35,
+  archiveLength: 35, //TODO: Use dayjs.duration
 
-  // Every hour check for new newspapers
+  // Every hour check for new papers and update device statuses
   refreshCron: '0 * * * *',
+  refreshInterval: dayjs.duration({ hours: 1 }), //TODO: replace refreshCron and rotation.default with this
 
   // Settings for rotating papers in the frontend
   rotation: {
@@ -161,7 +163,7 @@ function setupVisionectUpdates() {
 
   if (env.isProd) {
     db.devices.list().forEach(device => {
-      logApi = (msg, promise) => promise.then(() => console.log(msg, device.id)).catch(err => console.error(`Failed to ${msg.toLowerCase()}`, device.id, err))
+      logApi = (msg, promise) => promise.then(() => log.info(msg, device.id)).catch(err => log.error(`Failed to ${msg.toLowerCase()}`, device.id, err))
 
       logApi('Update device', visionect.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}}))
       logApi('Update session', visionect.sessions.patch(device.id, {
@@ -178,22 +180,27 @@ function setupVisionectUpdates() {
     })
   }
 
-  scheduleAndRun(config.refreshCron, () => {
-    log.info('Updating status ...')
-    visionect.devices.get().then(res => {
-      log.debug(res.data)
-      res.data.forEach(device => {
-        const updated = db.devices.updateStatus(device.Uuid, {
-          wifi: parseInt(device.Status?.RSSI),
-          battery: parseInt(device.Status?.Battery),
-          temperature: parseInt(device.Status?.Temperature),
-          updatedAt: dayjs(), //TODO: updatedAt should come from joan API
-          _apiResponse: device
-        })
-        if (!updated) log.error('Device in API not found in database', device)
+  int = (x) => _.isInteger(x) && x !== -999 && x !== 999 ? x : undefined
+
+  updateDevice = (device) => {
+    log.info(`Updating status for ${device.id} ...`)
+    visionect.devices.get(device.id, dayjs().subtract(config.refreshInterval).unix())
+      .then(res => {
+        const statuses = res.data.map(r => { return {
+          wifi: Math.min(Math.max(2*(100 - int(r.Status?.RSSI)), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
+          battery: int(r.Status?.Battery),
+          temperature: int(r.Status?.Temperature),
+          updatedAt: r?.Date?.length === 6 ? dayjs.utc(r.Date).subtract(1, 'month') : undefined,
+        }}).filter(status => status.wifi && status.battery && status.temperature && status.updatedAt)
+        log.debug(`Recent statuses for ${device.id}`, statuses)
+        const latest = _.maxBy(statuses, r => r.updatedAt)
+        if (latest) db.devices.updateStatus(device.id, latest)
+        else log.warn(`No updates for deviceId=${device.id} in ${config.refreshInterval.humanize()}`, res)
       })
-    })
-  })
+      .catch(err => log.error('Did not find device in API', device, err))
+  }
+
+  scheduleAndRun(config.refreshCron, () => db.devices.list().forEach(updateDevice))
 }
 
 /** Setup the express server */
@@ -228,7 +235,7 @@ const app = express()
       paper = nextPaper(null, req.query.prev)
     }
 
-    log.info(reqInfo, `; Next=${paper?.name} for ${paper?.date}; Device=${device?.name}`)
+    log.info(reqInfo, `; Next=[${paper?.name} for ${paper?.date}]; Device=[${device?.name}]`)
     paper ? res.render('paper', {paper: paper, device: device}) : notFound('Any newspapers')
   })
 // Wire up globals to ejs
