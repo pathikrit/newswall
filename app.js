@@ -49,14 +49,6 @@ config = {
   }
 }
 
-//TODO:
-// 1: refresh issue
-
-// Add a util array.random()
-Object.defineProperty(Array.prototype, 'random', {
-  value: function () {return this[~~(this.length * Math.random())]}
-})
-
 const wait = (seconds) => new Promise(resolve => setTimeout(resolve, 1000*seconds))
 
 class db {
@@ -129,7 +121,7 @@ const nextPaper = (currentDevice, currentPaper) => {
     const ids = glob.sync(globExpr).map(image => path.parse(image).name)
     if (ids.length === 0) continue
     // Find something that is not current or a random one
-    const id = ids.filter(id => currentPaper && id !== currentPaper).random() || ids.random()
+    const id = ids.length === 1 ? ids[0] : _.sample(ids.filter(id => !currentPaper || id !== currentPaper))
     const paper = db.newspapers.list(id)
     const displayFor = currentDevice?.newspapers?.find(p => p.id === paper.id)?.displayFor || config.refreshInterval.asMinutes()
     if (paper) return Object.assign(paper, {date: date, displayFor: displayFor})
@@ -146,7 +138,6 @@ const scheduleAndRun = (job) => {
 
 /** Uses VSS API to fetch device WiFi and Battery info AND also sync VSS device info with our configs */
 const setupVisionectUpdates = (visionect) => {
-  console.assert(!env.isTest, "VSS should not be messed around with from tests!")
   visionect.http.interceptors.request.use(req => {
     console.assert(!env.isTest, "VSS should not be messed around from tests")
     console.assert(env.isProd || req.method.toUpperCase() === 'GET', 'Cannot make non-GET calls from non-prod env')
