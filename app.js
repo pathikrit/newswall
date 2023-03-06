@@ -4,6 +4,7 @@ const dayjs = require('dayjs')
   .extend(require('dayjs/plugin/relativeTime'))
   .extend(require('dayjs/plugin/utc'))
   .extend(require('dayjs/plugin/timezone'))
+  .extend(require('dayjs/plugin/arraySupport'))
 const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
@@ -53,9 +54,7 @@ config = {
 
 // Add a util array.random()
 Object.defineProperty(Array.prototype, 'random', {
-  value: function () {
-    return this[~~(this.length * Math.random())]
-  }
+  value: function () {return this[~~(this.length * Math.random())]}
 })
 
 const wait = (seconds) => new Promise(resolve => setTimeout(resolve, 1000*seconds))
@@ -75,12 +74,10 @@ class db {
 }
 
 /** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC+14 */
-function recentDays(n, timezone = 'Etc/GMT-14') {
-  return Array.from(Array(n).keys()).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
-}
+const recentDays = (n, timezone = 'Etc/GMT-14')  => Array.from(Array(n).keys()).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
 
 /** Downloads all newspapers for all recent days; trashes old ones */
-function downloadAll() {
+const downloadAll = () => {
   // Delete old stuff
   glob(path.join(config.newsstand, `!(${recentDays(config.archiveLength).join('|')})`), (err, dirs) => {
     dirs.forEach(dir => fs.rm(dir, {force: true, recursive: true}, () => log.info(`Deleted old files: ${dir}`)))
@@ -91,7 +88,7 @@ function downloadAll() {
 }
 
 /** Download the newspaper for given date */
-function download(newspaper, date) {
+const download = (newspaper, date) => {
   const directory = path.join(config.newsstand, date)
   const fileName = `${newspaper.id}.pdf`
   const pdfPath = path.join(directory, fileName)
@@ -116,7 +113,7 @@ function download(newspaper, date) {
     })
 }
 
-function pdfToImage(pdf, png) {
+const pdfToImage = (pdf, png) => {
   log.info(`Converting ${pdf} to ${png} ...`)
   return require('pdf-img-convert')
     .convert(pdf, config.display.pdf2ImgOpts)
@@ -125,7 +122,7 @@ function pdfToImage(pdf, png) {
 }
 
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
-function nextPaper(currentDevice, currentPaper) {
+const nextPaper = (currentDevice, currentPaper) => {
   const searchTerm = currentDevice?.newspapers?.length > 0 ? (currentDevice.newspapers.length === 1 ? currentDevice.newspapers[0].id : `{${currentDevice.newspapers.map(p => p.id).join(',')}}`) : '*'
   for (const date of recentDays(3, currentDevice?.timezone)) {
     const globExpr = path.join(config.newsstand, date, `${searchTerm}.png`)
@@ -141,17 +138,15 @@ function nextPaper(currentDevice, currentPaper) {
 }
 
 /** Schedule the job (and kick one off right now) */
-function scheduleAndRun(job) {
+const scheduleAndRun = (job) => {
   if (env.isTest) log.debug('Skipping job scheduling in tests')
   else setInterval(job, config.refreshInterval.asMilliseconds())
   return job()
 }
 
 /** Uses VSS API to fetch device WiFi and Battery info AND also sync VSS device info with our configs */
-function setupVisionectUpdates() {
+const setupVisionectUpdates = (visionect) => {
   console.assert(!env.isTest, "VSS should not be messed around with from tests!")
-  const VisionectApiClient = require('node-visionect')
-  const visionect = new VisionectApiClient(config.visionect)
   visionect.http.interceptors.request.use(req => {
     console.assert(!env.isTest, "VSS should not be messed around from tests")
     console.assert(env.isProd || req.method.toUpperCase() === 'GET', 'Cannot make non-GET calls from non-prod env')
@@ -256,5 +251,8 @@ module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.l
   // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
   // glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
 
-  setupVisionectUpdates()
+  if (config.visionect) {
+    const VisionectApiClient = require('node-visionect')
+    setupVisionectUpdates(new VisionectApiClient(config.visionect))
+  }
 }))
