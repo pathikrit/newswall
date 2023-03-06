@@ -48,8 +48,8 @@ config = {
 }
 
 //TODO:
-// a: refresh issue
-// c: prod interceptor
+// 1: refresh issue
+// 3: itertools.product
 
 // Add a util array.random()
 Object.defineProperty(Array.prototype, 'random', {
@@ -145,7 +145,8 @@ function nextPaper(currentDevice, currentPaper) {
 
 /** Schedule the job (and kick one off right now) */
 function scheduleAndRun(job) {
-  setTimeout(job, config.refreshInterval.asMilliseconds())
+  if (env.isTest) log.debug('Skipping job scheduling in tests')
+  else setInterval(job, config.refreshInterval.asMilliseconds())
   return job()
 }
 
@@ -154,6 +155,12 @@ function setupVisionectUpdates() {
   console.assert(!env.isTest, "VSS should not be messed around with from tests!")
   const VisionectApiClient = require('node-visionect')
   const visionect = new VisionectApiClient(config.visionect)
+  visionect.http.interceptors.request.use(req => {
+    console.assert(!env.isTest, "VSS should not be messed around from tests")
+    console.assert(env.isProd || req.method.toUpperCase() === 'GET', 'Cannot make non-GET calls from non-prod env')
+    return req
+  })
+
   const sync = {
     toVss: (device) => {
       logApi = (msg, promise) => promise.then(() => log.info(msg, device.id)).catch(err => log.error(`Failed to ${msg.toLowerCase()}`, device.id, err))
@@ -203,7 +210,7 @@ function setupVisionectUpdates() {
   }
 
   if (env.isProd) db.devices.list().forEach(sync.toVss)
-  scheduleAndRun(() => db.devices.list().forEach(sync.toDb))
+  return scheduleAndRun(() => db.devices.list().forEach(sync.toDb))
 }
 
 /** Setup the express server */
@@ -244,19 +251,13 @@ const app = express()
 // Wire up globals to ejs
 app.locals = Object.assign(app.locals, {dayjs: dayjs, env: env, display: config.display})
 
-// Just download right away and then and export the app if this is a test so test framework can start the server
-if (env.isTest) {
-  module.exports = downloadAll().then(() => app)
-} else { // Start the server!
-  app.listen(config.port, () => {
-    log.info(`Started server on port ${config.port} with refreshInterval = ${config.refreshInterval.humanize()} ...`)
+// Kickoff download and export the app if this is a test so test framework can start the server else we start it ourselves
+module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.listen(config.port, () => {
+  log.info(`Started server on port ${config.port} with refreshInterval = ${config.refreshInterval.humanize()} ...`)
 
-    // Uncomment this line to trigger a rerender of images on deployment
-    // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
-    // glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
+  // Uncomment this line to trigger a rerender of images on deployment
+  // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
+  // glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
 
-    // Schedule jobs
-    scheduleAndRun(downloadAll)
-    setupVisionectUpdates()
-  })
-}
+  setupVisionectUpdates()
+}))
