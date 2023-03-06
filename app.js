@@ -7,6 +7,7 @@ const dayjs = require('dayjs')
 const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
+require('lodash.product')
 const _ = require('lodash')
 const {StatusCodes} = require('http-status-codes')
 const log = console
@@ -49,7 +50,6 @@ config = {
 
 //TODO:
 // 1: refresh issue
-// 3: itertools.product
 
 // Add a util array.random()
 Object.defineProperty(Array.prototype, 'random', {
@@ -59,9 +59,6 @@ Object.defineProperty(Array.prototype, 'random', {
 })
 
 const wait = (seconds) => new Promise(resolve => setTimeout(resolve, 1000*seconds))
-
-// Cartesian product util - see https://stackoverflow.com/questions/12303989/
-const cartesian = (...as) => as.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat())))
 
 class db {
   static #data = require('./db.js') // TODO: use a real database
@@ -90,7 +87,7 @@ function downloadAll() {
   })
 
   log.info('Checking for new papers ...')
-  return Promise.all(cartesian(recentDays(3), db.newspapers.list()).map(arg => download(arg[1], arg[0])))
+  return Promise.all(_.product(recentDays(3), db.newspapers.list()).map(arg => download(arg[1], arg[0])))
 }
 
 /** Download the newspaper for given date */

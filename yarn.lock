@@ -2167,6 +2167,11 @@ locate-path@^5.0.0:
   dependencies:
     p-locate "^4.1.0"
 
+lodash.product@^18.10.0:
+  version "18.10.0"
+  resolved "https://registry.yarnpkg.com/lodash.product/-/lodash.product-18.10.0.tgz#113e6d63a99e31530ff0f70788c5a21450fab5c8"
+  integrity sha512-QyJXtayg223OlQUpgeD0xrWnQ/5LrDmAIjTeEZm1jZdQs2laQV5OCsOxo9FmC3TQx/CGOqRuNWyyHuKF2GMGBA==
+
 lodash@^4.17.21:
   version "4.17.21"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
