@@ -139,39 +139,36 @@ const scheduleAndRun = (job) => {
 /** Uses VSS API to fetch device WiFi and Battery info AND also sync VSS device info with our configs */
 const setupVisionectUpdates = (visionect) => {
   visionect.http.interceptors.request.use(req => {
-    console.assert(!env.isTest, "VSS should not be messed around from tests")
+    console.assert(!env.isTest, 'VSS should not be messed around from tests')
     console.assert(env.isProd || req.method.toUpperCase() === 'GET', 'Cannot make non-GET calls from non-prod env')
     return req
   })
 
   const sync = {
     toVss: (device) => {
-      logApi = (msg, promise) => promise.then(() => log.info(msg, device.id)).catch(err => log.error(`Failed to ${msg.toLowerCase()}`, device.id, err))
+      log.info(`Syncing deviceId=${device.id} from DB to VSS ...`)
+      logApi = (msg, promise) => promise
+        .then(() => log.info(`${msg} id = `, device.id))
+        .catch(err => log.error(`Failed to ${msg.toLowerCase().replace('ed ', '')} id = `, device.id, err))
 
-      logApi('Update device', visionect.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}}))
+      logApi('Updated device', visionect.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}}))
 
       if (config.myUrl) {
-        logApi('Update session', visionect.sessions.patch(device.id, {
-            Backend: {
-              Name: 'HTML',
-              Fields: {
-                ReloadTimeout: Math.ceil(config.refreshInterval.asSeconds()).toString(),
-                url: `${config.myUrl}/latest/${device.id}`
-              }
-            }
-          })
+        logApi(
+          'Updated session',
+          visionect.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
         )
       } else {
         log.warn('Server url not found', config)
       }
 
-      logApi('Restart session', wait(60).then(() => visionect.sessions.restart(device.id)))
+      logApi('Restarted session', wait(60).then(() => visionect.sessions.restart(device.id)))
     },
 
     toDb: (device) => {
       int = (x) => _.isInteger(x) && x !== -999 && x !== 999 ? x : undefined
 
-      log.info(`Updating status for deviceId=${device.id} ...`)
+      log.info(`Syncing deviceId=${device.id} from VSS to DB ...`)
       visionect.devices.get(device.id, dayjs().subtract(config.refreshInterval).unix())
         .then(res => {
           const statuses = res.data.map(r => { return {
@@ -182,13 +179,13 @@ const setupVisionectUpdates = (visionect) => {
           }}).filter(status => status.wifi && status.battery && status.temperature && status.updatedAt)
           const latest = _.maxBy(statuses, r => dayjs(r.updatedAt))
           if (latest) {
-            log.debug(`Setting status for deviceId=${device.id} to`, latest)
+            log.debug(`Updating db status for deviceId=${device.id} to`, latest)
             db.devices.updateStatus(device.id, latest)
           } else {
-            log.warn(`No updates for deviceId=${device.id} in ${config.refreshInterval.humanize()}`, res, statuses)
+            log.warn(`No recent status for deviceId=${device.id} in ${config.refreshInterval.humanize()}`, res, statuses)
           }
         })
-        .catch(err => log.error('Did not find device in API', device, err))
+        .catch(err => log.error('Error retrieving status for device = ', device, err))
     }
   }
 
