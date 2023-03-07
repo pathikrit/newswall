@@ -139,53 +139,47 @@ const scheduleAndRun = (job) => {
 /** Uses VSS API to fetch device WiFi and Battery info AND also sync VSS device info with our configs */
 const setupVisionectUpdates = (visionect) => {
   visionect.http.interceptors.request.use(req => {
+    req.method = req.method.toUpperCase()
     console.assert(!env.isTest, 'VSS should not be messed around from tests')
-    console.assert(env.isProd || req.method.toUpperCase() === 'GET', 'Cannot make non-GET calls from non-prod env')
+    console.assert(env.isProd || req.method === 'GET', 'Cannot make non-GET calls from non-prod env')
     return req
-  })
+  }, (err) => log.error('VSS request failure', err))
+
+  visionect.http.interceptors.response.use(res => {
+    log.debug('VSS response:', res.config.method, res.config.url, res.config.params, res.data)
+    return res
+  }, (err) => log.error('VSS response failure', err))
 
   const sync = {
     toVss: (device) => {
       log.info(`Syncing deviceId=${device.id} from DB to VSS ...`)
-      logApi = (msg, promise) => promise
-        .then(() => log.info(`${msg} id = `, device.id))
-        .catch(err => log.error(`Failed to ${msg.toLowerCase().replace('ed ', '')} id = `, device.id, err))
+      visionect.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
 
-      logApi('Updated device', visionect.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}}))
+      if (config.myUrl) visionect.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: 0, url: `${config.myUrl}/latest/${device.id}`}}})
+      else log.warn('Server url not found', config)
 
-      if (config.myUrl) {
-        logApi(
-          'Updated session',
-          visionect.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
-        )
-      } else {
-        log.warn('Server url not found', config)
-      }
-
-      logApi('Restarted session', wait(60).then(() => visionect.sessions.restart(device.id)))
+      wait(60).then(() => visionect.sessions.restart(device.id))
     },
 
     toDb: (device) => {
       int = (x) => _.isInteger(x) && x !== -999 && x !== 999 ? x : undefined
 
       log.info(`Syncing deviceId=${device.id} from VSS to DB ...`)
-      visionect.devices.get(device.id, dayjs().subtract(config.refreshInterval).unix())
-        .then(res => {
-          const statuses = res.data.map(r => { return {
-            wifi: Math.min(Math.max(2*(100 - int(r.Status?.RSSI)), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
-            battery: int(r.Status?.Battery),
-            temperature: int(r.Status?.Temperature),
-            updatedAt: r?.Date?.length === 6 ? dayjs.utc(r.Date).subtract(1, 'month').toISOString() : undefined,
-          }}).filter(status => status.wifi && status.battery && status.temperature && status.updatedAt)
-          const latest = _.maxBy(statuses, r => dayjs(r.updatedAt))
-          if (latest) {
-            log.debug(`Updating db status for deviceId=${device.id} to`, latest)
-            db.devices.updateStatus(device.id, latest)
-          } else {
-            log.warn(`No recent status for deviceId=${device.id} in ${config.refreshInterval.humanize()}`, res, statuses)
-          }
-        })
-        .catch(err => log.error('Error retrieving status for device = ', device, err))
+      visionect.devices.get(device.id, dayjs().subtract(config.refreshInterval).unix()).then(res => {
+        const statuses = res.data.map(r => { return {
+          wifi: Math.min(Math.max(2*(100 - int(r.Status?.RSSI)), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
+          battery: int(r.Status?.Battery),
+          temperature: int(r.Status?.Temperature),
+          updatedAt: r?.Date?.length === 6 ? dayjs.utc(r.Date).subtract(1, 'month').toISOString() : undefined,
+        }}).filter(status => status.wifi && status.battery && status.temperature && status.updatedAt)
+        const latest = _.maxBy(statuses, r => dayjs(r.updatedAt))
+        if (latest) {
+          log.debug(`Updating db status for deviceId=${device.id} to`, latest)
+          db.devices.updateStatus(device.id, latest)
+        } else {
+          log.warn(`No recent status for deviceId=${device.id} in ${config.refreshInterval.humanize()}`, res, statuses)
+        }
+      })
     }
   }
 
