@@ -29,4 +29,4 @@ made a [custom frame](https://photos.app.goo.gl/SYgRZbz4BgVaxsVg8) for me that n
 that makes it easy to recharge the display without taking the frame off the wall. 
 I have a [little util](https://github.com/pathikrit/node-joan) which uses [their API](https://portal.getjoan.com/api/docs/) to overlay a little battery status on the bottom of the newspaper being shown.
 
-![My Frame](/my_frame.jpg?raw=true)
+![My Frame](https://i.imgur.com/g7IWzEU.jpg)

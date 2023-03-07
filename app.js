@@ -201,7 +201,6 @@ const app = express()
   // Statically serve the archive
   .use('/archive', require('serve-index')(config.newsstand))
   .use('/archive', express.static(config.newsstand))
-  .use('/my', express.static('my_frame.jpg'))
   // Main pages
   .get('/', (req, res) => res.render('index', {db: db}))
   .get('/latest/:deviceId?', (req, res) => {
