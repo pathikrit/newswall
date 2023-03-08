@@ -13,7 +13,7 @@
     "jest": "^29.4.3",
     "lodash": "^4.17.21",
     "lodash.product": "^18.10.0",
-    "node-visionect": "^0.0.4",
+    "node-visionect": "^0.0.6",
     "nodejs-file-downloader": "^4.10.2",
     "pdf-img-convert": "^1.1.1",
     "serve-index": "^1.9.1",

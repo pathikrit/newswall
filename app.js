@@ -137,15 +137,14 @@ const scheduleAndRun = (job) => {
 }
 
 /** Uses VSS API to fetch device WiFi and Battery info AND also sync VSS device info with our configs */
-const setupVisionectUpdates = (visionect) => {
-  visionect.http.interceptors.request.use(req => {
-    req.method = req.method.toUpperCase()
+const setupVisionectUpdates = (vss) => {
+  vss.http.interceptors.request.use(req => {
     console.assert(!env.isTest, 'VSS should not be messed around from tests')
     console.assert(env.isProd || req.method === 'GET', 'Cannot make non-GET calls from non-prod env')
     return req
   }, (err) => log.error('VSS request failure', err))
 
-  visionect.http.interceptors.response.use(res => {
+  vss.http.interceptors.response.use(res => {
     log.debug('VSS response:', res.request.method, res.request.path, res.headers['content-type'] === 'application/json' ? res.data : res.headers['content-type'])
     return res
   }, (err) => log.error('VSS response failure', err))
@@ -153,19 +152,19 @@ const setupVisionectUpdates = (visionect) => {
   const sync = {
     toVss: (device) => {
       log.info(`Syncing deviceId=${device.id} from DB to VSS ...`)
-      visionect.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
+      vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
 
-      if (config.myUrl) visionect.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
+      if (config.myUrl) vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
       else log.warn('Server url not found', config)
 
-      wait(60).then(() => visionect.sessions.restart(device.id))
+      wait(60).then(() => vss.sessions.restart(device.id))
     },
 
     toDb: (device) => {
       int = (x) => _.isInteger(x) && x !== -999 && x !== 999 ? x : undefined
 
       log.info(`Syncing deviceId=${device.id} from VSS to DB ...`)
-      visionect.devices.get(device.id, dayjs().subtract(config.refreshInterval).unix()).then(res => {
+      vss.devices.get(device.id, dayjs().subtract(config.refreshInterval).unix()).then(res => {
         const statuses = res.data.map(r => { return {
           wifi: Math.min(Math.max(2*(100 - int(r.Status?.RSSI)), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
           battery: int(r.Status?.Battery),
