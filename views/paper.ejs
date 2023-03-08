@@ -4,7 +4,7 @@
   <title><%= device?.name || 'Newswall' %></title>
   <link rel="stylesheet" href="https://kit.fontawesome.com/a22be8527e.css" crossorigin="anonymous">
   <%# Refresh this page every displayFor minutes and mark the current item as previous in query param so that we try to pick a different paper next time %>
-<!--  <meta http-equiv="refresh" content="<%=paper.displayFor * 60%>;?prev=<%=paper.id%>">-->
+  <meta http-equiv="refresh" content="<%=paper.displayFor * 60%>;?prev=<%=paper.id%>">
   <style>
     * {
       margin: 0;
@@ -29,10 +29,10 @@
       top: <%=display.height - 2*statusBarFontSize%>px;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
-  <script>
-    $(document).ready(() => $.post('/log', {name: 'okular', okular: window.okular}))
-  </script>
+<!--  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>-->
+<!--  <script>-->
+<!--    $(document).ready(() => $.post('/log', {name: 'okular', okular: window.okular}))-->
+<!--  </script>-->
 </head>
 <body>
   <div class="paper-container">
