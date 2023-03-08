@@ -31,7 +31,7 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
   <script>
-    setTimeout(() => $.post('/log', {name: 'okular', okular: window.okular}), 60*1000)
+    $(document).ready(() => $.post('/log', {name: 'okular', okular: window.okular}))
   </script>
 </head>
 <body>
