@@ -25,7 +25,8 @@ config = {
   newsstand: env.isProd ? '/var/lib/data/newsstand' : path.resolve('./.newspapers'),
 
   // The production site url
-  myUrl: process.env.RENDER_EXTERNAL_URL,
+  // myUrl: process.env.RENDER_EXTERNAL_URL,
+  myUrl: env.isProd ? 'https://framed.news' : undefined,
 
   // How many days of papers to keep
   archiveLength: 35,
