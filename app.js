@@ -146,7 +146,7 @@ const setupVisionectUpdates = (visionect) => {
   }, (err) => log.error('VSS request failure', err))
 
   visionect.http.interceptors.response.use(res => {
-    log.debug('VSS response:', res.config.method, res.config.url, res.config.params, res.data)
+    log.debug('VSS response:', res.request.method, res.request.path, res.headers['content-type'] === 'application/json' ? res.data : res.headers['content-type'])
     return res
   }, (err) => log.error('VSS response failure', err))
 
@@ -155,7 +155,7 @@ const setupVisionectUpdates = (visionect) => {
       log.info(`Syncing deviceId=${device.id} from DB to VSS ...`)
       visionect.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
 
-      if (config.myUrl) visionect.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: 0, url: `${config.myUrl}/latest/${device.id}`}}})
+      if (config.myUrl) visionect.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
       else log.warn('Server url not found', config)
 
       wait(60).then(() => visionect.sessions.restart(device.id))
