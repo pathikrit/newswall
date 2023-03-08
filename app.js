@@ -189,7 +189,10 @@ const setupVisionectUpdates = (vss) => {
 /** Setup the express server */
 const express = require('express')
 const app = express()
+  // Setup middlewares
   .use(require('compression')())
+  .use(express.json()) // for parsing application/json
+  .use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
   .set('view engine', 'ejs')
   // Statically serve the archive
   .use('/archive', require('serve-index')(config.newsstand))
@@ -219,6 +222,10 @@ const app = express()
 
     log.info(reqInfo, `; Next=[${paper?.name} for ${paper?.date}]; Device=[${device?.name}]`)
     paper ? res.render('paper', {paper: paper, device: device}) : notFound('Any newspapers')
+  })
+  .post('/log', (req, res) => {
+    log.info('LOG:', req.body)
+    res.sendStatus(StatusCodes.OK)
   })
 // Wire up globals to ejs
 app.locals = Object.assign(app.locals, {dayjs: dayjs, env: env, display: config.display})
