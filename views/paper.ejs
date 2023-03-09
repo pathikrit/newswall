@@ -40,6 +40,8 @@
         GetReloadTimeout: () => ''
       }
       const telemetry = {
+        nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device.timezone).format('h:mm A')%>',
+        updatedAt: '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>',
         wifi: Math.min(Math.max(2*(100 - this.okular?.RSSI), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
         battery: this.okular?.BatteryLevel,
         temperature: this.okular?.Temperature,
