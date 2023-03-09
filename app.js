@@ -60,8 +60,6 @@ class db {
 
   static devices = {
     list: id => id ? this.#data.devices.find(device => device.id === id) : this.#data.devices,
-
-    updateStatus: (deviceId, status) => Object.assign(db.devices.list(deviceId), {status: status})
   }
 }
 
@@ -200,7 +198,7 @@ const app = express()
     paper ? res.render('paper', {paper: paper, device: device}) : notFound('Any newspapers')
   })
   .post('/log', (req, res) => { //TODO: rm this?
-    log.info('LOG:', req.body)
+    log.info('LOG:', JSON.stringify(req.body))
     res.sendStatus(StatusCodes.OK)
   })
 // Wire up globals to ejs

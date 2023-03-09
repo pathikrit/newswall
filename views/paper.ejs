@@ -31,16 +31,19 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
   <script>
-    <% random = (from, to) => from + Math.floor((to - from) * Math.random()) %>
-    $(document).ready(() => {
-      okular = (typeof okular !== 'undefined') ? okular : {
-        <% if (!env.isProd) {%>
-        RSSI: random(50, 80),
-        BatteryLevel: random(5, 99),
-        Temperature: random(-10, 35),
-        GetReloadTimeout: () => ''
-        <% } %>
-      }
+    random = (from, to) => from + Math.floor((to - from) * Math.random())
+
+    pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
+
+    okular = (typeof okular !== 'undefined') ? okular : {
+      <% if (!env.isProd) { %>
+      RSSI: random(50, 80),
+      BatteryLevel: random(5, 99),
+      Temperature: random(-10, 35),
+      <% } %>
+    }
+
+    updateStatus = (evt) => {
       const telemetry = {
         uuid: okular.session_uuid,
         nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone).format('h:mm A')%>',
@@ -48,26 +51,32 @@
         wifi: Math.min(Math.max(2*(100 - okular.RSSI), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
         battery: okular.BatteryLevel,
         temperature: okular.Temperature,
-        timeout: typeof okular.GetReloadTimeout == 'function' ? okular.GetReloadTimeout() : undefined
+        timeout: typeof okular.GetReloadTimeout == 'function' ? okular.GetReloadTimeout() : undefined,
+        event: JSON.stringify(evt)
       }
+      $('.statusbar').empty()
+      if (telemetry.nextRefresh) $('.statusbar').append(`${telemetry.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
+      if (telemetry.updatedAt) $('.statusbar').append(`${telemetry.updatedAt}: `)
+      if (telemetry.wifi) $('.statusbar').append(`${telemetry.wifi}% <i class="fa-regular fa-${pick(telemetry.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
+      if (telemetry.battery) $('.statusbar').append(`${telemetry.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(telemetry.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}>"></i>&emsp;`)
+      if (telemetry.temperature) $('.statusbar').append(`${Math.round(<%=device.showFahrenheit%> ? telemetry.temperature*1.8 + 32 : telemetry.temperature)}° ${<%=device.showFahrenheit%> ? 'F' : 'C'}`)
       $.post('/log', telemetry)
-    })
+    }
+    document.addEventListener('device-connect', updateStatus, true)
+    $(document).ready(updateStatus)
+
   </script>
 </head>
 <body>
   <div class="paper-container">
     <img src="/archive/<%=paper.date%>/<%=paper.id%>.png" style="transform: scale(<%=paper.scale%>)" alt="Showing <%=paper.id%> for <%=paper.date%>">
-    <div class="statusbar">
-      <%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%> <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;
-      <%
-         // Display next refresh time, WiFi strength and battery level in the bottom left
-         pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
-      %>
-      <% if (device?.status?.updatedAt) {%><%=dayjs.duration(dayjs(device.status.updatedAt).diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>:<% } %>
-      <% if (device?.status?.wifi) {%><%=device.status.wifi%>% <i class="fa-regular fa-<%=pick(device.status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])%>"></i>&emsp;<% } %>
-      <% if (device?.status?.battery) {%><%=device.status.battery%>% <i class="fa-regular fa-rotate-270 fa-battery-<%=pick(device.status.battery, ['empty', 'low', 'quarters', 'half', 'three-quarters', 'full'])%>"></i>&emsp;<% } %>
-      <% if (device?.status?.temperature) {%><%= Math.round(device.showFahrenheit ? device.status.temperature*1.8 + 32 : device.status.temperature)%>°<%= device.showFahrenheit ? 'F' : 'C'%><% } %>
-    </div>
+    <div class="statusbar"></div>
   </div>
 </body>
 </html>
+<!--
+1. Get rid of DB api
+2. FE dayjs
+3. event listener
+4. battery icon
+-->
