@@ -139,8 +139,9 @@ const scheduleAndRun = (job) => {
 /** Uses VSS API to fetch device WiFi and Battery info AND also sync VSS device info with our configs */
 const setupVisionectUpdates = (vss) => {
   vss.http.interceptors.request.use(req => {
+    req.method = req.method.toUpperCase()
     if (env.isTest) return Promise.reject('VSS should not be messed around from tests')
-    if (env.isProd || req.method.toUpperCase() !== 'GET') return Promise.reject(`Cannot make non-GET call (${req.method} ${req.path}) from non-prod env`)
+    if (!env.isProd || req.method !== 'GET') return Promise.reject(`Cannot make non-GET call (${req.method} ${req.path}) from non-prod env`)
     return req
   }, (err) => log.error('VSS request failure', err))
 
