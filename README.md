@@ -1,6 +1,6 @@
 Newswall [![CI](https://github.com/pathikrit/newswall/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/pathikrit/newswall/actions/workflows/ci.yml)
 ---
-Inspired by the [e-ink newspaper](https://github.com/mmicire/nyt2png) project ([HN post](https://news.ycombinator.com/item?id=26611371)),
+Inspired by the [e-ink newspaper](https://github.com/mmicire/nyt2png) project ([HN post](https://news.ycombinator.com/item?id=26611371), [original idea by Max Braun](https://onezero.medium.com/the-morning-paper-revisited-35b407822494)),
 this is a pure node.js port of [graiz/newsprint](https://github.com/graiz/newsprint)
 
 1. Install `yarn` and `node` e.g. using `brew`:
@@ -12,12 +12,14 @@ brew install node yarn
 ```shell
 yarn && node --watch app.js
 ```
-Then open <http://localhost:3000> in your browser.
+Then open <http://localhost:3000> in your browser. You can now point your e-ink display to <http://localhost:3000/latest>
 
 3. Run [tests](/app.test.js):
 ```shell
 yarn test
 ```
+
+Most of the papers come from [The Freedom Forum](https://www.freedomforum.org/todaysfrontpages/) - please consider [supporting](https://www.freedomforum.org/support/) them.
 
 My Setup
 ---
