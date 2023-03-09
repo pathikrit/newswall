@@ -12,6 +12,7 @@ require('lodash.product')
 const _ = require('lodash')
 const {StatusCodes} = require('http-status-codes')
 const log = console
+const db = require('./db.js') // TODO: use a real database
 
 env = {
   isProd: process.env.NODE_ENV === 'production',
@@ -49,22 +50,6 @@ config = {
   }
 }
 
-const wait = (seconds) => new Promise(resolve => setTimeout(resolve, 1000*seconds))
-
-class db {
-  static #data = require('./db.js') // TODO: use a real database
-
-  static newspapers = {
-    list: id => id ? this.#data.newspapers.find(paper => paper.id === id) : this.#data.newspapers
-  }
-
-  static devices = {
-    list: id => id ? this.#data.devices.find(device => device.id === id) : this.#data.devices,
-
-    updateStatus: (deviceId, status) => Object.assign(db.devices.list(deviceId), {status: status})
-  }
-}
-
 /** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC+14 */
 const recentDays = (n, timezone = 'Etc/GMT-14')  => Array.from(Array(n).keys()).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
 
@@ -76,7 +61,7 @@ const downloadAll = () => {
   })
 
   log.info('Checking for new papers ...')
-  return Promise.all(_.product(recentDays(3), db.newspapers.list()).map(arg => download(arg[1], arg[0])))
+  return Promise.all(_.product(recentDays(3), db.newspapers).map(arg => download(arg[1], arg[0])))
 }
 
 /** Download the newspaper for given date */
@@ -122,7 +107,7 @@ const nextPaper = (currentDevice, currentPaper) => {
     if (ids.length === 0) continue
     // Find something that is not current or a random one
     const id = ids.length === 1 ? ids[0] : _.sample(ids.filter(id => !currentPaper || id !== currentPaper))
-    const paper = db.newspapers.list(id)
+    const paper = db.newspapers.find(paper => paper.id === id)
     const displayFor = currentDevice?.newspapers?.find(p => p.id === paper.id)?.displayFor || config.refreshInterval.asMinutes()
     if (paper) return Object.assign(paper, {date: date, displayFor: displayFor})
     if (id) log.error(`Unknown paper found: ${id}`)
@@ -136,54 +121,26 @@ const scheduleAndRun = (job) => {
   return job()
 }
 
-/** Uses VSS API to fetch device WiFi and Battery info AND also sync VSS device info with our configs */
-const setupVisionectUpdates = (vss) => {
+/** Sync device configs to VSS and restart sessions */
+const updateVss = (vss) => {
   vss.http.interceptors.request.use(req => {
     req.method = req.method.toUpperCase()
     if (env.isTest) return Promise.reject('VSS should not be messed around from tests')
-    if (!env.isProd && req.method !== 'GET') return Promise.reject(`Cannot make non-GET call (${req.method} ${req.url} from non-prod env`)
+    if (!env.isProd && req.method !== 'GET') return Promise.reject(`${req.method} ${req.url} BLOCKED (cannot make non-GET call from non-prod env)`)
     return req
   }, (err) => log.error('VSS request failure', err))
 
   vss.http.interceptors.response.use(res => {
     log.debug(res.request.method, res.request.path, res.status)
     return res
-  }, (err) => log.error('VSS response failure', err))
+  }, (err) => log.error(err))
 
-  const sync = {
-    toVss: (device) => {
-      log.info(`Syncing deviceId=${device.id} from DB to VSS ...`)
-      vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
-      if (env.isProd && config.myUrl) {
-        vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
-      }
-      wait(60).then(() => vss.sessions.restart(device.id))
-    },
-
-    toDb: (device) => {
-      int = (x) => _.isInteger(x) && x !== -999 && x !== 999 ? x : undefined
-
-      log.info(`Syncing deviceId=${device.id} from VSS to DB ...`)
-      vss.devices.get(device.id, dayjs().subtract(config.refreshInterval).unix()).then(res => {
-        const statuses = res.data.map(r => { return {
-          wifi: Math.min(Math.max(2*(100 - int(r.Status?.RSSI)), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
-          battery: int(r.Status?.Battery),
-          temperature: int(r.Status?.Temperature),
-          updatedAt: r?.Date?.length === 6 ? dayjs.utc(r.Date).subtract(1, 'month').toISOString() : undefined,
-        }}).filter(status => status.wifi && status.battery && status.temperature && status.updatedAt)
-        const latest = _.maxBy(statuses, r => dayjs(r.updatedAt))
-        if (latest) {
-          log.debug(`Updating db status for deviceId=${device.id} to`, JSON.stringify(latest))
-          db.devices.updateStatus(device.id, latest)
-        } else {
-          log.warn(`No recent status for deviceId=${device.id} in ${config.refreshInterval.humanize()}`, res, statuses)
-        }
-      })
-    }
-  }
-
-  if (env.isProd) db.devices.list().forEach(sync.toVss)
-  return scheduleAndRun(() => db.devices.list().forEach(sync.toDb))
+  db.devices.forEach(device => {
+    log.info(`Syncing deviceId=${device.id} to VSS ...`)
+    vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
+    if (config.myUrl) vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
+    setTimeout(vss.sessions.restart, 60*1000, device.id)
+  })
 }
 
 /** Setup the express server */
@@ -209,7 +166,7 @@ const app = express()
 
     let paper = null, device = null
     if (req.params.deviceId) {
-      device = db.devices.list(req.params.deviceId)
+      device = db.devices.find(device => device.id === req.params.deviceId)
       if (!device) return notFound(`Device Id = ${req.params.deviceId}`)
       paper = nextPaper(device, req.query.prev)
     } else if (req.query.papers) {
@@ -224,7 +181,7 @@ const app = express()
     paper ? res.render('paper', {paper: paper, device: device}) : notFound('Any newspapers')
   })
   .post('/log', (req, res) => { //TODO: rm this?
-    log.info('LOG:', req.body)
+    log.info('LOG:', JSON.stringify(req.body))
     res.sendStatus(StatusCodes.OK)
   })
 // Wire up globals to ejs
@@ -240,6 +197,6 @@ module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.l
 
   if (config.visionect) {
     const VisionectApiClient = require('node-visionect')
-    setupVisionectUpdates(new VisionectApiClient(config.visionect))
+    updateVss(new VisionectApiClient(config.visionect))
   }
 }))

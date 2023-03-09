@@ -33,34 +33,48 @@
   <script>
     random = (from, to) => from + Math.floor((to - from) * Math.random())
 
-    $(document).ready(() => {
-      if (okular) {
-        $.post('/log', {
-          timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
-          uuid: okular.session_uuid,
-          wifi: okular.RSSI,
-          battery: okular.BatteryLevel,
-          temperature: okular.Temperature,
-          event: `Hello ${random(10, 20)}`
-        })
+    pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
+
+    okular = (typeof okular !== 'undefined') ? okular : {
+      <% if (!env.isProd) { %>
+      RSSI: random(40, 80),
+      BatteryLevel: random(5, 99),
+      Temperature: random(-10, 35),
+      <% } %>
+    }
+
+    const telemetry = (event) => {
+      const status = {
+        uuid: okular.session_uuid,
+        nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>',
+        updatedAt: okular.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined,
+        wifi: Math.min(Math.max(2*(100 - okular.RSSI), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
+        battery: okular.BatteryLevel,
+        temperature: okular.Temperature,
+        timeout: typeof okular.GetReloadTimeout == 'function' ? okular.GetReloadTimeout() : undefined,
+        event: event
       }
-    })
+      $.post('/log', status)
+      return status
+    }
+
+    updateStatus = () => {
+      const status = telemetry('update-status')
+      if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
+      if (status.updatedAt) $('.statusbar').append(`${status.updatedAt}: `)
+      if (status.wifi) $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
+      if (status.battery) $('.statusbar').append(`${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`)
+      if (status.temperature) $('.statusbar').append(`${Math.round(<%=device?.showFahrenheit ?? true%> ? status.temperature*1.8 + 32 : status.temperature)}° ${<%=device?.showFahrenheit ?? true%> ? 'F' : 'C'}`)
+    }
+
+    document.addEventListener('device-connect', telemetry, true)
+    $(document).ready(updateStatus)
   </script>
 </head>
 <body>
   <div class="paper-container">
     <img src="/archive/<%=paper.date%>/<%=paper.id%>.png" style="transform: scale(<%=paper.scale%>)" alt="Showing <%=paper.id%> for <%=paper.date%>">
-    <div class="statusbar">
-      <%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%> <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;
-      <%
-         // Display next refresh time, WiFi strength and battery level in the bottom left
-         pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
-      %>
-      <% if (device?.status?.updatedAt) {%><%=dayjs.duration(dayjs(device.status.updatedAt).diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>:<% } %>
-      <% if (device?.status?.wifi) {%><%=device.status.wifi%>% <i class="fa-regular fa-<%=pick(device.status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])%>"></i>&emsp;<% } %>
-      <% if (device?.status?.battery) {%><%=device.status.battery%>% <i class="fa-regular fa-rotate-270 fa-battery-<%=pick(device.status.battery, ['empty', 'low', 'quarters', 'half', 'three-quarters', 'full'])%>"></i>&emsp;<% } %>
-      <% if (device?.status?.temperature) {%><%= Math.round(device.showFahrenheit ? device.status.temperature*1.8 + 32 : device.status.temperature)%>°<%= device.showFahrenheit ? 'F' : 'C'%><% } %>
-    </div>
+    <div class="statusbar"></div>
   </div>
 </body>
 </html>
