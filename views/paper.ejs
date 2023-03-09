@@ -30,9 +30,20 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
-<!--  <script>-->
-<!--    $(document).ready(() => $.post('/log', {name: 'okular', okular: window.okular}))-->
-<!--  </script>-->
+  <script>
+    $(document).ready(() => {
+      if (okular) {
+        $.post('/log', {
+          status: typeof okular['DevicesStatus'] == 'function' ? okular.DevicesStatus() : undefined,
+          timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
+          uuid: okular.session_uuid,
+          wifi: okular.RSSI,
+          battery: okular.BatteryLevel,
+          temperature: okular.Temperature
+        })
+      }
+    })
+  </script>
 </head>
 <body>
   <div class="paper-container">
