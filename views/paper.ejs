@@ -36,7 +36,7 @@
     pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
 
     const telemetry = (event) => {
-      const device = (typeof device !== 'undefined') ? okular : {
+      const o = (typeof okular !== 'undefined') ? okular : {
         <% if (!env.isProd) { %>
         RSSI: random(40, 80),
         BatteryLevel: random(5, 99),
@@ -44,13 +44,13 @@
         <% } %>
       }
       const status = {
-        uuid: device.session_uuid,
+        uuid: o.session_uuid,
         nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>',
-        updatedAt: device.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined,
-        wifi: Math.min(Math.max(2*(100 - device.RSSI), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
-        battery: device.BatteryLevel,
-        temperature: device.Temperature,
-        timeout: typeof device.GetReloadTimeout == 'function' ? device.GetReloadTimeout() : undefined,
+        updatedAt: o.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined,
+        wifi: o.RSSI ? Math.min(Math.max(2*(100 - o.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
+        battery: o.BatteryLevel,
+        temperature: o.Temperature,
+        timeout: typeof o.GetReloadTimeout == 'function' ? o.GetReloadTimeout() : undefined,
         event: event
       }
       $.post('/log', status)
