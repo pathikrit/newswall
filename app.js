@@ -12,6 +12,7 @@ require('lodash.product')
 const _ = require('lodash')
 const {StatusCodes} = require('http-status-codes')
 const log = console
+const db = require('./db.js') // TODO: use a real database
 
 env = {
   isProd: process.env.NODE_ENV === 'production',
@@ -51,18 +52,6 @@ config = {
 
 const wait = (seconds) => new Promise(resolve => setTimeout(resolve, 1000*seconds))
 
-class db {
-  static #data = require('./db.js') // TODO: use a real database
-
-  static newspapers = {
-    list: id => id ? this.#data.newspapers.find(paper => paper.id === id) : this.#data.newspapers
-  }
-
-  static devices = {
-    list: id => id ? this.#data.devices.find(device => device.id === id) : this.#data.devices,
-  }
-}
-
 /** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC+14 */
 const recentDays = (n, timezone = 'Etc/GMT-14')  => Array.from(Array(n).keys()).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
 
@@ -74,7 +63,7 @@ const downloadAll = () => {
   })
 
   log.info('Checking for new papers ...')
-  return Promise.all(_.product(recentDays(3), db.newspapers.list()).map(arg => download(arg[1], arg[0])))
+  return Promise.all(_.product(recentDays(3), db.newspapers).map(arg => download(arg[1], arg[0])))
 }
 
 /** Download the newspaper for given date */
@@ -120,7 +109,7 @@ const nextPaper = (currentDevice, currentPaper) => {
     if (ids.length === 0) continue
     // Find something that is not current or a random one
     const id = ids.length === 1 ? ids[0] : _.sample(ids.filter(id => !currentPaper || id !== currentPaper))
-    const paper = db.newspapers.list(id)
+    const paper = db.newspapers.find(paper => paper.id === id)
     const displayFor = currentDevice?.newspapers?.find(p => p.id === paper.id)?.displayFor || config.refreshInterval.asMinutes()
     if (paper) return Object.assign(paper, {date: date, displayFor: displayFor})
     if (id) log.error(`Unknown paper found: ${id}`)
@@ -157,7 +146,7 @@ const updateVss = (vss) => {
     wait(60).then(() => vss.sessions.restart(device.id))
   }
 
-  return Promise.all(db.devices.list().map(syncToVss))
+  return Promise.all(db.devices.map(syncToVss))
 }
 
 /** Setup the express server */
@@ -183,7 +172,7 @@ const app = express()
 
     let paper = null, device = null
     if (req.params.deviceId) {
-      device = db.devices.list(req.params.deviceId)
+      device = db.devices.find(device => device.id === req.params.deviceId)
       if (!device) return notFound(`Device Id = ${req.params.deviceId}`)
       paper = nextPaper(device, req.query.prev)
     } else if (req.query.papers) {

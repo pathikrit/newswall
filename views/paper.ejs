@@ -46,7 +46,8 @@
     const telemetry = (event) => {
       const telemetry = {
         uuid: okular.session_uuid,
-        nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone).format('h:mm A')%>',
+        debug: '<%=dayjs.tz.guess()%>',
+        nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>',
         updatedAt: okular.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined,
         wifi: Math.min(Math.max(2*(100 - okular.RSSI), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
         battery: okular.BatteryLevel,
@@ -65,7 +66,7 @@
       if (status.updatedAt) $('.statusbar').append(`${status.updatedAt}: `)
       if (status.wifi) $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
       if (status.battery) $('.statusbar').append(`${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}>"></i>&emsp;`)
-      if (status.temperature) $('.statusbar').append(`${Math.round(<%=device.showFahrenheit%> ? status.temperature*1.8 + 32 : status.temperature)}° ${<%=device.showFahrenheit%> ? 'F' : 'C'}`)
+      if (status.temperature) $('.statusbar').append(`${Math.round(<%=device?.showFahrenheit ?? true%> ? status.temperature*1.8 + 32 : status.temperature)}° ${<%=device?.showFahrenheit ?? true%> ? 'F' : 'C'}`)
     }
 
     document.addEventListener('device-connect', telemetry, true)
@@ -79,6 +80,3 @@
   </div>
 </body>
 </html>
-<!--
-1. Get rid of DB api
--->
