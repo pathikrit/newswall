@@ -35,42 +35,38 @@
 
     pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
 
-    okular = (typeof okular !== 'undefined') ? okular : {
-      <% if (!env.isProd) { %>
-      RSSI: random(40, 80),
-      BatteryLevel: random(5, 99),
-      Temperature: random(-10, 35),
-      <% } %>
-    }
-
     const telemetry = (event) => {
-      try {
-        const status = {
-          uuid: okular.session_uuid,
-          nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>',
-          updatedAt: okular.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined,
-          wifi: Math.min(Math.max(2*(100 - okular.RSSI), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
-          battery: okular.BatteryLevel,
-          temperature: okular.Temperature,
-          timeout: typeof okular.GetReloadTimeout == 'function' ? okular.GetReloadTimeout() : undefined,
-          event: event
-        }
-        $.post('/log', status)
-        return status
-      } catch (error) {
-        $.post('/log', {error: error})
+      const device = (typeof device !== 'undefined') ? okular : {
+        <% if (!env.isProd) { %>
+        RSSI: random(40, 80),
+        BatteryLevel: random(5, 99),
+        Temperature: random(-10, 35),
+        <% } %>
       }
+      const status = {
+        uuid: device.session_uuid,
+        nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>',
+        updatedAt: device.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined,
+        wifi: Math.min(Math.max(2*(100 - device.RSSI), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
+        battery: device.BatteryLevel,
+        temperature: device.Temperature,
+        timeout: typeof device.GetReloadTimeout == 'function' ? device.GetReloadTimeout() : undefined,
+        event: event
+      }
+      $.post('/log', status)
+      return status
     }
 
     updateStatus = () => {
       try {
         const status = telemetry('update-status')
+        $('.statusbar').empty()
         if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
         if (status.updatedAt) $('.statusbar').append(`${status.updatedAt}: `)
         if (status.wifi) $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
         if (status.battery) $('.statusbar').append(`${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`)
         if (status.temperature) $('.statusbar').append(`${Math.round(<%=device?.showFahrenheit ?? true%> ? status.temperature*1.8 + 32 : status.temperature)}° ${<%=device?.showFahrenheit ?? true%> ? 'F' : 'C'}`)
-      } catch (err) {
+      } catch (error) {
         $.post('/log', {error: error})
       }
     }
