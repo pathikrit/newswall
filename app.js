@@ -141,7 +141,7 @@ const setupVisionectUpdates = (vss) => {
   vss.http.interceptors.request.use(req => {
     req.method = req.method.toUpperCase()
     if (env.isTest) return Promise.reject('VSS should not be messed around from tests')
-    if (!env.isProd || req.method !== 'GET') return Promise.reject(`Cannot make non-GET call (${req.method} ${req.path}) from non-prod env`)
+    if (!env.isProd && req.method !== 'GET') return Promise.reject(`Cannot make non-GET call (${req.method} ${req.url} from non-prod env`)
     return req
   }, (err) => log.error('VSS request failure', err))
 
@@ -154,7 +154,7 @@ const setupVisionectUpdates = (vss) => {
     toVss: (device) => {
       log.info(`Syncing deviceId=${device.id} from DB to VSS ...`)
       vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
-      if (config.isProd && config.myUrl) {
+      if (env.isProd && config.myUrl) {
         vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
       }
       wait(60).then(() => vss.sessions.restart(device.id))
