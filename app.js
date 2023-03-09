@@ -50,8 +50,6 @@ config = {
   }
 }
 
-const wait = (seconds) => new Promise(resolve => setTimeout(resolve, 1000*seconds))
-
 /** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC+14 */
 const recentDays = (n, timezone = 'Etc/GMT-14')  => Array.from(Array(n).keys()).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
 
@@ -128,25 +126,21 @@ const updateVss = (vss) => {
   vss.http.interceptors.request.use(req => {
     req.method = req.method.toUpperCase()
     if (env.isTest) return Promise.reject('VSS should not be messed around from tests')
-    if (!env.isProd && req.method !== 'GET') return Promise.reject(`Cannot make non-GET call (${req.method} ${req.url}) from non-prod env`)
+    if (!env.isProd && req.method !== 'GET') return Promise.reject(`${req.method} ${req.url} BLOCKED (cannot make non-GET call from non-prod env)`)
     return req
   }, (err) => log.error('VSS request failure', err))
 
   vss.http.interceptors.response.use(res => {
     log.debug(res.request.method, res.request.path, res.status)
     return res
-  }, (err) => log.error('VSS response failure', err))
+  }, (err) => log.error(err))
 
-  const syncToVss = (device) => {
-    log.info(`Syncing deviceId=${device.id} from DB to VSS ...`)
+  db.devices.forEach(device => {
+    log.info(`Syncing deviceId=${device.id} to VSS ...`)
     vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
-    if (config.myUrl) {
-      vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
-    }
-    wait(60).then(() => vss.sessions.restart(device.id))
-  }
-
-  return Promise.all(db.devices.map(syncToVss))
+    if (config.myUrl) vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
+    setTimeout(vss.sessions.restart, 60*1000, device.id)
+  })
 }
 
 /** Setup the express server */
