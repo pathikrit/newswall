@@ -25,8 +25,7 @@ config = {
   newsstand: env.isProd ? '/var/lib/data/newsstand' : path.resolve('./.newspapers'),
 
   // The production site url
-  // myUrl: process.env.RENDER_EXTERNAL_URL,
-  myUrl: env.isProd ? 'https://framed.news' : undefined,
+  myUrl: process.env.RENDER_EXTERNAL_URL,
 
   // How many days of papers to keep
   archiveLength: 35,
@@ -140,13 +139,13 @@ const scheduleAndRun = (job) => {
 /** Uses VSS API to fetch device WiFi and Battery info AND also sync VSS device info with our configs */
 const setupVisionectUpdates = (vss) => {
   vss.http.interceptors.request.use(req => {
-    console.assert(!env.isTest, 'VSS should not be messed around from tests')
-    console.assert(env.isProd || req.method === 'GET', 'Cannot make non-GET calls from non-prod env')
+    if (env.isTest) return Promise.reject('VSS should not be messed around from tests')
+    if (env.isProd || req.method.toUpperCase() !== 'GET') return Promise.reject(`Cannot make non-GET call (${req.method} ${req.path}) from non-prod env`)
     return req
   }, (err) => log.error('VSS request failure', err))
 
   vss.http.interceptors.response.use(res => {
-    log.debug('VSS response:', res.request.method, res.request.path, res.headers['content-type'] === 'application/json' ? res.data : res.headers['content-type'])
+    log.debug(res.request.method, res.request.path, res.status)
     return res
   }, (err) => log.error('VSS response failure', err))
 
@@ -154,10 +153,9 @@ const setupVisionectUpdates = (vss) => {
     toVss: (device) => {
       log.info(`Syncing deviceId=${device.id} from DB to VSS ...`)
       vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
-
-      if (config.myUrl) vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
-      else log.warn('Server url not found', config)
-
+      if (config.isProd && config.myUrl) {
+        vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
+      }
       wait(60).then(() => vss.sessions.restart(device.id))
     },
 
@@ -174,7 +172,7 @@ const setupVisionectUpdates = (vss) => {
         }}).filter(status => status.wifi && status.battery && status.temperature && status.updatedAt)
         const latest = _.maxBy(statuses, r => dayjs(r.updatedAt))
         if (latest) {
-          log.debug(`Updating db status for deviceId=${device.id} to`, latest)
+          log.debug(`Updating db status for deviceId=${device.id} to`, JSON.stringify(latest))
           db.devices.updateStatus(device.id, latest)
         } else {
           log.warn(`No recent status for deviceId=${device.id} in ${config.refreshInterval.humanize()}`, res, statuses)
@@ -224,7 +222,7 @@ const app = express()
     log.info(reqInfo, `; Next=[${paper?.name} for ${paper?.date}]; Device=[${device?.name}]`)
     paper ? res.render('paper', {paper: paper, device: device}) : notFound('Any newspapers')
   })
-  .post('/log', (req, res) => {
+  .post('/log', (req, res) => { //TODO: rm this?
     log.info('LOG:', req.body)
     res.sendStatus(StatusCodes.OK)
   })
