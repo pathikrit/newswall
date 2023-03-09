@@ -136,12 +136,12 @@ const scheduleAndRun = (job) => {
   return job()
 }
 
-/** Uses VSS API to fetch device WiFi and Battery info AND also sync VSS device info with our configs */
-const setupVisionectUpdates = (vss) => {
+/** Sync device configs to VSS and restart sessions */
+const updateVss = (vss) => {
   vss.http.interceptors.request.use(req => {
     req.method = req.method.toUpperCase()
     if (env.isTest) return Promise.reject('VSS should not be messed around from tests')
-    if (!env.isProd && req.method !== 'GET') return Promise.reject(`Cannot make non-GET call (${req.method} ${req.url} from non-prod env`)
+    if (!env.isProd && req.method !== 'GET') return Promise.reject(`Cannot make non-GET call (${req.method} ${req.url}) from non-prod env`)
     return req
   }, (err) => log.error('VSS request failure', err))
 
@@ -150,40 +150,16 @@ const setupVisionectUpdates = (vss) => {
     return res
   }, (err) => log.error('VSS response failure', err))
 
-  const sync = {
-    toVss: (device) => {
-      log.info(`Syncing deviceId=${device.id} from DB to VSS ...`)
-      vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
-      if (env.isProd && config.myUrl) {
-        vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
-      }
-      wait(60).then(() => vss.sessions.restart(device.id))
-    },
-
-    toDb: (device) => {
-      int = (x) => _.isInteger(x) && x !== -999 && x !== 999 ? x : undefined
-
-      log.info(`Syncing deviceId=${device.id} from VSS to DB ...`)
-      vss.devices.get(device.id, dayjs().subtract(config.refreshInterval).unix()).then(res => {
-        const statuses = res.data.map(r => { return {
-          wifi: Math.min(Math.max(2*(100 - int(r.Status?.RSSI)), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
-          battery: int(r.Status?.Battery),
-          temperature: int(r.Status?.Temperature),
-          updatedAt: r?.Date?.length === 6 ? dayjs.utc(r.Date).subtract(1, 'month').toISOString() : undefined,
-        }}).filter(status => status.wifi && status.battery && status.temperature && status.updatedAt)
-        const latest = _.maxBy(statuses, r => dayjs(r.updatedAt))
-        if (latest) {
-          log.debug(`Updating db status for deviceId=${device.id} to`, JSON.stringify(latest))
-          db.devices.updateStatus(device.id, latest)
-        } else {
-          log.warn(`No recent status for deviceId=${device.id} in ${config.refreshInterval.humanize()}`, res, statuses)
-        }
-      })
+  const syncToVss = (device) => {
+    log.info(`Syncing deviceId=${device.id} from DB to VSS ...`)
+    vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
+    if (config.myUrl) {
+      vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
     }
+    wait(60).then(() => vss.sessions.restart(device.id))
   }
 
-  if (env.isProd) db.devices.list().forEach(sync.toVss)
-  return scheduleAndRun(() => db.devices.list().forEach(sync.toDb))
+  return Promise.all(db.devices.list().map(syncToVss))
 }
 
 /** Setup the express server */
@@ -240,6 +216,6 @@ module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.l
 
   if (config.visionect) {
     const VisionectApiClient = require('node-visionect')
-    setupVisionectUpdates(new VisionectApiClient(config.visionect))
+    updateVss(new VisionectApiClient(config.visionect))
   }
 }))
