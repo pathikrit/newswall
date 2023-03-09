@@ -31,15 +31,17 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
   <script>
+    random = (from, to) => from + Math.floor((to - from) * Math.random())
+
     $(document).ready(() => {
       if (okular) {
         $.post('/log', {
-          status: typeof okular['DevicesStatus'] == 'function' ? okular.DevicesStatus() : undefined,
           timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
           uuid: okular.session_uuid,
           wifi: okular.RSSI,
           battery: okular.BatteryLevel,
-          temperature: okular.Temperature
+          temperature: okular.Temperature,
+          event: `Hello ${random(10, 20)}`
         })
       }
     })
