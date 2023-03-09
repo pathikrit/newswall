@@ -71,8 +71,22 @@
       }
     }
 
-    document.addEventListener('device-connect', telemetry, true)
-    $(document).ready(updateStatus)
+    $(document).ready(() => {
+      if (okular) {
+        const telemetry = {
+          timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
+          uuid: okular.session_uuid,
+          wifi: okular.RSSI,
+          battery: okular.BatteryLevel,
+          temperature: okular.Temperature,
+          event: `Hello ${random(10, 20)}`
+        }
+        $.post('/log', telemetry)
+      }
+    })
+
+    //document.addEventListener('device-connect', telemetry, true)
+    //$(document).ready(updateStatus)
   </script>
 </head>
 <body>
