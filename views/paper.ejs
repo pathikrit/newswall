@@ -31,21 +31,24 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
   <script>
+    <% random = (from, to) => from + Math.floor((to - from) * Math.random()) %>
     $(document).ready(() => {
-      random = (from, to) => from + Math.floor((to - from) * Math.random())
-      this.okular = typeof okular !== 'undefined' ? okular : {
+      okular = (typeof okular !== 'undefined') ? okular : {
+        <% if (!env.isProd) {%>
         RSSI: random(50, 80),
         BatteryLevel: random(5, 99),
         Temperature: random(-10, 35),
         GetReloadTimeout: () => ''
+        <% } %>
       }
       const telemetry = {
-        nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device.timezone).format('h:mm A')%>',
+        uuid: okular.session_uuid,
+        nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone).format('h:mm A')%>',
         updatedAt: '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>',
-        wifi: Math.min(Math.max(2*(100 - this.okular?.RSSI), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
-        battery: this.okular?.BatteryLevel,
-        temperature: this.okular?.Temperature,
-        timeout: this.okular?.GetReloadTimeout()
+        wifi: Math.min(Math.max(2*(100 - okular.RSSI), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
+        battery: okular.BatteryLevel,
+        temperature: okular.Temperature,
+        timeout: typeof okular.GetReloadTimeout == 'function' ? okular.GetReloadTimeout() : undefined
       }
       $.post('/log', telemetry)
     })
