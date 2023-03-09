@@ -43,28 +43,33 @@
       <% } %>
     }
 
-    updateStatus = (evt) => {
+    const telemetry = (event) => {
       const telemetry = {
         uuid: okular.session_uuid,
         nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone).format('h:mm A')%>',
-        updatedAt: '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>',
+        updatedAt: okular.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined,
         wifi: Math.min(Math.max(2*(100 - okular.RSSI), 0), 100), //See: https://stackoverflow.com/a/31852591/471136
         battery: okular.BatteryLevel,
         temperature: okular.Temperature,
         timeout: typeof okular.GetReloadTimeout == 'function' ? okular.GetReloadTimeout() : undefined,
-        event: JSON.stringify(evt)
+        event: event
       }
-      $('.statusbar').empty()
-      if (telemetry.nextRefresh) $('.statusbar').append(`${telemetry.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
-      if (telemetry.updatedAt) $('.statusbar').append(`${telemetry.updatedAt}: `)
-      if (telemetry.wifi) $('.statusbar').append(`${telemetry.wifi}% <i class="fa-regular fa-${pick(telemetry.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
-      if (telemetry.battery) $('.statusbar').append(`${telemetry.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(telemetry.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}>"></i>&emsp;`)
-      if (telemetry.temperature) $('.statusbar').append(`${Math.round(<%=device.showFahrenheit%> ? telemetry.temperature*1.8 + 32 : telemetry.temperature)}° ${<%=device.showFahrenheit%> ? 'F' : 'C'}`)
       $.post('/log', telemetry)
+      return telemetry
     }
-    document.addEventListener('device-connect', updateStatus, true)
-    $(document).ready(updateStatus)
 
+    updateStatus = () => {
+      const status = telemetry('update-status')
+      $('.statusbar').empty()
+      if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
+      if (status.updatedAt) $('.statusbar').append(`${status.updatedAt}: `)
+      if (status.wifi) $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
+      if (status.battery) $('.statusbar').append(`${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}>"></i>&emsp;`)
+      if (status.temperature) $('.statusbar').append(`${Math.round(<%=device.showFahrenheit%> ? status.temperature*1.8 + 32 : status.temperature)}° ${<%=device.showFahrenheit%> ? 'F' : 'C'}`)
+    }
+
+    document.addEventListener('device-connect', telemetry, true)
+    $(document).ready(updateStatus)
   </script>
 </head>
 <body>
@@ -76,7 +81,4 @@
 </html>
 <!--
 1. Get rid of DB api
-2. FE dayjs
-3. event listener
-4. battery icon
 -->
