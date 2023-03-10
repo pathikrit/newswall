@@ -35,7 +35,7 @@
 
     //pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
 
-    function telemetry(event) {
+    telemetry = (event) => {
       <% if (!env.isProd) { %>
       okular = {
         RSSI: random(40, 80),
@@ -50,7 +50,7 @@
         temperature: okular.Temperature,
         timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
         event: event,
-        debug: `Hello 19`
+        debug: `Hello 20`
       } : {}
       status.nextRefresh = '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>'
       status.updatedAt = status.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined
