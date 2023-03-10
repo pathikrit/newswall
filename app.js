@@ -181,7 +181,7 @@ const app = express()
     paper ? res.render('paper', {paper: paper, device: device}) : notFound('Any newspapers')
   })
   .post('/log', (req, res) => { //TODO: rm this?
-    log.info('LOG:', req.headers, JSON.stringify(req.body))
+    log.info('LOG:', req.headers['user-agent'], req.body)
     res.sendStatus(StatusCodes.OK)
   })
 // Wire up globals to ejs
