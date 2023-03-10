@@ -33,7 +33,7 @@
   <script>
     random = (from, to) => from + Math.floor((to - from) * Math.random())
 
-    //pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
+    pick = (level, choices, buckets) => choices[[0, 10, 20, 40, 65, 90].findLastIndex(x => level >= x)]
 
     telemetry = (event) => {
       <% if (!env.isProd) { %>
@@ -50,7 +50,7 @@
         temperature: okular.Temperature,
         timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
         event: event,
-        debug: `Hello 20`
+        debug: `Hello 21`
       } : {}
       status.nextRefresh = '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>'
       status.updatedAt = status.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined
@@ -66,8 +66,8 @@
         $('.statusbar').empty()
         if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
         if (status.updatedAt) $('.statusbar').append(`${status.updatedAt}: `)
-        //if (status.wifi) $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
-        //if (status.battery) $('.statusbar').append(`${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`)
+        if (status.wifi) $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
+        if (status.battery) $('.statusbar').append(`${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`)
         if (status.temperature) $('.statusbar').append(`${Math.round(<%=device?.showFahrenheit ?? true%> ? status.temperature*1.8 + 32 : status.temperature)}° ${<%=device?.showFahrenheit ?? true%> ? 'F' : 'C'}`)
       } catch (error) {
         $.post('/log', {error: error})
