@@ -175,13 +175,15 @@ const app = express()
       if (!paper) return notFound(`Newspapers = ${req.query.papers}`)
     } else {
       paper = nextPaper(null, req.query.prev)
+      if (!paper) notFound('Any newspapers')
     }
 
     log.info(reqInfo, `; Next=[${paper?.name} for ${paper?.date}]; Device=[${device?.name}]`)
-    paper ? res.render('paper', {paper: paper, device: device}) : notFound('Any newspapers')
+    res.render('paper', {paper: paper, device: device})
   })
-  .post('/log', (req, res) => { //TODO: rm this?
-    log.info('LOG:', req.headers['user-agent'], req.body)
+  // Helpful route to log things from device on the server console
+  .post('/log', (req, res) => {
+    log.info('LOG', req.headers['user-agent'], req.body)
     res.sendStatus(StatusCodes.OK)
   })
 // Wire up globals to ejs
