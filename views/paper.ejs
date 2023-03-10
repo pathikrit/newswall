@@ -33,7 +33,14 @@
   <script>
     random = (from, to) => from + Math.floor((to - from) * Math.random())
 
-    pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
+    //TODO: pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
+
+    pick = (level, choices) => {
+      const buckets = [0, 10, 20, 40, 65, 90]
+      for(let i = Math.min(choices.length, buckets.length)-1; i>=0; i--)
+        if (level >= buckets[i]) return choices[i]
+      return choices[0]
+    }
 
     telemetry = (event) => {
       <% if (!env.isProd) { %>
@@ -50,7 +57,7 @@
         temperature: okular.Temperature,
         timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
         event: event,
-        debug: `Hello 26`
+        debug: `Hello 27`
       } : {}
       status.nextRefresh = '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>'
       status.updatedAt = status.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined
