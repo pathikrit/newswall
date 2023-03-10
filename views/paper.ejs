@@ -33,39 +33,29 @@
   <script>
     random = (from, to) => from + Math.floor((to - from) * Math.random())
 
-    pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => {
-      // TODO: choices[buckets.findLastIndex(x => level >= x)]
-      for(let i = buckets.length-1; i >= 0; i--)
-        if (level >= buckets[i]) return choices[i]
-      return choices[0]
-    }
+    pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[0] //.findLastIndex(x => level >= x)]
 
     telemetry = (event) => {
-      try {
-        <% if (!env.isProd) { %>
-        okular = {
-          RSSI: random(40, 80),
-          BatteryLevel: random(5, 99),
-          Temperature: random(-10, 35),
-        }
-        <% } %>
-        const status = typeof okular !== 'undefined' ? {
-          uuid: okular.session_uuid,
-          wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
-          battery: okular.BatteryLevel,
-          temperature: okular.Temperature,
-          timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
-          event: event,
-          debug: `Hello 23`
-        } : {}
-        status.nextRefresh = '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>'
-        status.updatedAt = status.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined
-        $.post('/log', status)
-        return status
-      } catch (error) {
-        $.post('/log', {error: error})
-        return {}
+      <% if (!env.isProd) { %>
+      okular = {
+        RSSI: random(40, 80),
+        BatteryLevel: random(5, 99),
+        Temperature: random(-10, 35),
       }
+      <% } %>
+      const status = typeof okular !== 'undefined' ? {
+        uuid: okular.session_uuid,
+        wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
+        battery: okular.BatteryLevel,
+        temperature: okular.Temperature,
+        timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
+        event: event,
+        debug: `Hello 24`
+      } : {}
+      status.nextRefresh = '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>'
+      status.updatedAt = status.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined
+      $.post('/log', status)
+      return status
     }
 
     document.addEventListener('device-connect', telemetry, true)
