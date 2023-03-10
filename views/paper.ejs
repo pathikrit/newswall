@@ -57,7 +57,7 @@
           battery: okular.BatteryLevel,
           temperature: okular.Temperature,
           timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
-          event: event,
+          event: event.detail || event,
         } : {}
         status.nextRefresh = '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>'
         status.updatedAt = status.uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined
