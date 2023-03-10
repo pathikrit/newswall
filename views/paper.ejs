@@ -66,7 +66,14 @@
     $(document).ready(updateStatus)*/
 
     $(document).ready(() => {
-      if (okular) {
+      <% if (!env.isProd) { %>
+      okular = {
+        RSSI: random(40, 80),
+        BatteryLevel: random(5, 99),
+        Temperature: random(-10, 35),
+      }
+      <% } %>
+      if (typeof okular !== 'undefined') {
         const status = {
           uuid: okular.session_uuid,
           //nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>',
@@ -75,11 +82,11 @@
           battery: okular.BatteryLevel,
           temperature: okular.Temperature,
           timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
-          event: `Hello 6`
+          event: `Hello 8`
         }
-        if (status.wifi) $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
         $.post('/log', status)
         $('.statusbar').empty()
+        if (status.wifi) $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
       }
     })
   </script>
