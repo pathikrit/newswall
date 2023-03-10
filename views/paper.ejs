@@ -44,6 +44,7 @@
     telemetry = (event) => {
       <% if (!env.isProd) { %>
       okular = {
+        session_uuid: '<%=device?.id%>',
         RSSI: random(40, 80),
         BatteryLevel: random(5, 99),
         Temperature: random(-10, 35),
@@ -58,7 +59,7 @@
         event: event,
       } : {}
       status.nextRefresh = '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>'
-      status.updatedAt = status.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined
+      status.updatedAt = status.uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined
       $.post('/log', status)
       return status
     }
