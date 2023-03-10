@@ -33,7 +33,7 @@
   <script>
     random = (from, to) => from + Math.floor((to - from) * Math.random())
 
-    pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
+    //pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
 
     /*const telemetry = (event) => {
       const okular = (typeof okular !== 'undefined') ? okular : {
@@ -44,8 +44,6 @@
         <% } %>
       }
       const status = {
-        nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>',
-        updatedAt: okular.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined,
         event: event
       }
       $.post('/log', status)
@@ -72,11 +70,13 @@
     $(document).ready(() => {
       if (okular) {
         $.post('/log', {
-          timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
           uuid: okular.session_uuid,
+          //nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>',
+          //updatedAt: okular.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined,
           wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
           battery: okular.BatteryLevel,
           temperature: okular.Temperature,
+          timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
           event: `Hello ${random(10, 20)}`
         })
       }
