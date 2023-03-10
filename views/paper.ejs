@@ -33,7 +33,7 @@
   <script>
     random = (from, to) => from + Math.floor((to - from) * Math.random())
 
-    //pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
+    pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
 
     /*const telemetry = (event) => {
       const okular = (typeof okular !== 'undefined') ? okular : {
