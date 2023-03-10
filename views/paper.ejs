@@ -33,7 +33,7 @@
   <script>
     random = (from, to) => from + Math.floor((to - from) * Math.random())
 
-    pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
+    //pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
 
     /*const telemetry = (event) => {
       const okular = (typeof okular !== 'undefined') ? okular : {
@@ -53,7 +53,6 @@
     updateStatus = () => {
       try {
         const status = telemetry('update-status')
-        if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
         if (status.updatedAt) $('.statusbar').append(`${status.updatedAt}: `)
         if (status.wifi) $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
         if (status.battery) $('.statusbar').append(`${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`)
@@ -76,10 +75,11 @@
           battery: okular.BatteryLevel,
           temperature: okular.Temperature,
           timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
-          event: `Hello 11`
+          event: `Hello 12`
         }
         $.post('/log', status)
         $('.statusbar').empty()
+        if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
       }
     })
   </script>
