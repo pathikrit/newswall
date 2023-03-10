@@ -35,18 +35,6 @@
 
     //pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
 
-    /*const telemetry = (event) => {
-      const okular = (typeof okular !== 'undefined') ? okular : {}
-      const status = {
-        event: event
-      }
-      $.post('/log', status)
-      return status
-    }
-
-    document.addEventListener('device-connect', telemetry, true)
-    $(document).ready(updateStatus)*/
-
     function telemetry(event) {
       <% if (!env.isProd) { %>
       okular = {
@@ -62,13 +50,15 @@
         temperature: okular.Temperature,
         timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
         event: event,
-        debug: `Hello 18`
+        debug: `Hello 19`
       } : {}
       status.nextRefresh = '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>'
       status.updatedAt = status.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined
       $.post('/log', status)
       return status
     }
+
+    document.addEventListener('device-connect', telemetry, true)
 
     $(document).ready(() => {
       try {
