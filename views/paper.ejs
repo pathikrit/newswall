@@ -69,7 +69,7 @@
 
     $(document).ready(() => {
       if (okular) {
-        $.post('/log', {
+        const status = {
           uuid: okular.session_uuid,
           //nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>',
           //updatedAt: okular.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined,
@@ -77,8 +77,10 @@
           battery: okular.BatteryLevel,
           temperature: okular.Temperature,
           timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
-          event: `Hello ${random(10, 20)}`
-        })
+          event: `Hello 5`
+        }
+        $.post('/log', status)
+        $('.statusbar').empty()
       }
     })
   </script>
