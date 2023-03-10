@@ -33,7 +33,7 @@
   <script>
     random = (from, to) => from + Math.floor((to - from) * Math.random())
 
-    pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[0] //.findLastIndex(x => level >= x)]
+    pick = (level, choices, buckets) => choices[[0, 10, 20, 40, 65, 90].findLastIndex(x => level >= x)]
 
     telemetry = (event) => {
       <% if (!env.isProd) { %>
@@ -50,7 +50,7 @@
         temperature: okular.Temperature,
         timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
         event: event,
-        debug: `Hello 24`
+        debug: `Hello 25`
       } : {}
       status.nextRefresh = '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>'
       status.updatedAt = status.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined
@@ -59,6 +59,7 @@
     }
 
     document.addEventListener('device-connect', telemetry, true)
+
     $(document).ready(() => {
       try {
         const status = telemetry('update-status')
