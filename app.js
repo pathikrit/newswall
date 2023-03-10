@@ -189,7 +189,7 @@ const app = express()
     else if (req.headers['user-agent'].includes('VisionectOkular')) logger = log.info
     else logger = log.debug
 
-    logger('LOG', JSON.stringify(req.body))
+    logger('LOG', req.headers['user-agent'], JSON.stringify(req.body))
     res.sendStatus(StatusCodes.OK)
   })
 // Wire up globals to ejs
