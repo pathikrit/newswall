@@ -36,13 +36,7 @@
     //pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
 
     /*const telemetry = (event) => {
-      const okular = (typeof okular !== 'undefined') ? okular : {
-        <% if (!env.isProd) { %>
-        RSSI: random(40, 80),
-        BatteryLevel: random(5, 99),
-        Temperature: random(-10, 35),
-        <% } %>
-      }
+      const okular = (typeof okular !== 'undefined') ? okular : {}
       const status = {
         event: event
       }
@@ -74,19 +68,23 @@
       }
       <% } %>
       if (okular) {
-        const status = {
-          uuid: okular.session_uuid,
-          nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>',
-          //updatedAt: okular.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined,
-          wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
-          battery: okular.BatteryLevel,
-          temperature: okular.Temperature,
-          timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
-          event: `Hello 13`
+        try {
+          const status = {
+            uuid: okular.session_uuid,
+            nextRefresh: '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>',
+            //updatedAt: okular.session_uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined,
+            wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
+            battery: okular.BatteryLevel,
+            temperature: okular.Temperature,
+            timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
+            event: `Hello 14`
+          }
+          $.post('/log', status)
+          $('.statusbar').empty()
+          if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
+        } catch (error) {
+          $.post('/log', {error: error})
         }
-        $.post('/log', status)
-        $('.statusbar').empty()
-        if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
       }
     })
   </script>
