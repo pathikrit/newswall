@@ -183,7 +183,13 @@ const app = express()
   })
   // Helpful route to log things from device on the server console
   .post('/log', (req, res) => {
-    log.info('LOG', req.headers['user-agent'], req.body)
+    let logger
+
+    if (req.body?.error) logger = log.warn
+    else if (req.headers['user-agent'].includes('VisionectOkular')) logger = log.info
+    else logger = log.debug
+
+    logger('LOG', JSON.stringify(req.body))
     res.sendStatus(StatusCodes.OK)
   })
 // Wire up globals to ejs
