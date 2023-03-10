@@ -53,10 +53,8 @@
     updateStatus = () => {
       try {
         const status = telemetry('update-status')
-        $('.statusbar').empty()
         if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
         if (status.updatedAt) $('.statusbar').append(`${status.updatedAt}: `)
-        if (status.wifi) $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
         if (status.battery) $('.statusbar').append(`${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`)
         if (status.temperature) $('.statusbar').append(`${Math.round(<%=device?.showFahrenheit ?? true%> ? status.temperature*1.8 + 32 : status.temperature)}° ${<%=device?.showFahrenheit ?? true%> ? 'F' : 'C'}`)
       } catch (error) {
@@ -77,8 +75,9 @@
           battery: okular.BatteryLevel,
           temperature: okular.Temperature,
           timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
-          event: `Hello 5`
+          event: `Hello 6`
         }
+        if (status.wifi) $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
         $.post('/log', status)
         $('.statusbar').empty()
       }
