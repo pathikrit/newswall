@@ -170,7 +170,7 @@ const app = express()
       result.paper = nextPaper(null, req.query.prev)
     }
     if (!result.paper) result.missing = 'Any newspapers'
-    log.info(`${req.method} ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}), result=`, JSON.stringify(result))
+    log.info(`${req.method} ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}), result =`, JSON.stringify(result))
     if (result.missing) return res.status(StatusCodes.NOT_FOUND).send(`Not Found: ${result.missing}`)
     return req.query.api ? res.send(result) : res.render('paper', result)
   })
