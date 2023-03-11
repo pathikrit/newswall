@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <title>Newswall</title>
-  <!-- Always refresh every 12 hours -->
+  <!-- Always refresh every 12 hours to fix stuck displays and/or get new versions of this page -->
   <meta http-equiv="refresh" content="43200">
   <link rel="stylesheet" href="https://kit.fontawesome.com/a22be8527e.css" crossorigin="anonymous">
   <style>
@@ -44,29 +44,24 @@
       return choices[0]
     }
 
-    telemetry = (event) => {
-      <% if (!env.isProd) { %> okular = { RSSI: random(45, 85), BatteryLevel: random(5, 99), Temperature: random(-10, 35)}<% } %>
-      return typeof okular !== 'undefined' ? {
-        uuid: okular.session_uuid,
-        wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
-        battery: okular.BatteryLevel,
-        temperature: okular.Temperature,
-        timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
-        event: event.detail || event,
-      } : {}
-    }
-
     update = () => {
       try {
-        const status = telemetry('update-status')
+        <% if (!env.isProd) { %> okular = { RSSI: random(45, 85), BatteryLevel: random(5, 99), Temperature: random(-10, 35)}<% } %>
+        const status = typeof okular !== 'undefined' ? {
+          uuid: okular.session_uuid,
+          wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
+          battery: okular.BatteryLevel,
+          temperature: okular.Temperature,
+          timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
+        } : {}
         const params = new URLSearchParams(window.location.search)
         return $.get('/next', {
           deviceId: status.uuid || params.get('deviceId'),
           papers: params.get('papers')
         }, (res) => {
-            status.timezone = res.device && res.device.timezone ? res.device.timezone : dayjs.tz.guess()  // TODO: res.device.timezone || dayjs.tz.guess()
-            status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes')
-            status.nextRefresh = (status.timezone ? status.nextRefresh.tz(status.timezone) : status.nextRefresh).format('h:mm A')
+            status.timezone = res.device && res.device.timezone ? res.device.timezone : dayjs.tz.guess()
+            status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').format('h:mm A')
+            //status.nextRefresh = (status.timezone ? status.nextRefresh.tz(status.timezone) : status.nextRefresh)
             status.updatedAt = status.uuid ? dayjs.duration(dayjs().diff(dayjs().add(res.paper.displayFor/2, 'minutes'))).humanize(true) : undefined
             status.temperature = res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature +5)}° F` : `${status.temperature}° C`
             status.debug = 'post'
@@ -84,6 +79,8 @@
               <img src="/archive/${res.paper.date}/${res.paper.id}.png" style="transform: scale(${res.paper.scale})" alt="Showing ${res.paper.id} for ${res.paper.date}">
               <div class="statusbar">${statusBar}</div>
             `)
+
+            setTimeout(update, res.paper.displayFor * 60 * 1000)
           }
         )
       } catch (error) {
