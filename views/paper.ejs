@@ -34,6 +34,8 @@
   <script src="https://polyfill.io/v3/polyfill.min.js?features=URLSearchParams,Promise"></script>
 
   <script>
+    const params = new URLSearchParams(window.location.search)
+
     random = (from, to) => from + Math.floor((to - from) * Math.random())
 
     //TODO: pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
@@ -44,47 +46,41 @@
       return choices[0]
     }
 
+    //TODO: logtrail fe error reporter
     update = () => {
-      try {
-        <% if (!env.isProd) { %> okular = { RSSI: random(45, 85), BatteryLevel: random(5, 99), Temperature: random(-10, 35)}<% } %>
-        const status = typeof okular !== 'undefined' ? {
-          uuid: okular.session_uuid,
-          wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
-          battery: okular.BatteryLevel,
-          temperature: okular.Temperature,
-          timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
-        } : {}
-        const params = new URLSearchParams(window.location.search)
-        return $.post('/latest', {
-          deviceId: status.uuid || params.get('deviceId'),
-          papers: params.has('papers') ? params.get('papers') : undefined,
-          prev: $('.paper-container > img').attr('id')
-        }, (res) => {
-            status.timezone = res.device && res.device.timezone ? res.device.timezone : dayjs.tz.guess()
-            status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').format('h:mm A')
-            //status.nextRefresh = (status.timezone ? status.nextRefresh.tz(status.timezone) : status.nextRefresh)
-            status.updatedAt = status.uuid ? dayjs.duration(dayjs().diff(dayjs().add(res.paper.displayFor/2, 'minutes'))).humanize(true) : undefined
-            status.temperature = res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
-            status.debug = 'post'
+      <% if (!env.isProd) { %> okular = { RSSI: random(45, 85), BatteryLevel: random(5, 99), Temperature: random(-10, 35)}<% } %>
+      const status = typeof okular !== 'undefined' ? {
+        uuid: okular.session_uuid || params.get('deviceId'),
+        wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
+        battery: okular.BatteryLevel,
+        temperature: okular.Temperature,
+        timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
+        url: window.location,
+        papers: params.has('papers') ? params.get('papers').split(',') : undefined,
+        prev: $('.paper-container > img').attr('id')
+      } : {}
+      return $.post('/latest', status, res => {
+        status.timezone = res.device && res.device.timezone ? res.device.timezone : dayjs.tz.guess()
+        status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').format('h:mm A')
+        //status.nextRefresh = (status.timezone ? status.nextRefresh.tz(status.timezone) : status.nextRefresh)
+        status.updatedAt = status.uuid ? dayjs.duration(dayjs().diff(dayjs().add(res.paper.displayFor/2, 'minutes'))).humanize(true) : undefined
+        status.temperature = res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
+        status.debug = 'no-try'
 
-            let statusBar = ''
-            if (status.nextRefresh) statusBar += `${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
-            if (status.updatedAt)   statusBar += `${status.updatedAt}: `
-            if (status.wifi)        statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
-            if (status.battery)     statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`
-            if (status.temperature) statusBar += `${status.temperature}`
+        let statusBar = ''
+        if (status.nextRefresh) statusBar += `${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
+        if (status.updatedAt)   statusBar += `${status.updatedAt}: `
+        if (status.wifi)        statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
+        if (status.battery)     statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`
+        if (status.temperature) statusBar += `${status.temperature}`
 
-            $('.paper-container').html(`
-              <img id="${res.paper.id}" src="/archive/${res.paper.date}/${res.paper.id}.png" style="transform: scale(${res.paper.scale})" alt="${res.paper.name} for ${res.paper.date}">
-              <div class="statusbar">${statusBar}</div>
-            `)
+        $('.paper-container').html(`
+          <img id="${res.paper.id}" src="/archive/${res.paper.date}/${res.paper.id}.png" style="transform: scale(${res.paper.scale})" alt="${res.paper.name} for ${res.paper.date}">
+          <div class="statusbar">${statusBar}</div>
+        `)
 
-            setTimeout(update, res.paper.displayFor * 60 * 1000)
-          }
-        )
-      } catch (error) {
-        $.post('/log', {error: error})
-      }
+        setTimeout(update, res.paper.displayFor * 60 * 1000)
+      })
     }
 
     $(document).ready(update)
