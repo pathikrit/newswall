@@ -157,33 +157,23 @@ const app = express()
   // Main pages
   .get('/', (req, res) => res.render('index', {db: db}))
   .get('/latest', (req, res) => res.render('paper'))
-  .get('/next', (req, res) => {
+  .post('/latest', (req, res) => {
+    //TODO: .includes('VisionectOkular')
     const result = {device: null, paper: null}
-    if (req.query.deviceId) {
-      result.device = db.devices.find(device => device.id === req.query.deviceId)
-      if (result.device) result.paper = nextPaper(result.device, req.query.prev)
-      else result.missing = `Device Id = ${req.query.deviceId}`
-    } else if (req.query.papers) {
-      const papers = req.query.papers.split(',').map(paper => {return {id: paper}})
-      result.paper = nextPaper({newspapers: papers}, req.query.prev)
-      if (!result.paper) result.missing = `Newspapers = ${req.query.papers}`
+    if (req.body.deviceId) {
+      result.device = db.devices.find(device => device.id === req.body.deviceId)
+      if (result.device) result.paper = nextPaper(result.device, req.body.prev)
+      else result.missing = `Device Id = ${req.body.deviceId}`
+    } else if (req.body.papers) {
+      const papers = req.body.papers.split(',').map(paper => {return {id: paper}})
+      result.paper = nextPaper({newspapers: papers}, req.body.prev)
+      if (!result.paper) result.missing = `Newspapers = ${req.body.papers}`
     } else {
-      result.paper = nextPaper(null, req.query.prev)
+      result.paper = nextPaper(null, req.body.prev)
     }
     if (!result.paper) result.missing = 'Any newspapers'
-    log.info(`${req.method} ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}), result =`, JSON.stringify(result))
+    log.info(`${req.method} ${req.originalUrl} from ${req.ip}`, 'req =', req.body, 'result =', JSON.stringify(result))
     return res.status(result.missing ? StatusCodes.NOT_FOUND : StatusCodes.OK).send(result)
-  })
-  // Helpful route to log things from device on the server console
-  .post('/log', (req, res) => { //TODO: get rid of this
-    let logger
-
-    if (req.body?.error) logger = log.warn
-    else if (req.headers['user-agent'].includes('VisionectOkular')) logger = log.info
-    else logger = log.debug
-
-    logger('LOG', req.headers['user-agent'], JSON.stringify(req.body))
-    res.sendStatus(StatusCodes.OK)
   })
 // Wire up globals to ejs
 app.locals = Object.assign(app.locals, {env: env, display: config.display})

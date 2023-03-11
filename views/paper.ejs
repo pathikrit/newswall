@@ -55,7 +55,7 @@
           timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
         } : {}
         const params = new URLSearchParams(window.location.search)
-        return $.get('/next', {
+        return $.post('/latest', {
           deviceId: status.uuid || params.get('deviceId'),
           papers: params.has('papers') ? params.get('papers') : undefined,
           prev: $('.paper-container > img').attr('id')
@@ -66,8 +66,6 @@
             status.updatedAt = status.uuid ? dayjs.duration(dayjs().diff(dayjs().add(res.paper.displayFor/2, 'minutes'))).humanize(true) : undefined
             status.temperature = res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
             status.debug = 'post'
-
-            //$.post('/log', status)
 
             let statusBar = ''
             if (status.nextRefresh) statusBar += `${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
