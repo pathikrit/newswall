@@ -57,7 +57,8 @@
         const params = new URLSearchParams(window.location.search)
         return $.get('/next', {
           deviceId: status.uuid || params.get('deviceId'),
-          papers: params.get('papers')
+          papers: params.has('papers') ? params.get('papers') : undefined,
+          prev: $('.paper-container > img').attr('id')
         }, (res) => {
             status.timezone = res.device && res.device.timezone ? res.device.timezone : dayjs.tz.guess()
             status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').format('h:mm A')
@@ -66,7 +67,7 @@
             status.temperature = res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
             status.debug = 'post'
 
-            $.post('/log', status)
+            //$.post('/log', status)
 
             let statusBar = ''
             if (status.nextRefresh) statusBar += `${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`

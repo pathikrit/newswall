@@ -8,7 +8,7 @@ describe('server', () => {
   shouldServe = (path, bodyCheck) => it(`should serve ${path}`, () => appPromise.then(app => test(app).get(path).expect(StatusCodes.OK).then(response => bodyCheck && bodyCheck(response.res.text))))
   shouldNotServe = path => it(`should not serve ${path}`, () => appPromise.then(app => test(app).get(path).expect(StatusCodes.NOT_FOUND)))
 
-  displayingPaper = paper => html => html.includes(`alt="Showing ${paper || ''}`)
+  displayingPaper = paper => html => html.includes(`<img id="${paper || ''}`) //? Promise.resolve(html) : Promise.reject(`Did not find ${paper} in ${html}`)
 
   shouldServe('/')
   shouldServe('/archive')
