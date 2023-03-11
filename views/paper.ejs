@@ -82,7 +82,7 @@
           api: true,
           deviceId: status.uuid,
         }, (data) => {
-            if (status.temperature) $('.statusbar').append(`${Math.round(data.device?.showFahrenheit ? status.temperature*1.8 + 32 : status.temperature)}° ${data.device?.showFahrenheit ? 'F' : 'C'}`)
+            if (status.temperature) $('.statusbar').append(`${status.temperature}° C}`)
           }
         )
 
