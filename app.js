@@ -138,7 +138,7 @@ const updateVss = (vss) => {
   db.devices.forEach(device => {
     log.info(`Syncing deviceId=${device.id} to VSS ...`)
     vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
-    if (config.myUrl) vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest/${device.id}`}}})
+    if (config.myUrl) vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest`}}})
     setTimeout(vss.sessions.restart, 60*1000, device.id)
   })
 }
@@ -156,30 +156,23 @@ const app = express()
   .use('/archive', express.static(config.newsstand))
   // Main pages
   .get('/', (req, res) => res.render('index', {db: db}))
-  .get('/latest/:deviceId?', (req, res) => {
-    const reqInfo = `GET ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}): Prev=[${req.query.prev}]; DeviceId=[${req.params.deviceId}]`
-
-    notFound = msg => {
-      log.warn(reqInfo, `Not Found: ${msg}`)
-      return res.status(StatusCodes.NOT_FOUND).send(`Not Found: ${msg}`)
-    }
-
-    let paper = null, device = null
-    if (req.params.deviceId) {
-      device = db.devices.find(device => device.id === req.params.deviceId)
-      if (!device) return notFound(`Device Id = ${req.params.deviceId}`)
-      paper = nextPaper(device, req.query.prev)
+  .get('/latest', (req, res) => {
+    const result = {device: null, paper: null}
+    if (req.query.deviceId) {
+      result.device = db.devices.find(device => device.id === req.query.deviceId)
+      if (result.device) result.paper = nextPaper(result.device, req.query.prev)
+      else result.missing = `Device Id = ${req.query.deviceId}`
     } else if (req.query.papers) {
       const papers = req.query.papers.split(',').map(paper => {return {id: paper}})
-      paper = nextPaper({newspapers: papers}, req.query.prev)
-      if (!paper) return notFound(`Newspapers = ${req.query.papers}`)
+      result.paper = nextPaper({newspapers: papers}, req.query.prev)
+      if (!result.paper) result.missing = `Newspapers = ${req.query.papers}`
     } else {
-      paper = nextPaper(null, req.query.prev)
-      if (!paper) notFound('Any newspapers')
+      result.paper = nextPaper(null, req.query.prev)
     }
-
-    log.info(reqInfo, `; Next=[${paper?.name} for ${paper?.date}]; Device=[${device?.name}]`)
-    res.render('paper', {paper: paper, device: device})
+    if (!result.paper) result.missing = 'Any newspapers'
+    log.info(`${req.method} ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}), result=`, JSON.stringify(result))
+    if (result.missing) return res.status(StatusCodes.NOT_FOUND).send(`Not Found: ${result.missing}`)
+    return req.query.api ? res.send(result) : res.render('paper', result)
   })
   // Helpful route to log things from device on the server console
   .post('/log', (req, res) => {
