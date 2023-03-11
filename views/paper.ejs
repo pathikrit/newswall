@@ -53,7 +53,7 @@
         Temperature: random(-10, 35),
       }
       <% } %>
-      const status = typeof okular !== 'undefined' ? {
+      return typeof okular !== 'undefined' ? {
         uuid: okular.session_uuid,
         wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
         battery: okular.BatteryLevel,
@@ -61,7 +61,6 @@
         timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
         event: event.detail || event,
       } : {}
-      return status
     }
 
     $(document).ready(() => {
@@ -74,7 +73,7 @@
           deviceId: status.uuid /*|| new URLSearchParams(window.location.search).get('deviceId')*/,
         }, (res) => {
             $('.statusbar').empty()
-            status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').tz(res.device?.timezone || dayjs.tz.guess()).format('h:mm A')
+            status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').tz(res.device.timezone || dayjs.tz.guess()).format('h:mm A')
             status.updatedAt = status.uuid ? dayjs.duration(dayjs().diff(dayjs().add(res.paper.displayFor/2, 'minutes'))).humanize(true) : undefined
 
             if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
