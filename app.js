@@ -157,7 +157,7 @@ const app = express()
   // Main pages
   .get('/', (req, res) => res.render('index', {db: db}))
   .get('/latest', (req, res) => res.render('paper'))
-  .post('/latest', (req, res) => {
+  .get('/next', (req, res) => {
     const result = {device: null, paper: null}
     if (req.query.deviceId) {
       result.device = db.devices.find(device => device.id === req.query.deviceId)

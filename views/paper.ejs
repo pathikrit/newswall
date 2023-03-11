@@ -45,14 +45,7 @@
     }
 
     telemetry = (event) => {
-      <% if (!env.isProd) { %>
-      okular = {
-        session_uuid: new URLSearchParams(window.location.search).get('deviceId'),
-        RSSI: random(45, 85),
-        BatteryLevel: random(5, 99),
-        Temperature: random(-10, 35),
-      }
-      <% } %>
+      <% if (!env.isProd) { %> okular = { RSSI: random(45, 85), BatteryLevel: random(5, 99), Temperature: random(-10, 35)}<% } %>
       return typeof okular !== 'undefined' ? {
         uuid: okular.session_uuid,
         wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
@@ -66,11 +59,12 @@
     update = () => {
       try {
         const status = telemetry('update-status')
-        return $.post('/latest', {
+        return $.get('/next', {
           deviceId: status.uuid || new URLSearchParams(window.location.search).get('deviceId'),
         }, (res) => {
             status.timezone = res.device && res.device.timezone ? res.device.timezone : dayjs.tz.guess()  // TODO: res.device.timezone || dayjs.tz.guess()
-            status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').format('h:mm A')
+            status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes')
+            status.nextRefresh = (status.timezone ? status.nextRefresh.tz(status.timezone) : status.nextRefresh).format('h:mm A')
             status.updatedAt = status.uuid ? dayjs.duration(dayjs().diff(dayjs().add(res.paper.displayFor/2, 'minutes'))).humanize(true) : undefined
             status.debug = 'post'
 
