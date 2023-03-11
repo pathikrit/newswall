@@ -63,20 +63,21 @@
       } : {}
     }
 
-    $(document).ready(() => {
+    update = () => {
       try {
         const status = telemetry('update-status')
-        $.get('/latest', {
+        return $.get('/latest', {
           api: true,
           deviceId: status.uuid /*|| new URLSearchParams(window.location.search).get('deviceId')*/,
         }, (res) => {
-            $('.statusbar').empty()
             status.timezone = res.device && res.device.timezone ? res.device.timezone : dayjs.tz.guess()  // TODO: res.device.timezone || dayjs.tz.guess()
             status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').tz(status.timezone).format('h:mm A')
             status.updatedAt = status.uuid ? dayjs.duration(dayjs().diff(dayjs().add(res.paper.displayFor/2, 'minutes'))).humanize(true) : undefined
+            status.debug = 'Make it a fn'
 
             $.post('/log', status)
 
+            $('.statusbar').empty()
             if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
             if (status.updatedAt)   $('.statusbar').append(`${status.updatedAt}: `)
             if (status.wifi)        $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
@@ -87,7 +88,9 @@
       } catch (error) {
         $.post('/log', {error: error})
       }
-    })
+    }
+
+    $(document).ready(update)
 
   </script>
 </head>
