@@ -171,7 +171,7 @@ const app = express()
       result.paper = nextPaper(null, req.body.prev)
     }
     if (!result.paper) result.missing = 'Any newspapers'
-    log.info(`${req.method} ${req.originalUrl} from ${req.ip}`, JSON.stringify({req: req.body, res: {device: result.device?.name, paper: result.paper?.id, error: result.missing}}))
+    log.info(`${req.method} ${req.originalUrl}`, JSON.stringify({req: req.body, res: {device: result.device?.name, paper: result.paper?.id, error: result.missing}}))
     return res.status(result.missing ? StatusCodes.NOT_FOUND : StatusCodes.OK).send(result)
   })
 // Wire up globals to ejs

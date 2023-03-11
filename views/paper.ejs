@@ -61,19 +61,20 @@
         battery: device.BatteryLevel,
         temperature: device.Temperature,
         timeout: typeof device['DevicesStatus'] == 'function' ? device.GetReloadTimeout() : undefined,
+        timezone: dayjs.tz.guess(),
         url: window.location.pathname,
         papers: params.has('papers') ? params.get('papers').split(',') : undefined,
         prev: $('.paper-container > img').attr('id')
       }
       return $.post('/latest', status, res => {
-        status.timezone = res.device && res.device.timezone ? res.device.timezone : dayjs.tz.guess()
-        status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').format('h:mm A')
+        status.timezone = res.device && res.device.timezone ? res.device.timezone : status.timezone
+        status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes')
         //status.nextRefresh = (status.timezone ? status.nextRefresh.tz(status.timezone) : status.nextRefresh)
         status.updatedAt = status.uuid ? dayjs.duration(dayjs().diff(dayjs().add(res.paper.displayFor/2, 'minutes'))).humanize(true) : undefined
         status.temperature = res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
 
         let statusBar = ''
-        if (status.nextRefresh) statusBar += `${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
+        if (status.nextRefresh) statusBar += `${status.nextRefresh.format('h:mm A')} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
         if (status.updatedAt)   statusBar += `${status.updatedAt}: `
         if (status.wifi)        statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
         if (status.battery)     statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`
