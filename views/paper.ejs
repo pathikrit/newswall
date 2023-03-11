@@ -55,11 +55,14 @@
         battery: okular.BatteryLevel,
         temperature: okular.Temperature,
         timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
-        url: window.location,
+        url: window.location
+      } : {}
+      const payload = {
+        deviceId: status.uuid || params.get('deviceId'),
         papers: params.has('papers') ? params.get('papers').split(',') : undefined,
         prev: $('.paper-container > img').attr('id')
-      } : {}
-      return $.post('/latest', status, res => {
+      }
+      return $.post('/latest', payload, res => {
         status.timezone = res.device && res.device.timezone ? res.device.timezone : dayjs.tz.guess()
         status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').format('h:mm A')
         //status.nextRefresh = (status.timezone ? status.nextRefresh.tz(status.timezone) : status.nextRefresh)
