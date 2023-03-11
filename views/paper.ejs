@@ -77,12 +77,17 @@
 
             $.post('/log', status)
 
-            $('.statusbar').empty()
-            if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
-            if (status.updatedAt)   $('.statusbar').append(`${status.updatedAt}: `)
-            if (status.wifi)        $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
-            if (status.battery)     $('.statusbar').append(`${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`)
-            if (status.temperature) $('.statusbar').append(`${status.temperature}° C`)
+            let statusBar = ''
+            if (status.nextRefresh) statusBar +=`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
+            if (status.updatedAt)   statusBar +=`${status.updatedAt}: `
+            if (status.wifi)        statusBar +=`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
+            if (status.battery)     statusBar +=`${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`
+            if (status.temperature) statusBar +=`${status.temperature}° C`
+
+            $('.paper-container').html(`
+              <img src="/archive/${res.paper.date}/${res.paper.id}.png" style="transform: scale(${res.paper.scale})" alt="Showing ${res.paper.id} for ${res.paper.date}">
+              <div class="statusbar">${statusBar}</div>
+            `)
           }
         )
       } catch (error) {
@@ -95,9 +100,6 @@
   </script>
 </head>
 <body>
-  <div class="paper-container">
-    <img src="/archive/<%=paper.date%>/<%=paper.id%>.png" style="transform: scale(<%=paper.scale%>)" alt="Showing <%=paper.id%> for <%=paper.date%>">
-    <div class="statusbar"></div>
-  </div>
+  <div class="paper-container"></div>
 </body>
 </html>
