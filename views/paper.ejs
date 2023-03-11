@@ -77,14 +77,15 @@
         if (status.updatedAt)   $('.statusbar').append(`${status.updatedAt}: `)
         if (status.wifi)        $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
         if (status.battery)     $('.statusbar').append(`${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`)
+        if (status.temperature) $('.statusbar').append(`${Math.round(<%=device?.showFahrenheit ?? true%> ? status.temperature*1.8 + 32 : status.temperature)}° ${<%=device?.showFahrenheit ?? true%> ? 'F' : 'C'}`)
 
-        $.get('/latest', {
+        /*$.get('/latest', {
           api: true,
           deviceId: status.uuid || new URLSearchParams(window.location.search).get('deviceId'),
         })
         .then(data => {
           if (status.temperature) $('.statusbar').append(`${Math.round(data.device?.showFahrenheit ? status.temperature*1.8 + 32 : status.temperature)}° ${data.device?.showFahrenheit ? 'F' : 'C'}`)
-        })
+        })*/
       } catch (error) {
         $.post('/log', {error: error})
       }
