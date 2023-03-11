@@ -31,22 +31,18 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dayjs-with-plugins@1.0.3/dist/dayjs-with-plugins.min.js"></script>
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.findIndex,URLSearchParams,Promise"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=URLSearchParams,Promise"></script>
 
   <script>
     random = (from, to) => from + Math.floor((to - from) * Math.random())
 
     //TODO: pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
-    pick = (level, choices) => choices[[0, 10, 20, 40, 65, 90].findLastIndex(x => level >= x)]
-
-    /*
     pick = (level, choices) => {
       const buckets = [0, 10, 20, 40, 65, 90]
       for(let i = Math.min(choices.length, buckets.length)-1; i>=0; i--)
         if (level >= buckets[i]) return choices[i]
       return choices[0]
     }
-     */
 
     update = () => {
       try {
@@ -80,7 +76,7 @@
             if (status.temperature) statusBar += `${status.temperature}`
 
             $('.paper-container').html(`
-              <img src="/archive/${res.paper.date}/${res.paper.id}.png" style="transform: scale(${res.paper.scale})" alt="Showing ${res.paper.id} for ${res.paper.date}">
+              <img id="${res.paper.id}" src="/archive/${res.paper.date}/${res.paper.id}.png" style="transform: scale(${res.paper.scale})" alt="${res.paper.name} for ${res.paper.date}">
               <div class="statusbar">${statusBar}</div>
             `)
 

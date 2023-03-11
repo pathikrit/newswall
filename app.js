@@ -175,7 +175,7 @@ const app = express()
     return res.status(result.missing ? StatusCodes.NOT_FOUND : StatusCodes.OK).send(result)
   })
   // Helpful route to log things from device on the server console
-  .post('/log', (req, res) => {
+  .post('/log', (req, res) => { //TODO: get rid of this
     let logger
 
     if (req.body?.error) logger = log.warn
