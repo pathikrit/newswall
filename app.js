@@ -1,5 +1,5 @@
 require('dotenv').config()
-const dayjs = require('dayjs')
+const dayjs = require('dayjs') //TODO: dayjs all
   .extend(require('dayjs/plugin/duration'))
   .extend(require('dayjs/plugin/relativeTime'))
   .extend(require('dayjs/plugin/utc'))
@@ -12,7 +12,7 @@ require('lodash.product')
 const _ = require('lodash')
 const {StatusCodes} = require('http-status-codes')
 const log = console
-const db = require('./db.js') // TODO: use a real database
+const db = require('./db.js')
 
 env = {
   isProd: process.env.NODE_ENV === 'production',
