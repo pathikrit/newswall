@@ -23,7 +23,7 @@ describe('server', () => {
   shouldServe('/latest?papers=NYT,INVALID', displayingPaper('NYT'))
   shouldNotServe('/latest?papers=INVALID')
   shouldServe('/latest?deviceId=2a002800-0c47-3133-3633-333400000000', displayingPaper())
-  shouldServe('/latest?deviceId=2a002800-0c47-3133-3633-333400000000?prev=WSJ', !displayingPaper('WSJ'))
+  shouldServe('/latest?deviceId=2a002800-0c47-3133-3633-333400000000&prev=WSJ', !displayingPaper('WSJ'))
   shouldNotServe('/latest/INVALID')
   shouldNotServe('/INVALID')
 })
