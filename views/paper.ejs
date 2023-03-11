@@ -31,7 +31,7 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dayjs-with-plugins@1.0.3/dist/dayjs-with-plugins.min.js"></script>
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=Promise"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=URLSearchParams,Promise"></script>
 
   <script>
     random = (from, to) => from + Math.floor((to - from) * Math.random())
@@ -67,11 +67,10 @@
       try {
         const status = telemetry('update-status')
         return $.post('/latest', {
-          api: true,
-          deviceId: status.uuid /*|| new URLSearchParams(window.location.search).get('deviceId')*/,
+          deviceId: status.uuid || new URLSearchParams(window.location.search).get('deviceId'),
         }, (res) => {
             status.timezone = res.device && res.device.timezone ? res.device.timezone : dayjs.tz.guess()  // TODO: res.device.timezone || dayjs.tz.guess()
-            status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').tz(status.timezone).format('h:mm A')
+            status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').format('h:mm A')
             status.updatedAt = status.uuid ? dayjs.duration(dayjs().diff(dayjs().add(res.paper.displayFor/2, 'minutes'))).humanize(true) : undefined
             status.debug = 'post'
 
@@ -96,7 +95,6 @@
     }
 
     $(document).ready(update)
-
   </script>
 </head>
 <body>
