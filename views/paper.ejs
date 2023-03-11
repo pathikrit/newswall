@@ -48,27 +48,29 @@
 
     //TODO: logtrail fe error reporter
     update = () => {
-      <% if (!env.isProd) { %> okular = { RSSI: random(45, 85), BatteryLevel: random(5, 99), Temperature: random(-10, 35)}<% } %>
-      const status = typeof okular !== 'undefined' ? {
-        uuid: okular.session_uuid || params.get('deviceId'),
-        wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
-        battery: okular.BatteryLevel,
-        temperature: okular.Temperature,
-        timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
-        url: window.location
-      } : {}
-      const payload = {
-        deviceId: status.uuid || params.get('deviceId'),
+      const device = typeof okular !== 'undefined' ? okular : {
+        <% if (!env.isProd) { %>
+        RSSI: random(45, 85),
+        BatteryLevel: random(5, 99),
+        Temperature: random(-10, 35)
+        <% } %>
+      }
+      const status = {
+        uuid: device.session_uuid || params.get('deviceId'),
+        wifi: device.RSSI ? Math.min(Math.max(2*(100 - device.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
+        battery: device.BatteryLevel,
+        temperature: device.Temperature,
+        timeout: typeof device['DevicesStatus'] == 'function' ? device.GetReloadTimeout() : undefined,
+        url: window.location.pathname,
         papers: params.has('papers') ? params.get('papers').split(',') : undefined,
         prev: $('.paper-container > img').attr('id')
       }
-      return $.post('/latest', payload, res => {
+      return $.post('/latest', status, res => {
         status.timezone = res.device && res.device.timezone ? res.device.timezone : dayjs.tz.guess()
         status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').format('h:mm A')
         //status.nextRefresh = (status.timezone ? status.nextRefresh.tz(status.timezone) : status.nextRefresh)
         status.updatedAt = status.uuid ? dayjs.duration(dayjs().diff(dayjs().add(res.paper.displayFor/2, 'minutes'))).humanize(true) : undefined
         status.temperature = res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
-        status.debug = 'no-try'
 
         let statusBar = ''
         if (status.nextRefresh) statusBar += `${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`

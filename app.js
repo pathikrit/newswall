@@ -160,10 +160,10 @@ const app = express()
   .post('/latest', (req, res) => {
     req.body.isFrame = req.headers['user-agent'].includes('VisionectOkular')
     const result = {device: null, paper: null}
-    if (req.body.deviceId) {
-      result.device = db.devices.find(device => device.id === req.body.deviceId)
+    if (req.body.uuid) {
+      result.device = db.devices.find(device => device.id === req.body.uuid)
       if (result.device) result.paper = nextPaper(result.device, req.body.prev)
-      else result.missing = `Device Id = ${req.body.deviceId}`
+      else result.missing = `Device Id = ${req.body.uuid}`
     } else if (req.body.papers) {
       result.paper = nextPaper({newspapers: req.body.papers.map(paper => {return {id: paper}})}, req.body.prev)
       if (!result.paper) result.missing = `Newspapers = ${req.body.papers}`
@@ -171,7 +171,7 @@ const app = express()
       result.paper = nextPaper(null, req.body.prev)
     }
     if (!result.paper) result.missing = 'Any newspapers'
-    log.info(`${req.method} ${req.originalUrl} from ${req.ip}`, 'req:', JSON.stringify(req.body), 'res:', JSON.stringify(result))
+    log.info(`${req.method} ${req.originalUrl} from ${req.ip}`, JSON.stringify({req: req.body, res: {device: result.device?.name, paper: result.paper?.id, error: result.missing}}))
     return res.status(result.missing ? StatusCodes.NOT_FOUND : StatusCodes.OK).send(result)
   })
 // Wire up globals to ejs
