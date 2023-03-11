@@ -156,7 +156,8 @@ const app = express()
   .use('/archive', express.static(config.newsstand))
   // Main pages
   .get('/', (req, res) => res.render('index', {db: db}))
-  .get('/latest', (req, res) => {
+  .get('/latest', (req, res) => res.render('paper'))
+  .post('/latest', (req, res) => {
     const result = {device: null, paper: null}
     if (req.query.deviceId) {
       result.device = db.devices.find(device => device.id === req.query.deviceId)
@@ -171,8 +172,7 @@ const app = express()
     }
     if (!result.paper) result.missing = 'Any newspapers'
     log.info(`${req.method} ${req.originalUrl} from ${req.ip} (${req.headers['user-agent']}), result =`, JSON.stringify(result))
-    if (result.missing) return res.status(StatusCodes.NOT_FOUND).send(`Not Found: ${result.missing}`)
-    return req.query.api ? res.send(result) : res.render('paper', result)
+    return res.status(result.missing ? StatusCodes.NOT_FOUND : StatusCodes.OK).send(result)
   })
   // Helpful route to log things from device on the server console
   .post('/log', (req, res) => {
