@@ -82,9 +82,9 @@
           api: true,
           deviceId: status.uuid || new URLSearchParams(window.location.search).get('deviceId'),
         })
-        .success(data => {
+        .done(data => {
           console.log(data)
-          if (status.temperature) $('.statusbar').append(`${Math.round(<%=device?.showFahrenheit ?? true%> ? status.temperature*1.8 + 32 : status.temperature)}° ${<%=device?.showFahrenheit ?? true%> ? 'F' : 'C'}`)
+          if (status.temperature) $('.statusbar').append(`${Math.round(data.device?.showFahrenheit ? status.temperature*1.8 + 32 : status.temperature)}° ${data.device?.showFahrenheit ? 'F' : 'C'}`)
         })
       } catch (error) {
         $.post('/log', {error: error})
