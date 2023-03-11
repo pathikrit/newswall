@@ -31,18 +31,22 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dayjs-with-plugins@1.0.3/dist/dayjs-with-plugins.min.js"></script>
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=URLSearchParams,Promise"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.findIndex,URLSearchParams,Promise"></script>
 
   <script>
     random = (from, to) => from + Math.floor((to - from) * Math.random())
 
     //TODO: pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
+    pick = (level, choices) => choices[[0, 10, 20, 40, 65, 90].findLastIndex(x => level >= x)]
+
+    /*
     pick = (level, choices) => {
       const buckets = [0, 10, 20, 40, 65, 90]
       for(let i = Math.min(choices.length, buckets.length)-1; i>=0; i--)
         if (level >= buckets[i]) return choices[i]
       return choices[0]
     }
+     */
 
     update = () => {
       try {
@@ -63,7 +67,7 @@
             status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').format('h:mm A')
             //status.nextRefresh = (status.timezone ? status.nextRefresh.tz(status.timezone) : status.nextRefresh)
             status.updatedAt = status.uuid ? dayjs.duration(dayjs().diff(dayjs().add(res.paper.displayFor/2, 'minutes'))).humanize(true) : undefined
-            status.temperature = res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature +5)}° F` : `${status.temperature}° C`
+            status.temperature = res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
             status.debug = 'post'
 
             $.post('/log', status)
