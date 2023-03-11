@@ -186,7 +186,7 @@ const app = express()
     res.sendStatus(StatusCodes.OK)
   })
 // Wire up globals to ejs
-app.locals = Object.assign(app.locals, {dayjs: dayjs, env: env, display: config.display})
+app.locals = Object.assign(app.locals, {env: env, display: config.display})
 
 // Kickoff download and export the app if this is a test so test framework can start the server else we start it ourselves
 module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.listen(config.port, () => {

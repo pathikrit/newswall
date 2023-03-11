@@ -74,7 +74,7 @@
           deviceId: status.uuid /*|| new URLSearchParams(window.location.search).get('deviceId')*/,
         }, (res) => {
             $('.statusbar').empty()
-            status.nextRefresh = '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>'
+            status.nextRefresh = dayjs().add(res.paper.displayFor, 'minutes').tz(res.device?.timezone || dayjs.tz.guess()).format('h:mm A')
             status.updatedAt = status.uuid ? dayjs.duration(dayjs().diff(dayjs().add(res.paper.displayFor/2, 'minutes'))).humanize(true) : undefined
 
             if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
