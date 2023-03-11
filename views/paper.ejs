@@ -82,10 +82,10 @@
           api: true,
           deviceId: status.uuid || new URLSearchParams(window.location.search).get('deviceId'),
         })
-        .done(data => {
+        .then(data => {
           console.log(data)
           if (status.temperature) $('.statusbar').append(`${Math.round(data.device?.showFahrenheit ? status.temperature*1.8 + 32 : status.temperature)}° ${data.device?.showFahrenheit ? 'F' : 'C'}`)
-        })
+        }).catch(error => $.post('/log', {error: error, where: 'get-latest'}))
       } catch (error) {
         $.post('/log', {error: error})
       }
