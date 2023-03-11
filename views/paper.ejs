@@ -30,6 +30,9 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs-with-plugins@1.0.3/dist/dayjs-with-plugins.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=Promise"></script>
+
   <script>
     random = (from, to) => from + Math.floor((to - from) * Math.random())
 
@@ -58,8 +61,6 @@
         timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
         event: event.detail || event,
       } : {}
-      status.nextRefresh = '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>'
-      status.updatedAt = status.uuid ? '<%=dayjs.duration(dayjs().diff(dayjs().add(paper.displayFor/2, 'minutes'))).humanize(true) %>' : undefined
       return status
     }
 
@@ -71,13 +72,16 @@
         $.get('/latest', {
           api: true,
           deviceId: status.uuid /*|| new URLSearchParams(window.location.search).get('deviceId')*/,
-        }, (data) => {
+        }, (res) => {
             $('.statusbar').empty()
+            status.nextRefresh = '<%=dayjs().add(paper.displayFor, 'minutes').tz(device?.timezone || dayjs.tz.guess()).format('h:mm A')%>'
+            status.updatedAt = status.uuid ? dayjs.duration(dayjs().diff(dayjs().add(res.paper.displayFor/2, 'minutes'))).humanize(true) : undefined
+
             if (status.nextRefresh) $('.statusbar').append(`${status.nextRefresh} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`)
             if (status.updatedAt)   $('.statusbar').append(`${status.updatedAt}: `)
             if (status.wifi)        $('.statusbar').append(`${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`)
             if (status.battery)     $('.statusbar').append(`${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`)
-            if (status.temperature) $('.statusbar').append(`${status.temperature}° C}`)
+            if (status.temperature) $('.statusbar').append(`${status.temperature}° C`)
           }
         )
       } catch (error) {
