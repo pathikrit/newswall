@@ -173,7 +173,7 @@ const app = express()
     return res.status(result.missing ? StatusCodes.NOT_FOUND : StatusCodes.OK).send(result)
   })
 // Wire up globals to ejs
-app.locals = Object.assign(app.locals, {env: env, display: config.display})
+app.locals = Object.assign(app.locals, config, {env: env})
 
 // Kickoff download and export the app if this is a test so test framework can start the server else we start it ourselves
 module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.listen(config.port, () => {
