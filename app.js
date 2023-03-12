@@ -37,6 +37,9 @@ config = {
     pdf2ImgOpts: {width: 1600}
   },
 
+  // See: https://betterstack.com/docs/logs/javascript/install/#logging-from-browser
+  logTailSourceToken:'LQh5K1RSjwcEGtmLmRa9H9ka',
+
   // VSS Settings: See https://github.com/pathikrit/node-visionect
   visionect: {
     apiServer: 'https://pathikrit-1.dk.visionect.com:8081',

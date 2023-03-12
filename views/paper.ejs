@@ -30,9 +30,11 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/logtail-browser/0.3.0/dist/umd/logtail.js" integrity="sha512-j7t6vlvFm1ANrX6dGt+NFtZqOjWeeNlPmAWCkf8mf1n7CMjZVubwUBEvNiVT0RE7voXE7ojiQBNWsAreLg00CA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=URLSearchParams,Promise"></script>
   <script>
     const params = new URLSearchParams(window.location.search)
+    const log = new Logtail('LQh5K1RSjwcEGtmLmRa9H9ka')
 
     //TODO: pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
     pick = (level, choices) => {
@@ -42,7 +44,6 @@
       return choices[0]
     }
 
-    //TODO: logtrail fe error reporter
     update = () => {
       if (typeof okular === 'undefined') {
         random = (from, to) => from + Math.floor((to - from) * Math.random())
@@ -64,9 +65,7 @@
         papers: params.has('papers') ? params.get('papers').split(',') : undefined,
         prev: $('.paper-container > img').attr('id')
       }
-      // Retry in 1 minute if API failure
       return $.post('/latest', status)
-        .fail(() => setTimeout(update, 60 * 1000))
         .done(res => {
           let statusBar = `${new Date(new Date().getTime() + res.paper.displayFor * 60 * 1000).toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', hour12: true})} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
           if (status.wifi)        statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
@@ -79,6 +78,11 @@
           `)
           setTimeout(update, res.paper.displayFor * 60 * 1000)
       })
+       .fail((error) => {
+         log.error('Error in /latest request', error)
+         // Retry in 1 minute if API failure
+         setTimeout(update, 60 * 1000)
+       })
     }
 
     $(document).ready(update)
