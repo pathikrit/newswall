@@ -66,7 +66,8 @@
         papers: params.has('papers') ? params.get('papers').split(',') : undefined,
         prev: $('.paper-container > img').attr('id')
       }
-      return $.post('/latest', status, res => {
+
+      updateStatusBar = res => {
         let statusBar = `${dayjs().add(res.paper.displayFor, 'minutes').format('h:mm A')} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
         if (status.uuid)        statusBar += `${Math.ceil(res.paper.displayFor/2)} minutes ago: `
         if (status.wifi)        statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
@@ -79,7 +80,9 @@
         `)
 
         setTimeout(update, res.paper.displayFor * 60 * 1000)
-      })
+      }
+
+      return $.post('/latest', status).done(updateStatusBar)
     }
 
     $(document).ready(update)
