@@ -159,7 +159,7 @@ const app = express()
   .get('/latest', (req, res) => res.render('paper'))
   .post('/latest', (req, res) => {
     req.body.isFrame = req.headers['user-agent'].includes('VisionectOkular')
-    const result = {device: null, paper: null}
+    const result = {}
     if (req.body.uuid) {
       result.device = db.devices.find(device => device.id === req.body.uuid)
       if (result.device) result.paper = nextPaper(result.device, req.body.prev)
@@ -179,7 +179,7 @@ app.locals = Object.assign(app.locals, {env: env, display: config.display})
 
 // Kickoff download and export the app if this is a test so test framework can start the server else we start it ourselves
 module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.listen(config.port, () => {
-  log.info(`Started server on port ${config.port} with refreshInterval = ${config.refreshInterval.humanize()} ...`)
+  log.info(`Started server on port ${config.port} with refreshInterval of ${config.refreshInterval.humanize()} ...`)
 
   // Uncomment this line to trigger a rerender of images on deployment
   // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download

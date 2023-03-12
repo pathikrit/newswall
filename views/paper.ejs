@@ -36,8 +36,6 @@
   <script>
     const params = new URLSearchParams(window.location.search)
 
-    random = (from, to) => from + Math.floor((to - from) * Math.random())
-
     //TODO: pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
     pick = (level, choices) => {
       const buckets = [0, 10, 20, 40, 65, 90]
@@ -48,19 +46,22 @@
 
     //TODO: logtrail fe error reporter
     update = () => {
-      const device = typeof okular !== 'undefined' ? okular : {
-        <% if (!env.isProd) { %>
-        RSSI: random(45, 85),
-        BatteryLevel: random(5, 99),
-        Temperature: random(-10, 35)
-        <% } %>
+      if (typeof okular === 'undefined') {
+        random = (from, to) => from + Math.floor((to - from) * Math.random())
+        okular = {
+          <% if (!env.isProd) { %>
+          RSSI: random(45, 85),
+          BatteryLevel: random(5, 99),
+          Temperature: random(-10, 35)
+          <% } %>
+        }
       }
       const status = {
-        uuid: device.session_uuid || params.get('deviceId'),
-        wifi: device.RSSI ? Math.min(Math.max(2*(100 - device.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
-        battery: device.BatteryLevel,
-        temperature: device.Temperature,
-        timeout: typeof device['DevicesStatus'] == 'function' ? device.GetReloadTimeout() : undefined,
+        uuid: okular.session_uuid || params.get('deviceId'),
+        wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
+        battery: okular.BatteryLevel,
+        temperature: okular.Temperature,
+        timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
         url: window.location.pathname,
         papers: params.has('papers') ? params.get('papers').split(',') : undefined,
         prev: $('.paper-container > img').attr('id')
