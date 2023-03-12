@@ -3,7 +3,7 @@
 <head>
   <title>Newswall</title>
   <!-- Always refresh every 12 hours to fix stuck displays and/or get new versions of this page -->
-  <meta http-equiv="refresh" content="43200">
+  <meta http-equiv="refresh" content="<%= 12 * 60 * 60 %>">
   <link rel="stylesheet" href="https://kit.fontawesome.com/a22be8527e.css" crossorigin="anonymous">
   <style>
     * {
@@ -34,7 +34,8 @@
   <script>
     const params = new URLSearchParams(window.location.search)
 
-    //TODO: pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
+    //TODO: https://github.com/Financial-Times/polyfill-service/issues/2734
+    // pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
     pick = (level, choices) => {
       const buckets = [0, 10, 20, 40, 65, 90]
       for(let i = Math.min(choices.length, buckets.length)-1; i>=0; i--)
@@ -63,9 +64,8 @@
         papers: params.has('papers') ? params.get('papers').split(',') : undefined,
         prev: $('.paper-container > img').attr('id')
       }
-      // Retry in 1 minute if API failure
       return $.post('/latest', status)
-        .fail(() => setTimeout(update, 60 * 1000))
+        .fail(() => setTimeout(update, 60 * 1000))  // Retry in 1 minute if API failure
         .done(res => {
           let statusBar = `${new Date(new Date().getTime() + res.paper.displayFor * 60 * 1000).toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', hour12: true})} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
           if (status.wifi)        statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`

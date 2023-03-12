@@ -137,7 +137,7 @@ const updateVss = (vss) => {
     log.info(`Syncing deviceId=${device.id} to VSS ...`)
     vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
     if (config.myUrl) vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest`}}})
-    setTimeout(vss.sessions.restart, 60*1000, device.id)
+    setTimeout(vss.sessions.restart, 60 * 1000, device.id) // Restart the device session a minute from now
   })
 }
 
@@ -152,8 +152,9 @@ const app = express()
   // Statically serve the archive
   .use('/archive', require('serve-index')(config.newsstand))
   .use('/archive', express.static(config.newsstand))
-  // Main pages
+  // Homepage
   .get('/', (req, res) => res.render('index', {db: db}))
+  // GET returns the HTML and POST returns the next paper to render
   .get('/latest', (req, res) => res.render('paper'))
   .post('/latest', (req, res) => {
     req.body.isFrame = req.headers['user-agent'].includes('VisionectOkular')
