@@ -29,6 +29,7 @@
       top: <%=display.height - 2*statusBarFontSize%>px;
     }
   </style>
+  <!--  TODO: https://github.com/browserify/browserify-->
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=URLSearchParams,Promise"></script>
   <script>
@@ -44,15 +45,17 @@
     }
 
     // Update the DOM with new paper and status while also reporting current status with any prior error passed in
-    update = (error) => {
+    update = (arg) => {
+      // okular object is injected  by the display frame; we mock it otherwise in browser based emulations
       if (typeof okular === 'undefined') {
         random = (from, to) => from + Math.floor((to - from) * Math.random())
         okular = {
           <% if (!env.isProd) { %>
           RSSI: random(45, 85),
           BatteryLevel: random(5, 99),
-          Temperature: random(-10, 35)
+          Temperature: random(-10, 35),
           <% } %>
+          isMock: true
         }
       }
       const status = {
@@ -64,7 +67,9 @@
         url: window.location.pathname,
         papers: params.has('papers') ? params.get('papers').split(',') : undefined,
         prev: $('.paper-container > img').attr('id'),
-        error: error
+        isFrame: !okular.isMock,
+        // arg is either null (ajax), an error from ajax call or a fn from document.ready
+        mode: arg ? (typeof arg == 'function' ? 'Page Load' : `ERROR: ${arg}`) : 'AJAX',
       }
       return $.post('/latest', status)
         .fail((jqXhr, textStatus, errorThrown) => setTimeout(update, 60 * 1000, errorThrown)) // Retry API failure in 1 minute and report the error back to server

@@ -157,7 +157,6 @@ const app = express()
   // GET returns the HTML and POST returns the next paper to render
   .get('/latest', (req, res) => res.render('paper'))
   .post('/latest', (req, res) => {
-    req.body.isFrame = req.headers['user-agent'].includes('VisionectOkular')
     const result = {}
     if (req.body.uuid) {
       result.device = db.devices.find(device => device.id === req.body.uuid)
