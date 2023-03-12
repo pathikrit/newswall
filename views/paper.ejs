@@ -30,9 +30,7 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dayjs-with-plugins@1.0.3/dist/dayjs-with-plugins.min.js"></script>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=URLSearchParams,Promise"></script>
-
   <script>
     const params = new URLSearchParams(window.location.search)
 
@@ -70,7 +68,7 @@
       return $.post('/latest', status)
         .fail(() => setTimeout(update, 60 * 1000))
         .done(res => {
-          let statusBar = `${dayjs().add(res.paper.displayFor, 'minutes').format('h:mm A')} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
+          let statusBar = `${new Date(new Date().getTime() + res.paper.displayFor * 60 * 1000).toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', hour12: true})} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
           if (status.uuid)        statusBar += `${Math.ceil(res.paper.displayFor/2)} minutes ago: `
           if (status.wifi)        statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
           if (status.battery)     statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`
