@@ -1,10 +1,5 @@
 require('dotenv').config()
-const dayjs = require('dayjs') //TODO: dayjs all
-  .extend(require('dayjs/plugin/duration'))
-  .extend(require('dayjs/plugin/relativeTime'))
-  .extend(require('dayjs/plugin/utc'))
-  .extend(require('dayjs/plugin/timezone'))
-  .extend(require('dayjs/plugin/arraySupport'))
+const dayjs = require('dayjs-with-plugins')
 const fs = require('fs')
 const glob = require('glob')
 const path = require('path')

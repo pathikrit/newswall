@@ -69,7 +69,6 @@
         .fail(() => setTimeout(update, 60 * 1000))
         .done(res => {
           let statusBar = `${new Date(new Date().getTime() + res.paper.displayFor * 60 * 1000).toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', hour12: true})} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
-          if (status.uuid)        statusBar += `${Math.ceil(res.paper.displayFor/2)} minutes ago: `
           if (status.wifi)        statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
           if (status.battery)     statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`
           if (status.temperature) statusBar += res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
