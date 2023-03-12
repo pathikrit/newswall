@@ -43,7 +43,8 @@
       return choices[0]
     }
 
-    update = () => {
+    // Update the DOM with new paper and status while also reporting current status with any prior error passed in
+    update = (error) => {
       if (typeof okular === 'undefined') {
         random = (from, to) => from + Math.floor((to - from) * Math.random())
         okular = {
@@ -62,10 +63,11 @@
         timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
         url: window.location.pathname,
         papers: params.has('papers') ? params.get('papers').split(',') : undefined,
-        prev: $('.paper-container > img').attr('id')
+        prev: $('.paper-container > img').attr('id'),
+        error: error
       }
       return $.post('/latest', status)
-        .fail(() => setTimeout(update, 60 * 1000))  // Retry in 1 minute if API failure
+        .fail((jqXhr, textStatus, errorThrown) => setTimeout(update, 60 * 1000, errorThrown)) // Retry API failure in 1 minute and report the error back to server
         .done(res => {
           let statusBar = `${new Date(new Date().getTime() + res.paper.displayFor * 60 * 1000).toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', hour12: true})} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
           if (status.wifi)        statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
