@@ -59,7 +59,7 @@ const downloadAll = () => {
   })
 
   log.info('Checking for new papers ...')
-  return Promise.all(_.product(recentDays(3), db.newspapers).map(arg => download(arg[1], arg[0])))
+  return Promise.all(_.product(recentDays(3), db.newspapers).map(([date, newspaper]) => download(newspaper, date)))
 }
 
 /** Download the newspaper for given date */

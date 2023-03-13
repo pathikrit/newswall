@@ -1,29 +1,48 @@
-const test = require('supertest')
-const appPromise = require('./app')
-const {StatusCodes} = require('http-status-codes')
+const puppeteer   = require('puppeteer')
+const portfinder  = require('portfinder')
+const {OK, NOT_FOUND} = require('http-status-codes').StatusCodes
 
 jest.setTimeout(60*1000) // Initial download might be slow
 
-describe('server', () => {
-  shouldServe = (path, bodyCheck) => it(`should serve ${path}`, () => appPromise.then(app => test(app).get(path).expect(StatusCodes.OK).then(response => bodyCheck && bodyCheck(response.res.text))))
-  shouldNotServe = path => it(`should not serve ${path}`, () => appPromise.then(app => test(app).get(path).expect(StatusCodes.NOT_FOUND)))
+let port = null, server = null, browser = null
 
-  displayingPaper = paper => html => html.includes(`<img id="${paper || ''}`) //? Promise.resolve(html) : Promise.reject(`Did not find ${paper} in ${html}`)
-
-  shouldServe('/')
-  shouldServe('/archive')
-  shouldServe('/latest', displayingPaper())
-  shouldServe('/latest?prev=NYT', !displayingPaper('NYT'))
-  shouldServe('/latest?papers=NYT', displayingPaper('NYT'))
-  shouldServe('/latest?papers=NYT&prev=NYT', displayingPaper('NYT'))
-  shouldServe('/latest?papers=NYT&prev=INVALID', displayingPaper('NYT'))
-  shouldServe('/latest?papers=NYT,WSJ', displayingPaper('NYT') || displayingPaper('WSJ'))
-  shouldServe('/latest?papers=NYT,WSJ&prev=NYT', displayingPaper('WSJ'))
-  shouldServe('/latest?papers=NYT,WSJ&prev=WSJ', displayingPaper('NYT'))
-  shouldServe('/latest?papers=NYT,INVALID', displayingPaper('NYT'))
-  shouldNotServe('/latest?papers=INVALID')
-  shouldServe('/latest?deviceId=2a002800-0c47-3133-3633-333400000000', displayingPaper())
-  shouldServe('/latest?deviceId=2a002800-0c47-3133-3633-333400000000&prev=WSJ', !displayingPaper('WSJ'))
-  shouldNotServe('/latest/INVALID')
-  shouldNotServe('/INVALID')
+beforeAll(async () => {
+  port = await portfinder.getPortPromise()
+  server = await require('./app').then(app => app.listen(port))
+  browser = await puppeteer.launch()
 })
+
+afterAll(async () => {
+  await browser.close()
+  await server.close()
+})
+
+displayingPaper = (html, paper) => html.includes(`<img id="${paper || ''}`)
+
+test.each([
+  [OK, '/', html => html.includes('emulator')],
+  [OK, '/archive', html => html.includes('archive')],
+  [OK, '/latest', displayingPaper],
+  [OK, '/latest?prev=NYT', html => !displayingPaper(html, 'NYT')],
+  [OK, '/latest?papers=NYT', html => displayingPaper(html, 'NYT')],
+  [OK, '/latest?papers=NYT&prev=NYT', html => displayingPaper(html, 'NYT')],
+  [OK, '/latest?papers=NYT&prev=INVALID', html => displayingPaper(html, 'NYT')],
+  [OK, '/latest?papers=NYT,WSJ', html => displayingPaper(html,'NYT') || displayingPaper(html,'WSJ')],
+  [OK, '/latest?papers=NYT,WSJ&prev=NYT', html => displayingPaper(html, 'WSJ')],
+  [OK, '/latest?papers=NYT,WSJ&prev=WSJ', html => displayingPaper(html, 'NYT')],
+  [OK, '/latest?papers=NYT,INVALID', html => displayingPaper(html,'NYT')],
+  [OK, '/latest?papers=INVALID', displayingPaper],
+  [OK, '/latest?deviceId=INVALID', displayingPaper],
+  [OK, '/latest?deviceId=2a002800-0c47-3133-3633-333400000000', displayingPaper],
+  [OK, '/latest?deviceId=2a002800-0c47-3133-3633-333400000000&prev=WSJ', html => !displayingPaper(html, 'WSJ')],
+  [NOT_FOUND, '/latest/INVALID', html => html.includes('Cannot GET')],
+  [NOT_FOUND, '/INVALID', html => html.includes('Cannot GET')]
+])('%i: %s', async (statusCode, path, bodyCheck) => {
+    const page = await browser.newPage()
+    const res = await page.goto(`http://localhost:${port}${[path]}`)
+    await page.waitForNetworkIdle()
+    expect(typeof(bodyCheck) === 'function')
+    expect(res.status()).toBe(statusCode)
+    return page.content().then(content => bodyCheck(content) ? Promise.resolve(content) : Promise.reject(content))
+  }
+)
