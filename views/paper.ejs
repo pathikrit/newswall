@@ -69,7 +69,7 @@
         prev: params.get('prev') || $('.paper-container > img').attr('id'),
         isFrame: !okular.isMock,
         // arg is either null (ajax), an error from ajax call or a fn from document.ready
-        mode: arg ? (typeof arg == 'function' ? 'Page Load' : `ERROR: ${arg}`) : 'AJAX',
+        mode: arg ? (typeof arg == 'function' ? 'PageLoad' : `ERROR: ${arg}`) : 'AJAX',
       }
       return $.post('/latest', status)
         .fail((jqXhr, textStatus, errorThrown) => setTimeout(update, 60 * 1000, errorThrown)) // Retry API failure in 1 minute and report the error back to server
