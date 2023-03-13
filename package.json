@@ -17,8 +17,9 @@
     "node-visionect": "^0.0.6",
     "nodejs-file-downloader": "^4.10.2",
     "pdf-img-convert": "^1.1.1",
-    "serve-index": "^1.9.1",
-    "supertest": "^6.3.3"
+    "portfinder": "^1.0.32",
+    "puppeteer": "^19.7.4",
+    "serve-index": "^1.9.1"
   },
   "engines": {
     "npm": ">=8",

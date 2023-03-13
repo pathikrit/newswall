@@ -1,15 +1,40 @@
-const test = require('supertest')
-const appPromise = require('./app')
-const {StatusCodes} = require('http-status-codes')
+const puppeteer   = require('puppeteer' )
+const portfinder  = require('portfinder')
+const {OK, NotFound} = require('http-status-codes').StatusCodes
 
 jest.setTimeout(60*1000) // Initial download might be slow
 
+let port = null, server = null, browser = null
+
+beforeAll(async () => {
+  port = await portfinder.getPortPromise()
+  server = await require('./app').then(app => app.listen(port))
+  browser = await puppeteer.launch()
+})
+
+afterAll(async () => {
+  await browser.close()
+  await server.close()
+})
+
+displayingPaper = paper => html => html.includes(`<img id="${paper || ''}`) ? Promise.resolve(html) : Promise.reject(`Did not find ${paper} in ${html}`)
+
+test.each([
+  //['/', StatusCodes.OK],
+  [OK, '/latest', displayingPaper()],
+])('%i: %s', async (statusCode, path, bodyCheck) => {
+    const page = await browser.newPage()
+    const res = await page.goto(`http://localhost:${port}${[path]}`)
+    await page.waitForNetworkIdle()
+    expect(res.status()).toBe(statusCode)
+    return page.content().then(bodyCheck)
+  }
+)
+
+/*
 describe('server', () => {
-  shouldServe = (path, bodyCheck) => it(`should serve ${path}`, () => appPromise.then(app => test(app).get(path).expect(StatusCodes.OK).then(response => bodyCheck && bodyCheck(response.res.text))))
+  /*
   shouldNotServe = path => it(`should not serve ${path}`, () => appPromise.then(app => test(app).get(path).expect(StatusCodes.NOT_FOUND)))
-
-  displayingPaper = paper => html => html.includes(`<img id="${paper || ''}`) //? Promise.resolve(html) : Promise.reject(`Did not find ${paper} in ${html}`)
-
   shouldServe('/')
   shouldServe('/archive')
   shouldServe('/latest', displayingPaper())
@@ -27,3 +52,4 @@ describe('server', () => {
   shouldNotServe('/latest/INVALID')
   shouldNotServe('/INVALID')
 })
+*/
