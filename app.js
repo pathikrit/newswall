@@ -101,12 +101,13 @@ const nextPaper = (currentDevice, currentPaper) => {
   const searchTerm = currentDevice?.newspapers?.length > 0 ? (currentDevice.newspapers.length === 1 ? currentDevice.newspapers[0].id : `{${currentDevice.newspapers.map(p => p.id).join(',')}}`) : '*'
   for (const date of recentDays(3, currentDevice?.timezone)) {
     const globExpr = path.join(config.newsstand, date, `${searchTerm}.png`)
-    const ids = glob.sync(globExpr).map(image => path.parse(image).name)
+    const ids = glob.sync(globExpr).map(image => path.parse(image).name).sort()
     if (ids.length === 0) continue
     // Find something that is not current or a random one
-    const id = ids.length === 1 ? ids[0] : _.sample(ids.filter(id => !currentPaper || id !== currentPaper))
+    const idx = currentPaper ? ids.indexOf(currentPaper) : -1
+    const id = idx >= 0 ? ids[(idx + 1) % ids.length] : _.sample(ids)
     const paper = db.newspapers.find(paper => paper.id === id)
-    const displayFor = currentDevice?.newspapers?.find(p => p.id === paper.id)?.displayFor || config.refreshInterval.asMinutes()
+    const displayFor = currentDevice?.newspapers?.find(p => p.id === paper?.id)?.displayFor || config.refreshInterval.asMinutes()
     if (paper) return Object.assign(paper, {date: date, displayFor: displayFor})
     if (id) log.error(`Unknown paper found: ${id}`)
   }
