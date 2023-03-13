@@ -1,4 +1,4 @@
-const puppeteer   = require('puppeteer' )
+const puppeteer   = require('puppeteer')
 const portfinder  = require('portfinder')
 const {OK, NotFound} = require('http-status-codes').StatusCodes
 
@@ -17,11 +17,28 @@ afterAll(async () => {
   await server.close()
 })
 
-displayingPaper = paper => html => html.includes(`<img id="${paper || ''}`) ? Promise.resolve(html) : Promise.reject(`Did not find ${paper} in ${html}`)
+contains = (expected) => html => expected.some(part => html.includes(part)) ? Promise.resolve(html) : Promise.reject(`Did not find ${expected} in ${html}`)
+displayingPaper = (...papers) => contains(papers.map(paper => `<img id="${paper || ''}`))
+const any = null
 
 test.each([
-  //['/', StatusCodes.OK],
-  [OK, '/latest', displayingPaper()],
+  [OK, '/', contains(['emulator'])],
+  [OK, '/archive', contains(['archive'])],
+  [OK, '/latest', displayingPaper(any)],
+  [OK, '/latest', displayingPaper(any)],
+  [OK, '/latest?prev=NYT', !displayingPaper('NYT')],
+  [OK, '/latest?papers=NYT', displayingPaper('NYT')],
+  [OK, '/latest?papers=NYT&prev=NYT', displayingPaper('NYT')],
+  [OK, '/latest?papers=NYT&prev=INVALID', displayingPaper('NYT')],
+  [OK, '/latest?papers=NYT,WSJ', displayingPaper('NYT', 'WSJ')],
+  [OK, '/latest?papers=NYT,WSJ&prev=NYT', displayingPaper('WSJ')],
+  [OK, '/latest?papers=NYT,WSJ&prev=WSJ', displayingPaper('NYT')],
+  [OK, '/latest?papers=NYT,INVALID', displayingPaper('NYT')],
+  //shouldNotServe('/latest?papers=INVALID')
+  [OK, '/latest?deviceId=2a002800-0c47-3133-3633-333400000000', displayingPaper(any)],
+  [OK, '/latest?deviceId=2a002800-0c47-3133-3633-333400000000&prev=WSJ', !displayingPaper('WSJ')],
+  //shouldNotServe('/latest/INVALID')
+  //shouldNotServe('/INVALID')
 ])('%i: %s', async (statusCode, path, bodyCheck) => {
     const page = await browser.newPage()
     const res = await page.goto(`http://localhost:${port}${[path]}`)
@@ -30,26 +47,3 @@ test.each([
     return page.content().then(bodyCheck)
   }
 )
-
-/*
-describe('server', () => {
-  /*
-  shouldNotServe = path => it(`should not serve ${path}`, () => appPromise.then(app => test(app).get(path).expect(StatusCodes.NOT_FOUND)))
-  shouldServe('/')
-  shouldServe('/archive')
-  shouldServe('/latest', displayingPaper())
-  shouldServe('/latest?prev=NYT', !displayingPaper('NYT'))
-  shouldServe('/latest?papers=NYT', displayingPaper('NYT'))
-  shouldServe('/latest?papers=NYT&prev=NYT', displayingPaper('NYT'))
-  shouldServe('/latest?papers=NYT&prev=INVALID', displayingPaper('NYT'))
-  shouldServe('/latest?papers=NYT,WSJ', displayingPaper('NYT') || displayingPaper('WSJ'))
-  shouldServe('/latest?papers=NYT,WSJ&prev=NYT', displayingPaper('WSJ'))
-  shouldServe('/latest?papers=NYT,WSJ&prev=WSJ', displayingPaper('NYT'))
-  shouldServe('/latest?papers=NYT,INVALID', displayingPaper('NYT'))
-  shouldNotServe('/latest?papers=INVALID')
-  shouldServe('/latest?deviceId=2a002800-0c47-3133-3633-333400000000', displayingPaper())
-  shouldServe('/latest?deviceId=2a002800-0c47-3133-3633-333400000000&prev=WSJ', !displayingPaper('WSJ'))
-  shouldNotServe('/latest/INVALID')
-  shouldNotServe('/INVALID')
-})
-*/
