@@ -2016,6 +2016,11 @@ jest-leak-detector@^29.4.3:
     jest-get-type "^29.4.3"
     pretty-format "^29.4.3"
 
+jest-matcher-one-of@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/jest-matcher-one-of/-/jest-matcher-one-of-1.0.2.tgz#f9da727962f9726244cb957639530a799c029aa4"
+  integrity sha512-yNVu0kFAq0w7al2HB+U/qy/y2mMcoYjdNrU0iP9Q35XbKBfPpyPd8bCsbGmhhvD2qo7AMpzk3gCjQl43NcnrUQ==
+
 jest-matcher-utils@^29.4.3:
   version "29.4.3"
   resolved "https://registry.yarnpkg.com/jest-matcher-utils/-/jest-matcher-utils-29.4.3.tgz#ea68ebc0568aebea4c4213b99f169ff786df96a0"
