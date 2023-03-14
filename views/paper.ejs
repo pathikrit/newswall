@@ -40,9 +40,8 @@
     const params = new URLSearchParams(window.location.search)
 
     const timeFormat = (date) => {
-      let minutes = date.getMinutes()
-      minutes = minutes < 10 ? '0' + minutes : minutes
-      return `${(date.getHours() % 12) || 12}:${minutes} ${date.getHours() < 12 ? 'AM' : 'PM'}`
+      const h = date.getHours(), m = date.getMinutes()
+      return `${(h % 12) || 12}:${m < 10 ? '0' + m : m} ${h < 12 ? 'AM' : 'PM'}`
     }
 
     //TODO: https://github.com/Financial-Times/polyfill-service/issues/2734
@@ -84,18 +83,22 @@
       return $.post('/latest', status)
         .fail((jqXhr, textStatus, errorThrown) => setTimeout(update, 60 * 1000, errorThrown)) // Retry API failure in 1 minute and report the error back to server
         .done(res => {
-          const refreshAfter = res.paper.displayFor * 60 * 1000 // We will refresh after this many milliseconds
+          const refreshAfter = (res && res.paper ? res.paper.displayFor : 1) * 60 * 1000 // We will refresh after this many milliseconds
           setTimeout(update, refreshAfter)
 
-          let statusBar = `${timeFormat(new Date(new Date().getTime() + refreshAfter))} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
-          if (status.wifi)        statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
-          if (status.battery)     statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`
-          if (status.temperature) statusBar += res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
+          try {
+            let statusBar = `${timeFormat(new Date(new Date().getTime() + refreshAfter))} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
+            if (status.wifi)        statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
+            if (status.battery)     statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`
+            if (status.temperature) statusBar += res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
 
-          $('.paper-container').html(`
-            <img id="${res.paper.id}" src="/archive/${res.paper.date}/${res.paper.id}.png" style="transform: scale(${res.paper.scale})" alt="${res.paper.name} for ${res.paper.date}">
-            <div class="statusbar">${statusBar}</div>
-          `)
+            $('.paper-container').html(`
+              <img id="${res.paper.id}" src="/archive/${res.paper.date}/${res.paper.id}.png" style="transform: scale(${res.paper.scale})" alt="${res.paper.name} for ${res.paper.date}">
+              <div class="statusbar">${statusBar}</div>
+            `)
+          } catch (error) {
+            $('.statusbar').html(error.toString())
+          }
       })
     }
 
@@ -108,6 +111,7 @@
     <div class="load-message">
       <h1>Fetching newspapers ...</h1>
       <p>If you see this for a while, check your device's internet connection or contact support@framed.news</p>
+      <div class="statusbar"></div>
     </div>
   </div>
 </body>
