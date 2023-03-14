@@ -35,10 +35,15 @@
   </style>
   <!--  TODO: https://github.com/browserify/browserify-->
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=Intl.DateTimeFormat,URLSearchParams,Promise"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=URLSearchParams,Promise"></script>
   <script>
     const params = new URLSearchParams(window.location.search)
-    const timeFormat = new Intl.DateTimeFormat([], {timeStyle: "short"})
+
+    const timeFormat = (date) => {
+      let minutes = date.getMinutes()
+      minutes = minutes < 10 ? '0' + minutes : minutes
+      return `${(date.getHours() % 12) || 12}:${minutes} ${date.getHours() < 12 ? 'AM' : 'PM'}`
+    }
 
     //TODO: https://github.com/Financial-Times/polyfill-service/issues/2734
     // pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
@@ -82,7 +87,7 @@
           const refreshAfter = res.paper.displayFor * 60 * 1000 // We will refresh after this many milliseconds
           setTimeout(update, refreshAfter)
 
-          let statusBar = `${timeFormat.format(new Date(new Date().getTime() + refreshAfter))} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
+          let statusBar = `${timeFormat(new Date(new Date().getTime() + refreshAfter))} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
           if (status.wifi)        statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
           if (status.battery)     statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`
           if (status.temperature) statusBar += res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
