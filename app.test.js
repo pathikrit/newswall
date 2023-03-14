@@ -19,16 +19,12 @@ afterAll(async () => {
 })
 
 contains = str => page => expect(page.content()).resolves.toContain(str)
-
 actualPaperOn = page => expect(page.$eval('img', el => el.id))
 
-serves = (url, substring) => [StatusCodes.OK, url, contains(substring)]
-
-showsPaper = (url, papers) => [StatusCodes.OK, url, page => papers ? actualPaperOn(page).resolves.toBeOneOf(papers) : actualPaperOn(page).resolves.not.toBeNull()]
-
-doesNotShowPaper = (url, paper) => [StatusCodes.OK, url, page => paper ? actualPaperOn(page).resolves.not.toBe(paper) : actualPaperOn(page).rejects.toThrow()]
-
-doesNotServe = url => [StatusCodes.NOT_FOUND, url, contains(`Cannot GET ${url}`)]
+serves           = (url, text)    => [StatusCodes.OK        , url, contains(text)]
+doesNotServe     = (url)          => [StatusCodes.NOT_FOUND , url, contains(`Cannot GET ${url}`)]
+showsPaper       = (url, papers)  => [StatusCodes.OK        , url, page => papers ? actualPaperOn(page).resolves.toBeOneOf(papers) : actualPaperOn(page).resolves.not.toBeNull()]
+doesNotShowPaper = (url, paper)   => [StatusCodes.OK        , url, page => paper ? actualPaperOn(page).resolves.not.toBe(paper) : actualPaperOn(page).rejects.toThrow()]
 
 test.each([
   serves('/', 'emulator'),
