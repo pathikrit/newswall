@@ -20,13 +20,17 @@
       width: 100%;
       object-fit: contain;
     }
-    .paper-container .statusbar {
+    .statusbar {
       <% statusBarFontSize = 10 %>
       position: absolute;
       font-size: <%=statusBarFontSize%>px;
       font-family: serif;
       padding-left: <%=statusBarFontSize%>px;
       top: <%=display.height - 2*statusBarFontSize%>px;
+    }
+    .load-message {
+      text-align: center;
+      margin-top: <%=Math.ceil(display.height*40/100)%>px;
     }
   </style>
   <!--  TODO: https://github.com/browserify/browserify-->
@@ -77,7 +81,7 @@
           const refreshAfter = res.paper.displayFor * 60 * 1000 // We will refresh after this many milliseconds
           setTimeout(update, refreshAfter)
 
-          let statusBar = `${new Date(new Date().getTime() + refreshAfter).toLocaleTimeString('en-US', {timeStyle: "short"})} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
+          let statusBar = `${new Date(new Date().getTime() + refreshAfter).toLocaleTimeString([], {timeStyle: "short"})} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
           if (status.wifi)        statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
           if (status.battery)     statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`
           if (status.temperature) statusBar += res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
@@ -94,6 +98,11 @@
   </script>
 </head>
 <body>
-  <div class="paper-container"></div>
+  <div class="paper-container">
+    <div class="load-message">
+      <h1>Fetching newspapers ...</h1>
+      <p>If you see this for a while, check your device's internet connection or contact support@framed.news</p>
+    </div>
+  </div>
 </body>
 </html>
