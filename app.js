@@ -136,6 +136,7 @@ const updateVss = (vss) => {
 
   db.devices.forEach(device => {
     log.info(`Syncing deviceId=${device.id} to VSS ...`)
+    log.table(device.newspapers)
     vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
     if (config.myUrl) vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest`}}})
     setTimeout(vss.sessions.restart, 60 * 1000, device.id) // Restart the device session a minute from now
@@ -179,6 +180,7 @@ app.locals = Object.assign(app.locals, config, {env: env})
 // Kickoff download and export the app if this is a test so test framework can start the server else we start it ourselves
 module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.listen(config.port, () => {
   log.info(`Started server on port ${config.port} with refreshInterval of ${config.refreshInterval.humanize()} ...`)
+  log.table(db.newspapers)
 
   // Uncomment this line to trigger a rerender of images on deployment
   // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
