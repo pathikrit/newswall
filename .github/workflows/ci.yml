@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
 
 jobs:
   build:
@@ -16,7 +16,10 @@ jobs:
       with:
         node-version: 19.x
         cache: 'npm'
+    - uses: actions/cache@v3
+      with:
+        key: newsstand
+        path: .newspapers
+
     - run: yarn install --frozen-lockfile
     - run: yarn test
-
-# TODO: persists the .newspaper directory
