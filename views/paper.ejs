@@ -89,18 +89,18 @@
             if (status.refreshAfter)  statusBar += `${timeFormat(new Date(new Date().getTime() + status.refreshAfter))} <i class="fa-sharp fa-clock-rotate-left"></i>&emsp;`
             if (status.wifi)          statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
             if (status.battery)       statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`
-            if (status.temperature)   statusBar += res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
+            if (status.temperature)   statusBar += `${res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`}&emsp;`
 
             $('.paper-container').html(`
               <img id="${res.paper.id}" src="/archive/${res.paper.date}/${res.paper.id}.png" style="transform: scale(${res.paper.scale})" alt="${res.paper.name} for ${res.paper.date}">
               <div class="statusbar">${statusBar}</div>
             `)
-          } catch (error) {
-            status.error = error.toString()
-            $('.statusbar').html(error.toString())
-          }
+          } catch (error) { status.error = error }
         })
-        .always(() => setTimeout(update, status.refreshAfter || (1 * 60 * 1000))) // always update alteast 1 minute from now
+        .always(() => {
+          setTimeout(update, status.refreshAfter || (1 * 60 * 1000))  // always update alteast 1 minute from now
+          if (status.error) $('.statusbar').append(`<code>ERROR: ${status.error}</code>`)
+        })
     }
 
     $(document).ready(update)
