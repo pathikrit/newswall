@@ -86,7 +86,7 @@
             status.refreshAfter = res.paper.displayFor * 60 * 1000
 
             let statusBar = ``
-            if (status.refreshAfter)  statusBar += `${timeFormat(new Date(new Date().getTime() + status.refreshAfter))} <i class="fa-sharp fa-solid fa-rotate-right"></i>&emsp;`
+            if (status.refreshAfter)  statusBar += `${timeFormat(new Date(new Date().getTime() + status.refreshAfter))} <i class="fa-sharp fa-clock-rotate-left"></i>&emsp;`
             if (status.wifi)          statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
             if (status.battery)       statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`
             if (status.temperature)   statusBar += res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`
@@ -111,7 +111,7 @@
   <div class="paper-container">
     <div class="load-message">
       <h1>Fetching newspapers ...</h1>
-      <p>If you see this for a while, check your device's internet connection or contact support@framed.news</p>
+      <i>If you see this for a while, check your device's internet connection or contact <a href="mailto:help@framed.news?subject=Something%20is%20wrong%20with%20frame&body=My%20frame%20is%20stuck%20displaying%20xxxx">help@framed.news</a></i>
       <div class="statusbar"></div>
     </div>
   </div>
