@@ -13,13 +13,10 @@
       shadowThickness = 15
       containerWidth = display.width+2*frameThickness + shadowThickness
     %>
-    @media (min-width: <%=display.width/2%>px) {
+    @media (min-width: <%=Math.ceil(containerWidth*2/3)%>px) {
       .container-fluid {
         max-width: <%=containerWidth%>px;
       }
-    }
-    .shopify-buy-frame--product.shopify-buy__layout-horizontal iframe {
-      max-width: <%=containerWidth%>px;
     }
     .emulator {
       height: <%=display.height%>px;
@@ -34,7 +31,7 @@
     }
     .url {
       outline: solid;
-      width: <%=display.width/2%>px;
+      width: <%=Math.ceil(containerWidth*2/3)%>px;
     }
     body {
       background-color: #f9f7f1;
@@ -75,10 +72,9 @@
     <hr>
     <% }) %>
     <div class="input-group">
-      <p id="url" class="m-2 p-1 font-monospace url small"></p>
-      <button type="button" class="btn btn-dark rounded-pill" onclick="emulate()">Reset</button>
       <a class="link-dark m-2 p-1" href="/archive" target="_blank"><i class="fa-sharp fa-regular fa-newspaper fa-2xl"></i></a>
-      <a class="link-dark m-2 p-1" href="https://github.com/pathikrit/newswall" target="_blank"><i class="fa-brands fa-github fa-2xl"></i></a>
+      <p id="url" class="m-2 p-2 font-monospace url"></p>
+      <button type="button" class="btn btn-dark rounded-pill m-2" onclick="emulate()">Reset</button>
     </div>
   </form>
   <iframe id="emulator" class="emulator" scrolling="no"></iframe>
