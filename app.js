@@ -37,10 +37,8 @@ config = {
     pdf2ImgOpts: {width: 1600}
   },
 
-  // See: https://betterstack.com/docs/logs/javascript/install/#logging-from-browser
-  logTailSourceToken:'LQh5K1RSjwcEGtmLmRa9H9ka',
-
   // VSS Settings: See https://github.com/pathikrit/node-visionect
+  // Note: This whole section can be removed and things will still work e.g. if you are using the Joan portal
   visionect: {
     apiServer: 'https://pathikrit-1.dk.visionect.com:8081',
     apiKey: process.env.visionectApiKey,
@@ -135,7 +133,7 @@ const updateVss = (vss) => {
   }, (err) => log.error(err))
 
   db.devices.forEach(device => {
-    log.info(`Syncing deviceId=${device.id} to VSS ...`)
+    log.info(`Syncing ${device.id} to VSS ...`)
     log.table(device.newspapers)
     vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
     if (config.myUrl) vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest`}}})

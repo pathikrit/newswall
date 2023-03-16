@@ -80,7 +80,7 @@
         mode: typeof arg == 'function' ? 'PageLoad' : 'AJAX', // arg is either null (ajax) or a fn from document.ready
       }
       return $.post('/latest', status)
-        .fail((jqXhr, textStatus, errorThrown) => status.error = errorThrown)
+        .fail((jqXhr, textStatus, errorThrown) => status.error = {status: jqXhr.status, message: textStatus, error: errorThrown})
         .done(res => {
           try {
             status.refreshAfter = res.paper.displayFor * 60 * 1000
@@ -99,7 +99,7 @@
         })
         .always(() => {
           setTimeout(update, status.refreshAfter || (1 * 60 * 1000))  // always update alteast 1 minute from now
-          if (status.error) $('.statusbar').append(`<code>ERROR: ${status.error}</code>`)
+          if (status.error) $('.statusbar').append(`<code>ERROR: ${JSON.stringify(status.error)}</code>`)
         })
     }
 
