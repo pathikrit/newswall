@@ -1,6 +1,6 @@
 Newswall [![CI](https://github.com/pathikrit/newswall/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/pathikrit/newswall/actions/workflows/ci.yml)
 ---
-Inspired by the [e-ink newspaper](https://github.com/mmicire/nyt2png) project ([HN post](https://news.ycombinator.com/item?id=26611371), [original idea by Max Braun](https://onezero.medium.com/the-morning-paper-revisited-35b407822494)),
+Inspired by the [e-ink newspaper](https://github.com/mmicire/nyt2png) project ([HN post](https://news.ycombinator.com/item?id=26611371); [original idea by Max Braun](https://onezero.medium.com/the-morning-paper-revisited-35b407822494)),
 this is a pure node.js port of [graiz/newsprint](https://github.com/graiz/newsprint)
 
 1. Install `yarn` and `node` e.g. using `brew`:
