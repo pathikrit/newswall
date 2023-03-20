@@ -47,8 +47,8 @@ module.exports = {
   // displayFor: Configure this (in minutes) to display this paper before moving onto the next one
   devices: [
     {
-      id: '35003600-1247-3830-3933-303600000000',
-      name: "Rick's Hallway Newswall",
+      id: '32001d00-0f47-3830-3933-303600000000',
+      name: "Rick's Newswall",
       timezone: 'America/New_York',
       showFahrenheit: true,
       newspapers: [
@@ -71,6 +71,29 @@ module.exports = {
         {
           id: 'AsianAge',
           displayFor: 5
+        }
+      ]
+    },
+    {
+      id: '35003600-1247-3830-3933-303600000000',
+      name: "Tapas's Newswall",
+      timezone: 'America/New_York',
+      newspapers: [
+        {
+          id: 'NYT',
+          displayFor: 60
+        },
+        {
+          id: 'WSJ',
+          displayFor: 30
+        },
+        {
+          id: 'WaPo',
+          displayFor: 15
+        },
+        {
+          id: 'AsianAge',
+          displayFor: 45
         }
       ]
     },
