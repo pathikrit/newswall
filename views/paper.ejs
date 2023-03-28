@@ -44,15 +44,6 @@
       return `${(h % 12) || 12}:${m < 10 ? '0' + m : m} ${h < 12 ? 'AM' : 'PM'}`
     }
 
-    //TODO: https://github.com/Financial-Times/polyfill-service/issues/2734
-    // pick = (level, choices, buckets = [0, 10, 20, 40, 65, 90]) => choices[buckets.findLastIndex(x => level >= x)]
-    pick = (level, choices) => {
-      const buckets = [0, 10, 20, 40, 65, 90]
-      for(let i = Math.min(choices.length, buckets.length)-1; i>=0; i--)
-        if (level >= buckets[i]) return choices[i]
-      return choices[0]
-    }
-
     // Update the DOM with new paper and status while also reporting current status with any prior error passed in
     update = (arg) => {
       // okular object is injected  by the display frame; we mock it otherwise in browser based emulations
@@ -87,8 +78,8 @@
 
             let statusBar = ``
             if (status.refreshAfter)  statusBar += `${timeFormat(new Date(new Date().getTime() + status.refreshAfter))} <i class="fa-sharp fa-clock-rotate-left"></i>&emsp;`
-            if (status.wifi)          statusBar += `${status.wifi}% <i class="fa-regular fa-${pick(status.wifi, ['signal-slash', 'signal-fair', 'signal-weak', 'signal-good', 'signal-strong', 'signal'])}"></i>&emsp;`
-            if (status.battery)       statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${pick(status.battery, ['empty', 'low', 'quarter', 'half', 'three-quarters', 'full'])}"></i>&emsp;`
+            if (status.wifi)          statusBar += `${status.wifi}% <i class="fa-regular fa-signal-${Math.ceil(status.wifi * 6/100) - 1}"></i>&emsp;`
+            if (status.battery)       statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${Math.ceil(status.battery * 6/100) - 1}"></i>&emsp;`
             if (status.temperature)   statusBar += `${res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`}&emsp;`
 
             $('.paper-container').html(`
