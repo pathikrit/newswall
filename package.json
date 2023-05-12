@@ -21,7 +21,7 @@
   "engines": {
     "npm": ">=8",
     "yarn": ">=1",
-    "node": ">=19"
+    "node": ">=18 <20"
   },
   "engineStrict": true,
   "scripts": {
