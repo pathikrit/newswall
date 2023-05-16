@@ -82,10 +82,12 @@
             if (status.battery)       statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${Math.ceil(status.battery * 6/100) - 1}"></i>&emsp;`
             if (status.temperature)   statusBar += `${res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`}&emsp;`
 
-            $('.paper-container').html(`
-              <img id="${res.paper.id}" src="/archive/${res.paper.date}/${res.paper.id}.png" style="transform: scale(${res.paper.scale})" alt="${res.paper.name} for ${res.paper.date}">
-              <div class="statusbar">${statusBar}</div>
-            `)
+            $('.paper-container').html(
+              (status.battery && status.battery < <%=lowBatteryWarning%> ?
+                `<div class="load-message"><h1>LOW BATTERY ALERT!</h1><i>Please charge this device using the USB cable attached to the back of this frame.</i></div>` :
+                `<img id="${res.paper.id}" src="/archive/${res.paper.date}/${res.paper.id}.png" style="transform: scale(${res.paper.scale})" alt="${res.paper.name} for ${res.paper.date}">`
+              ) + `<div class="statusbar">${statusBar}</div>`
+            )
           } catch (error) { status.error = error }
         })
         .always(() => {

@@ -37,6 +37,9 @@ config = {
     pdf2ImgOpts: {width: 1600}
   },
 
+  // Show low battery warning below this
+  lowBatteryWarning: 20,
+
   // VSS Settings: See https://github.com/pathikrit/node-visionect
   // Note: This whole section can be removed and things will still work e.g. if you are using the Joan portal
   visionect: {
@@ -163,7 +166,7 @@ const app = express()
       if (result.device) result.paper = nextPaper(result.device, req.body.prev)
       else result.missing = `Device Id = ${req.body.uuid}`
     } else if (req.body.papers) {
-      result.paper = nextPaper({newspapers: req.body.papers.map(paper => {return {id: paper}})}, req.body.prev)
+      result.paper = nextPaper({newspapers: req.body.papers.map(paper => ({id: paper}))}, req.body.prev)
       if (!result.paper) result.missing = `Newspapers = ${req.body.papers}`
     } else {
       result.paper = nextPaper(null, req.body.prev)
