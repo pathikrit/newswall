@@ -9,12 +9,12 @@ const {StatusCodes} = require('http-status-codes')
 const log = console
 const db = require('./db.js')
 
-env = {
+const env = {
   isProd: process.env.NODE_ENV === 'production',
   isTest: process.env.NODE_ENV === 'test'
 }
 
-config = {
+const config = {
   port:  process.env.PORT || 3000,
 
   // Directory to cache newspaper downloads
@@ -50,7 +50,7 @@ config = {
 }
 
 /** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC+14 */
-const recentDays = (n, timezone = 'Etc/GMT-14')  => Array.from(Array(n).keys()).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
+const recentDays = (n, timezone = 'Etc/GMT-14')  => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
 
 /** Downloads all newspapers for all recent days; trashes old ones */
 const downloadAll = () => {
@@ -78,7 +78,7 @@ const download = (newspaper, date) => {
   log.info(`Checking for ${name} ...`)
   const url = newspaper.url(dayjs(date))
   const Downloader = require('nodejs-file-downloader')
-  return new Downloader({url: url, directory: directory, fileName: fileName})
+  return new Downloader({url, directory, fileName})
     .download()
     .then(() => pdfToImage(pdfPath, pngPath))
     .catch(error => {
@@ -109,7 +109,7 @@ const nextPaper = (currentDevice, currentPaper) => {
     const id = idx >= 0 ? ids[(idx + 1) % ids.length] : _.sample(ids)
     const paper = db.newspapers.find(paper => paper.id === id)
     const displayFor = currentDevice?.newspapers?.find(p => p.id === paper?.id)?.displayFor || config.refreshInterval.asMinutes()
-    if (paper) return Object.assign(paper, {date: date, displayFor: displayFor})
+    if (paper) return Object.assign(paper, {date, displayFor})
     if (id) log.error(`Unknown paper found: ${id}`)
   }
 }
@@ -156,7 +156,7 @@ const app = express()
   .use('/archive', require('serve-index')(config.newsstand))
   .use('/archive', express.static(config.newsstand))
   // Homepage
-  .get('/', (req, res) => res.render('index', {db: db}))
+  .get('/', (req, res) => res.render('index', {db}))
   // GET returns the HTML and POST returns the next paper to render
   .get('/latest', (req, res) => res.render('paper'))
   .post('/latest', (req, res) => {
@@ -176,7 +176,7 @@ const app = express()
     return res.status(result.missing ? StatusCodes.NOT_FOUND : StatusCodes.OK).send(result)
   })
 // Wire up globals to ejs
-app.locals = Object.assign(app.locals, config, {env: env})
+app.locals = Object.assign(app.locals, config, {env})
 
 // Kickoff download and export the app if this is a test so test framework can start the server else we start it ourselves
 module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.listen(config.port, () => {
