@@ -6,8 +6,9 @@ const path = require('path')
 require('lodash.product')
 const _ = require('lodash')
 const {StatusCodes} = require('http-status-codes')
-const log = console
 const db = require('./db.js')
+
+const log = console
 
 const env = {
   isProd: process.env.NODE_ENV === 'production',
@@ -15,16 +16,22 @@ const env = {
 }
 
 const config = {
+  verbose: (process.env.VERBOSE === 'true') || true,
+
   port:  process.env.PORT || 3000,
 
+  timezone: process.env.TIMEZONE || 'Etc/GMT-14',
+
   // Directory to cache newspaper downloads
-  newsstand: env.isProd ? '/var/lib/data/newsstand' : path.resolve('./.newspapers'),
+  newsstand: env.isProd ?
+      path.resolve(process.env.NEWSPAPER_STORAGE_DIR_PROD) || '/var/lib/data/newsstand' :
+      path.resolve(process.env.NEWSPAPER_STORAGE_DIR_DEV) || path.resolve('./.newspapers'),
 
   // The production site url
   myUrl: process.env.RENDER_EXTERNAL_URL,
 
   // How many days of papers to keep
-  archiveLength: 35,
+  archiveLength: (process.env.ARCHIVE_LENGTH && parseInt(process.env.ARCHIVE_LENGTH, 10)) || 35,
 
   // Every hour check for new papers and update device statuses
   refreshInterval: dayjs.duration(env.isProd ? { hours: 1 } : {minutes: 5}),
@@ -43,14 +50,14 @@ const config = {
   // VSS Settings: See https://github.com/pathikrit/node-visionect
   // Note: This whole section can be removed and things will still work e.g. if you are using the Joan portal
   visionect: {
-    apiServer: 'https://pathikrit-1.dk.visionect.com:8081',
-    apiKey: process.env.visionectApiKey,
-    apiSecret: process.env.visionectApiSecret
+    apiServer: process.env.VISIONECT_API_SERVER || 'https://pathikrit-1.dk.visionect.com:8081',
+    apiKey: process.env.VISIONECT_API_KEY,
+    apiSecret: process.env.VISIONECT_API_SECRET
   }
 }
 
 /** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC+14 */
-const recentDays = (n, timezone = 'Etc/GMT-14')  => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
+const recentDays = (n, timezone = config.timezone) => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
 
 /** Downloads all newspapers for all recent days; trashes old ones */
 const downloadAll = () => {
@@ -72,12 +79,19 @@ const download = (newspaper, date) => {
   const name = `${newspaper.name} for ${date}`
 
   if (fs.existsSync(pdfPath)) {
-    return fs.existsSync(pngPath) ? Promise.resolve(log.debug(`Already downloaded ${name}`)) : pdfToImage(pdfPath, pngPath)
+    return fs.existsSync(pngPath) ?
+        Promise.resolve(
+            config.verbose ?
+              log.debug(`Already downloaded ${name}`) :
+              undefined
+        ) :
+        pdfToImage(pdfPath, pngPath)
   }
 
   log.info(`Checking for ${name} ...`)
   const url = newspaper.url(dayjs(date))
   const Downloader = require('nodejs-file-downloader')
+
   return new Downloader({url, directory, fileName})
     .download()
     .then(() => pdfToImage(pdfPath, pngPath))
@@ -109,6 +123,7 @@ const nextPaper = (currentDevice, currentPaper) => {
     const id = idx >= 0 ? ids[(idx + 1) % ids.length] : _.sample(ids)
     const paper = db.newspapers.find(paper => paper.id === id)
     const displayFor = currentDevice?.newspapers?.find(p => p.id === paper?.id)?.displayFor || config.refreshInterval.asMinutes()
+
     if (paper) return Object.assign(paper, {date, displayFor})
     if (id) log.error(`Unknown paper found: ${id}`)
   }
@@ -143,6 +158,7 @@ const updateVss = (vss) => {
     setTimeout(vss.sessions.restart, 60 * 1000, device.id) // Restart the device session a minute from now
   })
 }
+
 
 /** Setup the express server */
 const express = require('express')
