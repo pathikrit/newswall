@@ -16,11 +16,7 @@ const env = {
 }
 
 const config = {
-  verbose: (process.env.VERBOSE === 'true') || true,
-
   port:  process.env.PORT || 3000,
-
-  timezone: process.env.TIMEZONE || 'Etc/GMT-14',
 
   // Directory to cache newspaper downloads
   newsstand: env.isProd ?
@@ -31,7 +27,7 @@ const config = {
   myUrl: process.env.RENDER_EXTERNAL_URL,
 
   // How many days of papers to keep
-  archiveLength: (process.env.ARCHIVE_LENGTH && parseInt(process.env.ARCHIVE_LENGTH, 10)) || 35,
+  archiveLength: (process.env.ARCHIVE_LENGTH_DAYS && parseInt(process.env.ARCHIVE_LENGTH_DAYS, 10)) || 35,
 
   // Every hour check for new papers and update device statuses
   refreshInterval: dayjs.duration(env.isProd ? { hours: 1 } : {minutes: 5}),
@@ -57,7 +53,7 @@ const config = {
 }
 
 /** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC+14 */
-const recentDays = (n, timezone = config.timezone) => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
+const recentDays = (n, timezone = 'Etc/GMT-14') => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
 
 /** Downloads all newspapers for all recent days; trashes old ones */
 const downloadAll = () => {
@@ -80,12 +76,10 @@ const download = (newspaper, date) => {
 
   if (fs.existsSync(pdfPath)) {
     return fs.existsSync(pngPath) ?
-        Promise.resolve(
-            config.verbose ?
-              log.debug(`Already downloaded ${name}`) :
-              undefined
-        ) :
-        pdfToImage(pdfPath, pngPath)
+      Promise.resolve(
+        log.trace(`Already downloaded ${name}`)
+      ) :
+      pdfToImage(pdfPath, pngPath)
   }
 
   log.info(`Checking for ${name} ...`)
