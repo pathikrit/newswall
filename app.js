@@ -16,18 +16,18 @@ const env = {
 }
 
 const config = {
-  port:  process.env.PORT || 3000,
+  port: process.env.PORT,
 
   // Directory to cache newspaper downloads
   newsstand: env.isProd ?
-      path.resolve(process.env.NEWSPAPER_STORAGE_DIR_PROD) || '/var/lib/data/newsstand' :
-      path.resolve(process.env.NEWSPAPER_STORAGE_DIR_DEV) || path.resolve('./.newspapers'),
+      path.resolve(process.env.NEWSPAPER_STORAGE_DIR_PROD) :
+      path.resolve(process.env.NEWSPAPER_STORAGE_DIR_DEV),
 
   // The production site url
   myUrl: process.env.RENDER_EXTERNAL_URL,
 
   // How many days of papers to keep
-  archiveLength: (process.env.ARCHIVE_LENGTH_DAYS && parseInt(process.env.ARCHIVE_LENGTH_DAYS, 10)) || 35,
+  archiveLength: (process.env.ARCHIVE_LENGTH_DAYS && parseInt(process.env.ARCHIVE_LENGTH_DAYS, 10)),
 
   // Every hour check for new papers and update device statuses
   refreshInterval: dayjs.duration(env.isProd ? { hours: 1 } : {minutes: 5}),
@@ -46,7 +46,7 @@ const config = {
   // VSS Settings: See https://github.com/pathikrit/node-visionect
   // Note: This whole section can be removed and things will still work e.g. if you are using the Joan portal
   visionect: {
-    apiServer: process.env.VISIONECT_API_SERVER || 'https://pathikrit-1.dk.visionect.com:8081',
+    apiServer: process.env.VISIONECT_API_SERVER,
     apiKey: process.env.VISIONECT_API_KEY,
     apiSecret: process.env.VISIONECT_API_SECRET
   }
