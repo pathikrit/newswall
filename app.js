@@ -19,15 +19,13 @@ const config = {
   port: process.env.PORT,
 
   // Directory to cache newspaper downloads
-  newsstand: env.isProd ?
-      path.resolve(process.env.NEWSPAPER_STORAGE_DIR_PROD) :
-      path.resolve(process.env.NEWSPAPER_STORAGE_DIR_DEV),
+  newsstand: path.resolve(env.isProd ? process.env.NEWSPAPER_STORAGE_DIR_PROD : process.env.NEWSPAPER_STORAGE_DIR_DEV),
 
   // The production site url
   myUrl: process.env.RENDER_EXTERNAL_URL,
 
   // How many days of papers to keep
-  archiveLength: (process.env.ARCHIVE_LENGTH_DAYS && parseInt(process.env.ARCHIVE_LENGTH_DAYS, 10)),
+  archiveLength: process.env.ARCHIVE_LENGTH_DAYS && parseInt(process.env.ARCHIVE_LENGTH_DAYS),
 
   // Every hour check for new papers and update device statuses
   refreshInterval: dayjs.duration(env.isProd ? { hours: 1 } : {minutes: 5}),
@@ -75,11 +73,7 @@ const download = (newspaper, date) => {
   const name = `${newspaper.name} for ${date}`
 
   if (fs.existsSync(pdfPath)) {
-    return fs.existsSync(pngPath) ?
-      Promise.resolve(
-        log.trace(`Already downloaded ${name}`)
-      ) :
-      pdfToImage(pdfPath, pngPath)
+    return fs.existsSync(pngPath) ? Promise.resolve(log.debug(`Already downloaded ${name}`)) : pdfToImage(pdfPath, pngPath)
   }
 
   log.info(`Checking for ${name} ...`)
@@ -152,7 +146,6 @@ const updateVss = (vss) => {
     setTimeout(vss.sessions.restart, 60 * 1000, device.id) // Restart the device session a minute from now
   })
 }
-
 
 /** Setup the express server */
 const express = require('express')
