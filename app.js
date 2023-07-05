@@ -70,7 +70,7 @@ const download = (newspaper, date) => {
   const fileName = `${newspaper.id}.pdf`
   const pdfPath = path.join(directory, fileName)
   const pngPath = pdfPath.replace('.pdf', '.png')
-  const name = `${newspaper.name} for ${date}`
+  const name = `'${newspaper.name}' for ${date}`
 
   if (fs.existsSync(pdfPath)) {
     return fs.existsSync(pngPath) ? Promise.resolve(log.debug(`Already downloaded ${name}`)) : pdfToImage(pdfPath, pngPath)
@@ -101,7 +101,12 @@ const pdfToImage = (pdf, png) => {
 
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
 const nextPaper = (currentDevice, currentPaper) => {
-  const searchTerm = currentDevice?.newspapers?.length > 0 ? (currentDevice.newspapers.length === 1 ? currentDevice.newspapers[0].id : `{${currentDevice.newspapers.map(p => p.id).join(',')}}`) : '*'
+  const searchTerm = currentDevice?.newspapers?.length > 0 ?
+      (currentDevice.newspapers.length === 1 ?
+          currentDevice.newspapers[0].id :
+          `{${currentDevice.newspapers.map(p => p.id).join(',')}}`) :
+      '*'
+
   for (const date of recentDays(3, currentDevice?.timezone)) {
     const globExpr = path.join(config.newsstand, date, `${searchTerm}.png`)
     const ids = glob.sync(globExpr.replace(/\\/g, '/')).map(image => path.parse(image).name).sort()
@@ -143,7 +148,13 @@ const updateVss = (vss) => {
     log.info(`Syncing ${device.id} to VSS ...`)
     log.table(device.newspapers)
     vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
-    if (config.myUrl) vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest`}}})
+    if (config.myUrl) {
+      const myUrl = `${config.myUrl}/latest`
+
+      log.info(`Sending URL ${myUrl} to device ${device.id} ...`)
+
+      vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: myUrl}}})
+    }
     setTimeout(vss.sessions.restart, 60 * 1000, device.id) // Restart the device session a minute from now
   })
 }
@@ -184,8 +195,20 @@ app.locals = Object.assign(app.locals, config, {env})
 
 // Kickoff download and export the app if this is a test so test framework can start the server else we start it ourselves
 module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.listen(config.port, () => {
-  log.info(`Started server on port ${config.port} with refreshInterval of ${config.refreshInterval.humanize()} ...`)
-  log.table(db.newspapers)
+  log.info(`\nStarted server on port ${config.port} with refreshInterval of ${config.refreshInterval.humanize()} ...`)
+
+  const dateToday = dayjs().tz(config.timezone)
+
+  log.table(
+    // Resolve newspaper DB items URL function to its string, for display in the console table output
+    db.newspapers.map(
+      (item) => ({
+        ...item,
+
+        url: item.url(dateToday)
+      })
+    )
+  )
 
   // Uncomment this line to trigger a re-render of images on deployment
   // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
