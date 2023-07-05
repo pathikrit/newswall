@@ -150,9 +150,7 @@ const updateVss = (vss) => {
     vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
     if (config.myUrl) {
       const myUrl = `${config.myUrl}/latest`
-
-      log.info(`Sending URL ${myUrl} to device ${device.id} ...`)
-
+      log.debug(`Sending URL ${myUrl} to device ${device.id} ...`)
       vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: myUrl}}})
     }
     setTimeout(vss.sessions.restart, 60 * 1000, device.id) // Restart the device session a minute from now
@@ -199,23 +197,15 @@ module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.l
 
   const dateToday = dayjs().tz(config.timezone)
 
-  log.table(
-    // Resolve newspaper DB items URL function to its string, for display in the console table output
-    db.newspapers.map(
-      (item) => ({
-        ...item,
-
-        url: item.url(dateToday)
-      })
-    )
-  )
+  // Resolve newspaper DB items URL function to its string, for display in the console table output
+  log.table(db.newspapers.map((item) => ({...item, url: item.url(dateToday)})))
 
   // Uncomment this line to trigger a re-render of images on deployment
   // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
   // glob.sync(path.join(newsstand, '*', '*.png').replace(/\\/g, '/')).forEach(fs.rmSync)
 
   // Update Visionect?
-  if (config.visionect) {
+  if (config.visionect?.apiKey && config.visionect?.apiServer && config.visionect?.apiSecret) {
     const VisionectApiClient = require('node-visionect')
     updateVss(new VisionectApiClient(config.visionect))
   }
