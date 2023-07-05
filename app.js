@@ -19,7 +19,7 @@ const config = {
   port: process.env.PORT,
 
   // Directory to cache newspaper downloads
-  newsstand: path.resolve(env.isProd ? process.env.NEWSPAPER_STORAGE_DIR_PROD : process.env.NEWSPAPER_STORAGE_DIR_DEV),
+  newsstand: path.resolve(process.env.NEWSPAPER_STORAGE_DIR),
 
   // The production site url
   myUrl: process.env.RENDER_EXTERNAL_URL,
