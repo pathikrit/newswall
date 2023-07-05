@@ -91,7 +91,7 @@
           } catch (error) { status.error = error }
         })
         .always(() => {
-          setTimeout(update, status.refreshAfter || (1 * 60 * 1000))  // always update alteast 1 minute from now
+          setTimeout(update, status.refreshAfter || (1 * 60 * 1000))  // always update at least 1 minute from now
           if (status.error) $('.statusbar').append(`<code>ERROR: ${JSON.stringify(status.error)}</code>`)
         })
     }

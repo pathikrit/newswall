@@ -8,13 +8,15 @@ this is a pure node.js port of [graiz/newsprint](https://github.com/graiz/newspr
 brew install node yarn
 ```
 
-2. The server is a simple [expressjs](https://expressjs.com/) app. Running it locally:
+2. Copy the `.env.sample` file to `.env` and make any changes appropriate for your environment / installation.
+
+3. The server is a simple [expressjs](https://expressjs.com/) app. Running it locally:
 ```shell
 yarn && node --watch app.js
 ```
 Then open <http://localhost:3000> in your browser. You can now point your e-ink display to <http://localhost:3000/latest>
 
-3. Run [tests](/app.test.js):
+4. Run [tests](/app.test.js):
 ```shell
 yarn test
 ```
