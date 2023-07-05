@@ -104,7 +104,8 @@ const nextPaper = (currentDevice, currentPaper) => {
   const searchTerm = currentDevice?.newspapers?.length > 0 ? (currentDevice.newspapers.length === 1 ? currentDevice.newspapers[0].id : `{${currentDevice.newspapers.map(p => p.id).join(',')}}`) : '*'
   for (const date of recentDays(3, currentDevice?.timezone)) {
     const globExpr = path.join(config.newsstand, date, `${searchTerm}.png`)
-    const ids = glob.sync(globExpr).map(image => path.parse(image).name).sort()
+    const ids = glob.sync(globExpr.replace(/\\/g, '/')).map(image => path.parse(image).name).sort()
+
     if (ids.length === 0) continue
     // Find something that is not current or a random one
     const idx = currentPaper ? ids.indexOf(currentPaper) : -1
@@ -186,10 +187,11 @@ module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.l
   log.info(`Started server on port ${config.port} with refreshInterval of ${config.refreshInterval.humanize()} ...`)
   log.table(db.newspapers)
 
-  // Uncomment this line to trigger a rerender of images on deployment
+  // Uncomment this line to trigger a re-render of images on deployment
   // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
-  // glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
+  // glob.sync(path.join(newsstand, '*', '*.png').replace(/\\/g, '/')).forEach(fs.rmSync)
 
+  // Update Visionect?
   if (config.visionect) {
     const VisionectApiClient = require('node-visionect')
     updateVss(new VisionectApiClient(config.visionect))
