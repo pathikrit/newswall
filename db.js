@@ -12,6 +12,7 @@ module.exports = {
     {
       id: 'NYT',
       name: 'New York Times',
+      isSelected: true,
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
       scale: 1.04,
     },
