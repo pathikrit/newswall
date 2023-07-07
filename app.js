@@ -30,7 +30,7 @@ const config = {
   archiveLength: (process.env.ARCHIVE_LENGTH_DAYS && parseInt(process.env.ARCHIVE_LENGTH_DAYS, 10)),
 
   // Every hour check for new papers and update device statuses
-  refreshInterval: dayjs.duration(env.isProd ? { hours: 1 } : {minutes: 5}),
+  refreshInterval: dayjs.duration({minutes: parseInt(process.env.REFRESH_INTERVAL_MINUTES, 10)}),
 
   // Although the Visionect 32-inch e-ink display is 2560x1440 we choose a slightly bigger width of 1600px when converting from pdf to png
   // since it makes it easier to zoom/crop useless white margins around the edges of the newspapers
@@ -41,7 +41,7 @@ const config = {
   },
 
   // Show low battery warning below this
-  lowBatteryWarning: 20,
+  lowBatteryWarning: parseInt(process.env.LOW_BATTERY_WARNING, 10),
 
   // VSS Settings: See https://github.com/pathikrit/node-visionect
   // Note: This whole section can be removed and things will still work e.g. if you are using the Joan portal
