@@ -19,15 +19,13 @@ const config = {
   port: process.env.PORT,
 
   // Directory to cache newspaper downloads
-  newsstand: env.isProd ?
-      path.resolve(process.env.NEWSPAPER_STORAGE_DIR_PROD) :
-      path.resolve(process.env.NEWSPAPER_STORAGE_DIR_DEV),
+  newsstand: path.resolve(process.env.NEWSPAPER_STORAGE_DIR),
 
   // The production site url
   myUrl: process.env.RENDER_EXTERNAL_URL,
 
   // How many days of papers to keep
-  archiveLength: (process.env.ARCHIVE_LENGTH_DAYS && parseInt(process.env.ARCHIVE_LENGTH_DAYS, 10)),
+  archiveLength: process.env.ARCHIVE_LENGTH_DAYS && parseInt(process.env.ARCHIVE_LENGTH_DAYS),
 
   // Every hour check for new papers and update device statuses
   refreshInterval: dayjs.duration({minutes: parseInt(process.env.REFRESH_INTERVAL_MINUTES, 10)}),
@@ -72,14 +70,10 @@ const download = (newspaper, date) => {
   const fileName = `${newspaper.id}.pdf`
   const pdfPath = path.join(directory, fileName)
   const pngPath = pdfPath.replace('.pdf', '.png')
-  const name = `${newspaper.name} for ${date}`
+  const name = `'${newspaper.name}' for ${date}`
 
   if (fs.existsSync(pdfPath)) {
-    return fs.existsSync(pngPath) ?
-      Promise.resolve(
-        log.trace(`Already downloaded ${name}`)
-      ) :
-      pdfToImage(pdfPath, pngPath)
+    return fs.existsSync(pngPath) ? Promise.resolve(log.debug(`Already downloaded ${name}`)) : pdfToImage(pdfPath, pngPath)
   }
 
   log.info(`Checking for ${name} ...`)
@@ -107,10 +101,16 @@ const pdfToImage = (pdf, png) => {
 
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
 const nextPaper = (currentDevice, currentPaper) => {
-  const searchTerm = currentDevice?.newspapers?.length > 0 ? (currentDevice.newspapers.length === 1 ? currentDevice.newspapers[0].id : `{${currentDevice.newspapers.map(p => p.id).join(',')}}`) : '*'
+  const searchTerm = currentDevice?.newspapers?.length > 0 ?
+      (currentDevice.newspapers.length === 1 ?
+          currentDevice.newspapers[0].id :
+          `{${currentDevice.newspapers.map(p => p.id).join(',')}}`) :
+      '*'
+
   for (const date of recentDays(3, currentDevice?.timezone)) {
     const globExpr = path.join(config.newsstand, date, `${searchTerm}.png`)
-    const ids = glob.sync(globExpr).map(image => path.parse(image).name).sort()
+    const ids = glob.sync(globExpr.replace(/\\/g, '/')).map(image => path.parse(image).name).sort()
+
     if (ids.length === 0) continue
     // Find something that is not current or a random one
     const idx = currentPaper ? ids.indexOf(currentPaper) : -1
@@ -148,11 +148,14 @@ const updateVss = (vss) => {
     log.info(`Syncing ${device.id} to VSS ...`)
     log.table(device.newspapers)
     vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
-    if (config.myUrl) vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: `${config.myUrl}/latest`}}})
+    if (config.myUrl) {
+      const myUrl = `${config.myUrl}/latest`
+      log.debug(`Sending URL ${myUrl} to device ${device.id} ...`)
+      vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: myUrl}}})
+    }
     setTimeout(vss.sessions.restart, 60 * 1000, device.id) // Restart the device session a minute from now
   })
 }
-
 
 /** Setup the express server */
 const express = require('express')
@@ -190,14 +193,19 @@ app.locals = Object.assign(app.locals, config, {env})
 
 // Kickoff download and export the app if this is a test so test framework can start the server else we start it ourselves
 module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.listen(config.port, () => {
-  log.info(`Started server on port ${config.port} with refreshInterval of ${config.refreshInterval.humanize()} ...`)
-  log.table(db.newspapers)
+  log.info(`\nStarted server on port ${config.port} with refreshInterval of ${config.refreshInterval.humanize()} ...`)
 
-  // Uncomment this line to trigger a rerender of images on deployment
+  const dateToday = dayjs().tz(config.timezone)
+
+  // Resolve newspaper DB items URL function to its string, for display in the console table output
+  log.table(db.newspapers.map((item) => ({...item, url: item.url(dateToday)})))
+
+  // Uncomment this line to trigger a re-render of images on deployment
   // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
-  // glob.sync(path.join(newsstand, '*', '*.png')).forEach(fs.rmSync)
+  // glob.sync(path.join(newsstand, '*', '*.png').replace(/\\/g, '/')).forEach(fs.rmSync)
 
-  if (config.visionect) {
+  // Update Visionect?
+  if (config.visionect?.apiKey && config.visionect?.apiServer && config.visionect?.apiSecret) {
     const VisionectApiClient = require('node-visionect')
     updateVss(new VisionectApiClient(config.visionect))
   }
