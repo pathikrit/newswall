@@ -10,6 +10,42 @@ module.exports = {
   // scale: Gets compiled to transform: scale(x) CSS style to zoom in to remove useless white margins. Use the emulator on homepage to experiment
   newspapers: [
     {
+      id: 'LATimes',
+      name: 'Los Angeles Times',
+      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/CA_LAT.pdf`,
+      scale: 1.03,
+    },
+    {
+      id: 'SFChronicle',
+      name: 'San Francisco Chronicle',
+      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/CA_SFC.pdf`,
+      scale: 1.01,
+    },
+    {
+      id: 'USAToday',
+      name: 'USA Today',
+      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/USAT.pdf`,
+      scale: 1.02,
+    },
+    {
+      id: 'BostonGlobe',
+      name: 'The Boston Globe',
+      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/MA_BG.pdf`,
+      scale: 0.98,
+    },
+    {
+      id: 'PittsburghPG',
+      name: 'Pittsburgh Post-Gazette',
+      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/PA_PPG.pdf`,
+      scale: 1.05,
+    },
+    {
+      id: 'WaPo',
+      name: 'Washington Post',
+      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
+      scale: 1.08,
+    },
+    {
       id: 'NYT',
       name: 'New York Times',
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
@@ -19,24 +55,30 @@ module.exports = {
       id: 'WSJ',
       name: 'Wall Street Journal',
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/WSJ.pdf`,
-      scale: 1.05
+      scale: 1.04,
     },
     {
-      id: 'WaPo',
-      name: 'Washington Post',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
-      scale: 1.07,
+      id: 'IrishTimes',
+      name: 'Irish Times',
+      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IRL_IT.pdf`,
+      scale: 1.04,
     },
     {
-      id: 'UsaToday',
-      name: 'USA Today',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/USAT.pdf`,
-      scale: 1.03,
+      id: 'Haaretz',
+      name: 'Haaretz - English Edition',
+      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/ISR_HA.pdf`,
+      scale: 1.05,
     },
     {
       id: 'AsianAge',
       name: 'The Asian Age',
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_AGE.pdf`,
+      scale: 1.02,
+    },
+    {
+      id: 'JapanTimes',
+      name: 'The Japan Times',
+      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/JPN_JT.pdf`,
       scale: 1.02,
     },
   ],
@@ -65,7 +107,7 @@ module.exports = {
           displayFor: 15
         },
         {
-          id: 'UsaToday',
+          id: 'USAToday',
           displayFor: 10
         },
         {
