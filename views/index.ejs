@@ -88,9 +88,7 @@
 
   emulate(
     // if there is an `isSelected` newspaper, initialize in newspapers mode, otherwise initialize in devices mode
-    (db.newspapers.filter(item => item.isSelected).length > 0) ?
-      'newspapers' :
-      'devices'
+    db.newspapers.some(item => item.isSelected) ? 'newspapers' : 'devices'
   );
 </script>
 </body>
