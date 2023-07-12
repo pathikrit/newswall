@@ -1,4 +1,8 @@
 module.exports = {
+  // Note: An `isSelected: true` item can be added to either an entry in the `newspapers` or `devices` sections below.
+  //       Only one `isSelected` can be added across both sections, and an `isSelected` in the `newspapers` section
+  //       takes priority over an `isSelected` in the `devices` section.
+  //
   // List of newspapers we support
   // and a function for each that given a date returns the url of the pdf of the front page of that newspaper for that date
   // The Freedom Forum has a large list of papers: https://www.freedomforum.org/todaysfrontpages/
@@ -48,6 +52,7 @@ module.exports = {
     {
       id: 'NYT',
       name: 'New York Times',
+      isSelected: true,
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
       scale: 1.04,
     },
@@ -85,8 +90,11 @@ module.exports = {
 
   // Each device has the following attributes:
   // id: This is the joan device id e.g. from this url https://portal.getjoan.com/manage/devices/2a002800-0c47-3133-3633-333400000000
-  // timezone: Since we always try to show the latest newspapers, you may not want to see newspapers from tomorrow based on your timezone
-  // displayFor: Configure this (in minutes) to display this paper before moving onto the next one
+  // timezone: Since we always try to show the latest newspapers, you may not want to see newspapers from tomorrow based on your timezone.
+  // showFahrenheit: Which temperature scale to use for the device temperature display in the page footer.
+  // newspapers: A list of newspapers (from the section above) that will display on your device - in the format:
+  //    id: The id of the newspaper (from the section above).
+  //    displayFor: Configure this (in minutes) to display this paper before moving onto the next one.
   devices: [
     {
       id: '32001d00-0f47-3830-3933-303600000000',
