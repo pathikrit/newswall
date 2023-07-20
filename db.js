@@ -1,8 +1,4 @@
 module.exports = {
-  // Note: An `isSelected: true` item can be added to either an entry in the `newspapers` or `devices` sections below.
-  //       Only one `isSelected` can be added across both sections, and an `isSelected` in the `newspapers` section
-  //       takes priority over an `isSelected` in the `devices` section.
-  //
   // List of newspapers we support
   // and a function for each that given a date returns the url of the pdf of the front page of that newspaper for that date
   // The Freedom Forum has a large list of papers: https://www.freedomforum.org/todaysfrontpages/
@@ -17,7 +13,7 @@ module.exports = {
       id: 'LATimes',
       name: 'Los Angeles Times',
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/CA_LAT.pdf`,
-      scale: 1.03,
+      scale: 1.07,
     },
     {
       id: 'SFChronicle',
@@ -33,7 +29,7 @@ module.exports = {
     },
     {
       id: 'BostonGlobe',
-      name: 'The Boston Globe',
+      name: 'Boston Globe',
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/MA_BG.pdf`,
       scale: 0.98,
     },
@@ -52,7 +48,7 @@ module.exports = {
     {
       id: 'NYT',
       name: 'New York Times',
-      isSelected: true,
+      isSelected: true, // isSelected: True (for either newspaper or device) means we show it as default on the server homepage
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
       scale: 1.04,
     },
@@ -70,19 +66,19 @@ module.exports = {
     },
     {
       id: 'Haaretz',
-      name: 'Haaretz - English Edition',
+      name: 'Haaretz (English Edition)',
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/ISR_HA.pdf`,
       scale: 1.05,
     },
     {
       id: 'AsianAge',
-      name: 'The Asian Age',
+      name: 'Asian Age',
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_AGE.pdf`,
       scale: 1.02,
     },
     {
       id: 'JapanTimes',
-      name: 'The Japan Times',
+      name: 'Japan Times',
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/JPN_JT.pdf`,
       scale: 1.02,
     },
@@ -90,7 +86,7 @@ module.exports = {
 
   // Each device has the following attributes:
   // id: This is the joan device id e.g. from this url https://portal.getjoan.com/manage/devices/2a002800-0c47-3133-3633-333400000000
-  // timezone: Since we always try to show the latest newspapers, you may not want to see newspapers from tomorrow based on your timezone.
+  // timezone: Your local timezone to display correct local time and make sure we don't display newspapers from "tomorrow"
   // showFahrenheit: Which temperature scale to use for the device temperature display in the page footer.
   // newspapers: A list of newspapers (from the section above) that will display on your device - in the format:
   //    id: The id of the newspaper (from the section above).
