@@ -191,6 +191,14 @@ const app = express()
 // Wire up globals to ejs
 app.locals = Object.assign(app.locals, config, {env})
 
+// Uncomment the following lines to trigger a re-render of images on deployment
+// If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
+glob.sync(path.join(config.newsstand, '*', '*').replace(/\\/g, '/'))
+  .forEach(path => {
+    console.log('Deleting', path)
+    fs.rmSync(path)
+  })
+
 // Kickoff download and export the app if this is a test so test framework can start the server else we start it ourselves
 module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.listen(config.port, () => {
   log.info(`\nStarted server on port ${config.port} with refreshInterval of ${config.refreshInterval.humanize()} ...`)
@@ -199,10 +207,6 @@ module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.l
 
   // Resolve newspaper DB items URL function to its string, for display in the console table output
   log.table(db.newspapers.map((item) => ({...item, url: item.url(dateToday)})))
-
-  // Uncomment this line to trigger a re-render of images on deployment
-  // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
-  // glob.sync(path.join(newsstand, '*', '*.png').replace(/\\/g, '/')).forEach(fs.rmSync)
 
   // Update Visionect?
   if (config.visionect?.apiKey && config.visionect?.apiServer && config.visionect?.apiSecret) {
