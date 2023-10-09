@@ -193,11 +193,11 @@ app.locals = Object.assign(app.locals, config, {env})
 
 // Uncomment the following lines to trigger a re-render of images on deployment
 // If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
-glob.sync(path.join(config.newsstand, '*', '*').replace(/\\/g, '/'))
-  .forEach(path => {
-    console.log('Deleting', path)
-    fs.rmSync(path)
-  })
+// glob.sync(path.join(config.newsstand, '*', '*.png').replace(/\\/g, '/'))
+//   .forEach(path => {
+//     console.log('Deleting', path)
+//     fs.rmSync(path)
+//   })
 
 // Kickoff download and export the app if this is a test so test framework can start the server else we start it ourselves
 module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.listen(config.port, () => {
