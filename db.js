@@ -124,6 +124,7 @@ module.exports = {
       id: '35003600-1247-3830-3933-303600000000',
       name: "Tapas's Newswall",
       timezone: 'America/New_York',
+      showFahrenheit: false,
       newspapers: [
         {
           id: 'NYT',
