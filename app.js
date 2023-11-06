@@ -85,12 +85,12 @@ const download = (newspaper, date) => {
     .then(() => pdfToText(pdfPath).then(extractDateFromText))
     .then(dates => {
       // Sometimes the URL may contain a PDF of the wrong date - we try and parse the date from PDF and delete it if it is wrong
-      if (dates.length > 0 && !dates.includes(date)) {
+      if (dates.includes(date)) {
+        return pdfToImage(pdfPath, pngPath)
+      } else {
         fs.rmSync(pdfPath)
         return Promise.reject(`Could not find ${date} in ${pdfPath}: ${dates}`)
       }
-      if (dates.length === 0) log.warn(`Could not extract date from ${pdfPath}`)
-      return pdfToImage(pdfPath, pngPath)
     })
     .catch(error => {
       if (error.statusCode && error.statusCode === StatusCodes.NOT_FOUND)
