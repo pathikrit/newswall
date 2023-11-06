@@ -51,7 +51,7 @@ const config = {
 }
 
 /** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC-14 */
-const recentDays = (n, timezone = 'Etc/GMT-14') => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
+const recentDays = (n, timezone = 'Etc/GMT+14') => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
 
 /** Downloads all newspapers for all recent days; trashes old ones */
 const downloadAll = () => {
@@ -82,14 +82,17 @@ const download = (newspaper, date) => {
 
   return new Downloader({url, directory, fileName})
     .download()
-    .then(() => pdfToText(pdfPath).then(extractDateFromText))
+    .then(() => [date]) //  TODO: rm this line and uncomment line below and change to Gmt-14
+    //.then(() => pdfToText(pdfPath).then(extractDateFromText))
     .then(dates => {
       // Sometimes the URL may contain a PDF of the wrong date - we try and parse the date from PDF and delete it if it is wrong
       if (dates.includes(date)) {
         return pdfToImage(pdfPath, pngPath)
       } else {
-        fs.rmSync(pdfPath)
-        return Promise.reject(`Could not find ${date} in ${pdfPath}: ${dates}`)
+        return pdfToText(pdfPath).then(text => {
+          fs.rmSync(pdfPath)
+          return Promise.reject(`Could not find ${date} in ${pdfPath}: ${dates}:\n${text}`)
+        })
       }
     })
     .catch(error => {
