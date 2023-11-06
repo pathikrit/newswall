@@ -50,7 +50,7 @@ const config = {
   }
 }
 
-/** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC+14 */
+/** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC-14 */
 const recentDays = (n, timezone = 'Etc/GMT-14') => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
 
 /** Downloads all newspapers for all recent days; trashes old ones */
@@ -82,13 +82,33 @@ const download = (newspaper, date) => {
 
   return new Downloader({url, directory, fileName})
     .download()
-    .then(() => pdfToImage(pdfPath, pngPath))
+    .then(() => pdfToText(pdfPath).then(extractDateFromText))
+    .then(dates => {
+      // Sometimes the URL may contain a PDF of the wrong date - we try and parse the date from PDF and delete it if it is wrong
+      if (dates.length > 0 && !dates.includes(date)) {
+        fs.rmSync(pdfPath)
+        return Promise.reject(`Could not find ${date} in ${pdfPath}: ${dates}`)
+      }
+      if (dates.length === 0) log.warn(`Could not extract date from ${pdfPath}`)
+      return pdfToImage(pdfPath, pngPath)
+    })
     .catch(error => {
       if (error.statusCode && error.statusCode === StatusCodes.NOT_FOUND)
         log.info(`${name} is not available at ${url}`)
       else
         log.error(`Could not download ${name} from ${url}`, error)
     })
+}
+
+const pdfToText = (pdf, numChunks = 50) => {
+  const util = require('util')
+  const pdfText = util.promisify(require('pdf-text'))
+  return pdfText(pdf).then(chunks => chunks.slice(0, numChunks).join(' '))
+}
+
+const extractDateFromText = (text) => {
+  const extractDate = require('extract-date').default
+  return extractDate(text).map(({date}) => date)
 }
 
 const pdfToImage = (pdf, png) => {
