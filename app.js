@@ -89,13 +89,11 @@ const download = (newspaper, date) => {
       if (dates.includes(date)) {
         return pdfToImage(pdfPath, pngPath)
       } else {
-        return pdfToText(pdfPath).then(text => {
-          fs.rmSync(pdfPath)
-          return Promise.reject(`Could not find ${date} in ${pdfPath}: ${dates}:\n${text}`)
-        })
+        return Promise.reject(`Could not find ${date} in ${pdfPath}: ${dates}`)
       }
     })
     .catch(error => {
+      fs.rmSync(pdfPath, {force: true})
       if (error.statusCode && error.statusCode === StatusCodes.NOT_FOUND)
         log.info(`${name} is not available at ${url}`)
       else
@@ -119,7 +117,6 @@ const pdfToImage = (pdf, png) => {
   return require('pdf-img-convert')
     .convert(pdf, config.display.pdf2ImgOpts)
     .then(images => fs.writeFile(png, images[0], () => log.info(`Wrote ${png}`)))
-    .catch(error => fs.rm(pdf, () => log.error(`Could not convert ${pdf} to png`, error))) // Corrupted pdf? Delete it
 }
 
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
