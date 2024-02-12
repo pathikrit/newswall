@@ -47,7 +47,10 @@ const config = {
     apiServer: process.env.VISIONECT_API_SERVER,
     apiKey: process.env.VISIONECT_API_KEY,
     apiSecret: process.env.VISIONECT_API_SECRET
-  }
+  },
+
+  // Sometimes the URL may contain a PDF of the wrong date - enable this to try and parse the date from PDF and check if it is correct
+  dateCheck: false  // TODO: disabled for now since we cannot install tesseract on the render.com platform
 }
 
 /** We store hashes of all PDFs we dowload to do a quick verification that we are not redownloading same file twice */
@@ -88,19 +91,14 @@ const download = (newspaper, date) => {
     .then(() => {
       const md5 = require('md5-file')
       const hash = md5.sync(pdfPath)
-      if (hashes.has(hash)) return Promise.reject(`${pdfPath} and ${hashes.get(hash)} have same hash: ${hash}`)
+      if (hashes.has(hash)) return Promise.reject(`Stale file found at ${url}: ${pdfPath} and ${hashes.get(hash)} have same hash (${hash})`)
       hashes.set(hash, pdfPath)
-      //TODO: Uncomment this to enable date checking from PDFs
-      //return pdfToText(pdfPath).then(extractDateFromText)
-      return [date] // We are not doing date checking from PDFs for now
+      log.debug(`Hash size = ${hashes.size}`)
+      return config.dateCheck ? pdfToText(pdfPath).then(extractDateFromText) : [date]
     })
     .then(dates => {
-      // Sometimes the URL may contain a PDF of the wrong date - we try and parse the date from PDF and delete it if it is wrong
-      if (dates.includes(date)) {
-        return pdfToImage(pdfPath, pngPath)
-      } else {
-        return Promise.reject(`Could not find ${date} in ${pdfPath}: ${dates}`)
-      }
+      if (!dates.includes(date)) return Promise.reject(`Could not find ${date} in ${pdfPath}: ${dates}`)
+      return pdfToImage(pdfPath, pngPath)
     })
     .catch(error => {
       fs.rmSync(pdfPath, {force: true})
