@@ -50,8 +50,11 @@ const config = {
   }
 }
 
+/** We store hashes of all PDFs we dowload to do a quick verification that we are not redownloading same file twice */
+const hashes = new Map()
+
 /** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC-14 */
-const recentDays = (n, timezone = 'US/Hawaii') => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
+const recentDays = (n, timezone = 'Etc/GMT-14') => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
 
 /** Downloads all newspapers for all recent days; trashes old ones */
 const downloadAll = () => {
@@ -82,8 +85,15 @@ const download = (newspaper, date) => {
 
   return new Downloader({url, directory, fileName})
     .download()
-    .then(() => [date]) //  TODO: rm this line and uncomment line below and change to Gmt-14
-    //.then(() => pdfToText(pdfPath).then(extractDateFromText))
+    .then(() => {
+      const md5 = require('md5-file')
+      const hash = md5.sync(pdfPath)
+      if (hashes.has(hash)) return Promise.reject(`${pdfPath} and ${hashes.get(hash)} have same hash: ${hash}`)
+      hashes.set(hash, pdfPath)
+      //TODO: Uncomment this to enable date checking from PDFs
+      //return pdfToText(pdfPath).then(extractDateFromText)
+      return [date] // We are not doing date checking from PDFs for now
+    })
     .then(dates => {
       // Sometimes the URL may contain a PDF of the wrong date - we try and parse the date from PDF and delete it if it is wrong
       if (dates.includes(date)) {
