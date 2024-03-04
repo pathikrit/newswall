@@ -15,6 +15,10 @@ const env = {
   isTest: process.env.NODE_ENV === 'test'
 }
 
+if (!env.isProd) {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0" // See https://stackoverflow.com/questions/12180552/
+}
+
 const config = {
   port: process.env.PORT,
 

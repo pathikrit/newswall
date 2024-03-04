@@ -70,12 +70,12 @@ module.exports = {
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/ISR_HA.pdf`,
       scale: 1.05,
     },
-    {
-      id: 'NewIndianExpress',
-      name: 'New Indian Express',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_NIE.pdf`,
-      scale: 1.02,
-    },
+    // {
+    //   id: 'NewIndianExpress',
+    //   name: 'New Indian Express',
+    //   url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_NIE.pdf`,
+    //   scale: 1.02,
+    // },
     {
       id: 'JapanTimes',
       name: 'Japan Times',
@@ -114,10 +114,10 @@ module.exports = {
           id: 'USAToday',
           displayFor: 10
         },
-        {
-          id: 'NewIndianExpress',
-          displayFor: 5
-        }
+        // {
+        //   id: 'NewIndianExpress',
+        //   displayFor: 5
+        // }
       ]
     },
     {
@@ -138,10 +138,10 @@ module.exports = {
           id: 'WaPo',
           displayFor: 15
         },
-        {
-          id: 'NewIndianExpress',
-          displayFor: 45
-        }
+        // {
+        //   id: 'NewIndianExpress',
+        //   displayFor: 45
+        // }
       ]
     },
     {
