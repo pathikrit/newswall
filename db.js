@@ -71,9 +71,9 @@ module.exports = {
       scale: 1.05,
     },
     {
-      id: 'AsianAge',
-      name: 'Asian Age',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_AGE.pdf`,
+      id: 'NewIndianExpress',
+      name: 'New Indian Express',
+      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_NIE.pdf`,
       scale: 1.02,
     },
     {
@@ -115,7 +115,7 @@ module.exports = {
           displayFor: 10
         },
         {
-          id: 'AsianAge',
+          id: 'NewIndianExpress',
           displayFor: 5
         }
       ]
@@ -139,7 +139,7 @@ module.exports = {
           displayFor: 15
         },
         {
-          id: 'AsianAge',
+          id: 'NewIndianExpress',
           displayFor: 45
         }
       ]
