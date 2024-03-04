@@ -61,7 +61,8 @@ const config = {
 const hashes = new Map()
 
 /** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC-14 */
-const recentDays = (n, timezone = 'Etc/GMT-14') => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
+const recentDays = (n, timezone = 'Etc/GMT+12') => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
+//TODO: Change back to GMT-14 ^^^^
 
 /** Downloads all newspapers for all recent days; trashes old ones */
 const downloadAll = () => {

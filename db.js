@@ -70,6 +70,7 @@ module.exports = {
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/ISR_HA.pdf`,
       scale: 1.05,
     },
+    // TODO: Disabled due to https://github.com/ol-th/pdf-img-convert.js/issues/48
     // {
     //   id: 'NewIndianExpress',
     //   name: 'New Indian Express',
