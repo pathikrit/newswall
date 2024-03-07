@@ -14,25 +14,7 @@ git clone git@github.com:pathikrit/newswall.git
 cd newswall/
 ```
 
-3. Create your environment file:
-```shell
-echo "PORT=3000
-
-LOW_BATTERY_WARNING=10
-
-REFRESH_INTERVAL_MINUTES=60
-
-ARCHIVE_LENGTH_DAYS=35
-
-NEWSPAPER_STORAGE_DIR=./.newspapers
-
-VISIONECT_API_SERVER=YOUR_API_SERVER
-VISIONECT_API_KEY=YOUR_API_KEY
-VISIONECT_API_SECRET=YOUR_API_SECRET
-" >> .env
-```
-
-4. The server is a simple [expressjs](https://expressjs.com/) app. Running it locally:
+3. The server is a simple [expressjs](https://expressjs.com/) app. Running it locally:
 ```shell
 yarn && yarn dev
 ```

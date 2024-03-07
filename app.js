@@ -15,24 +15,20 @@ const env = {
   isTest: process.env.NODE_ENV === 'test'
 }
 
-if (!env.isProd) {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0" // See https://stackoverflow.com/questions/12180552/
-}
-
 const config = {
-  port: process.env.PORT,
+  port: process.env.PORT ?? 3000,
 
   // Directory to cache newspaper downloads
-  newsstand: path.resolve(process.env.NEWSPAPER_STORAGE_DIR),
+  newsstand: path.resolve(process.env.NEWSPAPER_STORAGE_DIR ?? './.newspapers'),
 
   // The production site url
   myUrl: process.env.RENDER_EXTERNAL_URL,
 
   // How many days of papers to keep
-  archiveLength: process.env.ARCHIVE_LENGTH_DAYS && parseInt(process.env.ARCHIVE_LENGTH_DAYS),
+  archiveLength: parseInt(process.env.ARCHIVE_LENGTH_DAYS ?? 5),
 
   // Every hour check for new papers and update device statuses
-  refreshInterval: dayjs.duration({minutes: parseInt(process.env.REFRESH_INTERVAL_MINUTES)}),
+  refreshInterval: dayjs.duration({minutes: parseInt(process.env.REFRESH_INTERVAL_MINUTES ?? 60)}),
 
   // Although the Visionect 32-inch e-ink display is 2560x1440 we choose a slightly bigger width of 1600px when converting from pdf to png
   // since it makes it easier to zoom/crop useless white margins around the edges of the newspapers
@@ -43,7 +39,7 @@ const config = {
   },
 
   // Show low battery warning below this
-  lowBatteryWarning: parseInt(process.env.LOW_BATTERY_WARNING),
+  lowBatteryWarning: parseInt(process.env.LOW_BATTERY_WARNING ?? 20),
 
   // VSS Settings: See https://github.com/pathikrit/node-visionect
   // Note: This whole section can be removed and things will still work e.g. if you are using the Joan portal
