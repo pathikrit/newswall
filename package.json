@@ -28,6 +28,8 @@
   },
   "engineStrict": true,
   "scripts": {
+    "dev": "node --watch app.js",
+    "start": "node app.js",
     "test": "jest"
   },
   "devDependencies": {

@@ -10,5 +10,4 @@ node_modules/
 
 # This project
 .newspapers
-.env*
-!.env.sample
+.env
