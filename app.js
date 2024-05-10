@@ -203,13 +203,13 @@ const app = express()
   .get('/latest', (req, res) => res.render('paper'))
   .post('/latest', (req, res) => {
     const result = {}
-    if (req.body.uuid) {
+    if (req.body.papers) {
+      result.paper = nextPaper({newspapers: req.body.papers.map(paper => ({id: paper}))}, req.body.prev)
+      if (!result.paper) result.missing = `Newspapers = ${req.body.papers}`
+    } if (req.body.uuid) {
       result.device = db.devices.find(device => device.id === req.body.uuid)
       if (result.device) result.paper = nextPaper(result.device, req.body.prev)
       else result.missing = `Device Id = ${req.body.uuid}`
-    } else if (req.body.papers) {
-      result.paper = nextPaper({newspapers: req.body.papers.map(paper => ({id: paper}))}, req.body.prev)
-      if (!result.paper) result.missing = `Newspapers = ${req.body.papers}`
     } else {
       result.paper = nextPaper(null, req.body.prev)
     }
