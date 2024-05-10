@@ -206,7 +206,7 @@ const app = express()
     if (req.body.papers) {
       result.paper = nextPaper({newspapers: req.body.papers.map(paper => ({id: paper}))}, req.body.prev)
       if (!result.paper) result.missing = `Newspapers = ${req.body.papers}`
-    } if (req.body.uuid) {
+    } else if (req.body.uuid) {
       result.device = db.devices.find(device => device.id === req.body.uuid)
       if (result.device) result.paper = nextPaper(result.device, req.body.prev)
       else result.missing = `Device Id = ${req.body.uuid}`
@@ -222,11 +222,11 @@ app.locals = Object.assign(app.locals, config, {env})
 
 //Uncomment the following lines to trigger a re-render of images on deployment
 //If you change *.png to *, it would essentially wipe out the newsstand and trigger a fresh download
-glob.sync(path.join(config.newsstand, '*', '*').replace(/\\/g, '/'))
-  .forEach(path => {
-    log.info('Deleting', path)
-    fs.rmSync(path)
-  })
+// glob.sync(path.join(config.newsstand, '*', '*').replace(/\\/g, '/'))
+//   .forEach(path => {
+//     log.info('Deleting', path)
+//     fs.rmSync(path)
+//   })
 
 // Kickoff download and export the app if this is a test so test framework can start the server else we start it ourselves
 module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.listen(config.port, () => {
@@ -240,6 +240,6 @@ module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.l
   // Update Visionect?
   if (config.visionect?.apiKey && config.visionect?.apiServer && config.visionect?.apiSecret) {
     const VisionectApiClient = require('node-visionect')
-    updateVss(new VisionectApiClient(config.visionect))
+    // updateVss(new VisionectApiClient(config.visionect)) // TODO: Uncomment this line to enable VSS updates
   }
 }))
