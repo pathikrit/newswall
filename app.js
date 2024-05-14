@@ -50,7 +50,7 @@ const config = {
   },
 
   // Sometimes the URL may contain a PDF of the wrong date - enable this to try and parse the date from PDF and check if it is correct
-  dateCheck: !env.isProd  // TODO: disabled for now since we cannot install tesseract on the render.com platform
+  dateCheck: false  // TODO: disabled for now since we cannot install tesseract on the render.com platform
 }
 
 /** We store hashes of all PDFs we dowload to do a quick verification that we are not redownloading same file twice */
@@ -240,6 +240,6 @@ module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.l
   // Update Visionect?
   if (config.visionect?.apiKey && config.visionect?.apiServer && config.visionect?.apiSecret) {
     const VisionectApiClient = require('node-visionect')
-    updateVss(new VisionectApiClient(config.visionect)) // TODO: Uncomment this line to enable VSS updates
+    updateVss(new VisionectApiClient(config.visionect))
   }
 }))
