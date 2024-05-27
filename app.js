@@ -240,6 +240,7 @@ module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.l
   // Update Visionect?
   if (config.visionect?.apiKey && config.visionect?.apiServer && config.visionect?.apiSecret) {
     const VisionectApiClient = require('node-visionect')
-    updateVss(new VisionectApiClient(config.visionect))
+    // TODO: Enable VSS update
+    // updateVss(new VisionectApiClient(config.visionect))
   }
 }))
