@@ -13,7 +13,7 @@ module.exports = {
       id: 'LATimes',
       name: 'Los Angeles Times',
       url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/CA_LAT.pdf`,
-      scale: 1.07,
+      scale: 1.02,
     },
     {
       id: 'SFChronicle',
