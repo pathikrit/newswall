@@ -180,6 +180,10 @@ module.exports = {
           displayFor: 45
         },
         {
+          id: 'LATimes',
+          displayFor: 30
+        },
+        {
           id: 'WaPo',
           displayFor: 15
         }
