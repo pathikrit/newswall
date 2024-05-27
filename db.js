@@ -164,6 +164,26 @@ module.exports = {
           displayFor: 15
         }
       ]
+    },
+    {
+      id: '45004e00-1950-3151-4133-362000000000',
+      name: "Linh's Newswall",
+      timezone: 'America/New_York',
+      showFahrenheit: false,
+      newspapers: [
+        {
+          id: 'NYT',
+          displayFor: 60
+        },
+        {
+          id: 'WSJ',
+          displayFor: 45
+        },
+        {
+          id: 'WaPo',
+          displayFor: 15
+        }
+      ]
     }
   ]
 }
