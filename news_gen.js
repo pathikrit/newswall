@@ -1,9 +1,11 @@
 const OpenAI = require("openai")
+const Exa = require('exa-js').default
 const { z } = require('zod')
 const { zodResponseFormat } = require('openai/helpers/zod')
 require('dotenv').config()
 
 const llm = new OpenAI()
+const search_engine = new Exa(process.env.EXA_API_KEY)
 
 const prompts = {
     search_query: (topics) => ({
@@ -23,10 +25,14 @@ const ask_llm = (query, mini=true) => llm.beta.chat.completions.parse({
     response_format: zodResponseFormat(query.schema, query.name),
 }).then(result => result.choices[0].message.parsed)
 
+const news_search = (topic) => search_engine.searchAndContents(topic, {useAutoprompt: true, text: true, highlights: true, category: "news"})
+
+
 const main = async () => {
-    const topics = ["spacex", "bergen county"]
-    const res = await ask_llm(prompts.search_query(topics))
-    console.log(res);
+    // const topics = ["spacex", "bergen county"]
+    // const res = await ask_llm(prompts.search_query(topics))
+    const res = await news_search("bergen county");
+    console.log(res)
 }
 
 main()
