@@ -1,8 +1,9 @@
+require('dotenv').config()
 const OpenAI = require("openai")
 const Exa = require('exa-js').default
 const { z } = require('zod')
+const _ = require('lodash')
 const { zodResponseFormat } = require('openai/helpers/zod')
-require('dotenv').config()
 
 const llm = new OpenAI(process.env.OPENAI_API_KEY)
 const search_engine = new Exa(process.env.EXA_API_KEY)
@@ -25,21 +26,18 @@ const synthesize_news_prompt = (articles) => ({
     schema: z.object({articles: z.array(z.object({topic: z.string(), title: z.string(), highlight: z.string(), images: z.array(z.string()), text: z.string()}))})
 })
 
-const ask_llm = (query, mini=true) => llm.beta.chat.completions.parse({
+const ask_llm = (query, mini=false) => llm.beta.chat.completions.parse({
     model: mini ? "gpt-4o-mini" : "gpt-4o",
-    messages: [
-        {role: 'system',content: query.system},
-        {role: 'user',content: query.user}
-    ],
+    messages: [{role: 'system', content: query.system}, {role: 'user',content: query.user}],
     response_format: zodResponseFormat(query.schema, query.name),
 }).then(result => result.choices[0].message.parsed)
 
 const news_search = (topic) => search_engine
     .searchAndContents(topic, {useAutoprompt: true, text: true, highlights: true, category: "news"})
-    .then(response => response.results.map(res => ({topic, title: res.title, url: res.url, publishedDate: res.publishedDate, author: res.author, text: res.text, highlights: res.highlights, image: res.image})))
+    .then(response => response.results.map(res => _.pick({...res, topic}, ["topic", "url", "publishedDate", "author", "text", "highlights", "image"])))
 
 const make_news = (topics) => Promise.all(topics.map(topic => news_search(topic)))
-    .then(articles => ask_llm(synthesize_news_prompt(articles.flat()), mini=false))
+    .then(articles => ask_llm(synthesize_news_prompt(articles.flat())))
 
 const main = async () => {
     const res = await make_news(["spacex", "bergen county"]);
