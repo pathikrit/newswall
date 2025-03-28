@@ -39,7 +39,7 @@ const config = {
   },
 
   // Show low battery warning below this
-  lowBatteryWarning: parseInt(process.env.LOW_BATTERY_WARNING ?? 20),
+  lowBatteryWarning: parseInt(process.env.LOW_BATTERY_WARNING ?? 5),
 
   // VSS Settings: See https://github.com/pathikrit/node-visionect
   // Note: This whole section can be removed and things will still work e.g. if you are using the Joan portal
