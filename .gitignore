@@ -7,6 +7,7 @@ node_modules/
 
 # IDEs
 .idea/
+.vscode/
 
 # This project
 .newspapers
