@@ -49,7 +49,8 @@ module.exports = {
       id: 'NYT',
       name: 'New York Times',
       isSelected: true, // isSelected: True (for either newspaper or device) means we show it as default on the server homepage
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
+      // url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
+      url: date => `https://static01.nyt.com/images/${date.format('YYYY/MM/DD')}/nytfrontpage/scan.pdf`
       scale: 1.04,
     },
     {
