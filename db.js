@@ -1,12 +1,13 @@
-const freedom_forum_url = id => date => `https://d2dr22b2lm4tvw.cloudfront.net/${id}/${date.format('YYYY-MM-DD')}/front-page.pdf`
+const freedom_forum_url = id => date => 
+  `https://d2dr22b2lm4tvw.cloudfront.net/${id}/${date.format('YYYY-MM-DD')}/front-page.pdf` // TODO: support .png direct?
 
 module.exports = {
   // List of newspapers we support
-  // and a function for each that given a date returns the url of the front page asset for that newspaper on that date
-  // The Freedom Forum has a large list of papers:https://frontpages.freedomforum.org/
+  // and a function for each that given a date returns the url of the pdf of the front page of that newspaper for that date
+  // The Freedom Forum has a large list of papers: https://frontpages.freedomforum.org/
   // e.g. for Wall Street Journal the url is https://d2dr22b2lm4tvw.cloudfront.net/wsj/2026-03-12/front-page.pdf
   //
-  // But, any url as a function of date works e.g. for NYT
+  // But, any url as a function of date works e.g. for NYT, this works too (albeit with slight adjustment of the scale param):
   // url: date => `https://static01.nyt.com/images/${date.format('YYYY/MM/DD')}/nytfrontpage/scan.pdf`
   //
   // scale: Gets compiled to transform: scale(x) CSS style to zoom in to remove useless white margins. Use the emulator on homepage to experiment
