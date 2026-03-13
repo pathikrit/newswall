@@ -1,10 +1,12 @@
+const freedom_forum_url = id => date => `https://d2dr22b2lm4tvw.cloudfront.net/${id}/${date.format('YYYY-MM-DD')}/front-page.pdf`
+
 module.exports = {
   // List of newspapers we support
-  // and a function for each that given a date returns the url of the pdf of the front page of that newspaper for that date
-  // The Freedom Forum has a large list of papers: https://www.freedomforum.org/todaysfrontpages/
-  // e.g. for Wall Street Journal the url is https://cdn.freedomforum.org/dfp/pdf12/WSJ.pdf
+  // and a function for each that given a date returns the url of the front page asset for that newspaper on that date
+  // The Freedom Forum has a large list of papers:https://frontpages.freedomforum.org/
+  // e.g. for Wall Street Journal the url is https://d2dr22b2lm4tvw.cloudfront.net/wsj/2026-03-12/front-page.pdf
   //
-  // But, any url as a function of date works e.g. for NYT, this works too (albeit with slight adjustment of the scale param):
+  // But, any url as a function of date works e.g. for NYT
   // url: date => `https://static01.nyt.com/images/${date.format('YYYY/MM/DD')}/nytfrontpage/scan.pdf`
   //
   // scale: Gets compiled to transform: scale(x) CSS style to zoom in to remove useless white margins. Use the emulator on homepage to experiment
@@ -12,78 +14,28 @@ module.exports = {
     {
       id: 'LATimes',
       name: 'Los Angeles Times',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/CA_LAT.pdf`,
+      url: freedom_forum_url('ca_lat'),
       scale: 1.02,
-    },
-    {
-      id: 'SFChronicle',
-      name: 'San Francisco Chronicle',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/CA_SFC.pdf`,
-      scale: 1.01,
-    },
-    {
-      id: 'USAToday',
-      name: 'USA Today',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/USAT.pdf`,
-      scale: 1.02,
-    },
-    {
-      id: 'BostonGlobe',
-      name: 'Boston Globe',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/MA_BG.pdf`,
-      scale: 0.98,
-    },
-    {
-      id: 'PittsburghPG',
-      name: 'Pittsburgh Post-Gazette',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/PA_PPG.pdf`,
-      scale: 1.05,
     },
     {
       id: 'WaPo',
       name: 'Washington Post',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/DC_WP.pdf`,
+      url: freedom_forum_url('dc_wp'),
       scale: 1.08,
     },
     {
       id: 'NYT',
       name: 'New York Times',
       isSelected: true, // isSelected: True (for either newspaper or device) means we show it as default on the server homepage
-      // url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/NY_NYT.pdf`,
-      url: date => `https://static01.nyt.com/images/${date.format('YYYY/MM/DD')}/nytfrontpage/scan.pdf`,
+      url: freedom_forum_url('ny_nyt'),
       scale: 1.04,
     },
     {
       id: 'WSJ',
       name: 'Wall Street Journal',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/WSJ.pdf`,
+      url: freedom_forum_url('wsj'),
       scale: 1.04,
-    },
-    {
-      id: 'IrishTimes',
-      name: 'Irish Times',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IRL_IT.pdf`,
-      scale: 1.04,
-    },
-    {
-      id: 'Haaretz',
-      name: 'Haaretz (English Edition)',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/ISR_HA.pdf`,
-      scale: 1.05,
-    },
-    // TODO: Disabled due to https://github.com/ol-th/pdf-img-convert.js/issues/48
-    // {
-    //   id: 'NewIndianExpress',
-    //   name: 'New Indian Express',
-    //   url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/IND_NIE.pdf`,
-    //   scale: 1.02,
-    // },
-    {
-      id: 'JapanTimes',
-      name: 'Japan Times',
-      url: date => `https://cdn.freedomforum.org/dfp/pdf${date.format('D')}/JPN_JT.pdf`,
-      scale: 1.02,
-    },
+    }
   ],
 
   // Each device has the following attributes:
@@ -111,15 +63,7 @@ module.exports = {
         {
           id: 'WaPo',
           displayFor: 15
-        },
-        {
-          id: 'USAToday',
-          displayFor: 10
-        },
-        // {
-        //   id: 'NewIndianExpress',
-        //   displayFor: 5
-        // }
+        }
       ]
     },
     {
@@ -140,10 +84,6 @@ module.exports = {
           id: 'WaPo',
           displayFor: 15
         },
-        // {
-        //   id: 'NewIndianExpress',
-        //   displayFor: 45
-        // }
       ]
     },
     {
