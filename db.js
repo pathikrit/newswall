@@ -36,6 +36,12 @@ module.exports = {
       name: 'Wall Street Journal',
       url: freedom_forum_url('wsj'),
       scale: 1.04,
+    },
+    {
+      id: 'LinhTimes',
+      name: 'The Linh Times',
+      url: () => 'https://linh-news.fly.dev/pdf/latest?token=rbxGtp1zSCdI09rUI6LHq9vri-bIlG9eey9enXuVRoA',
+      scale: 1.0
     }
   ],
 
@@ -114,16 +120,20 @@ module.exports = {
       showFahrenheit: false,
       newspapers: [
         {
-          id: 'NYT',
+          id: 'LinhTimes',
           displayFor: 60
         },
         {
+          id: 'NYT',
+          displayFor: 15
+        },
+        {
           id: 'WSJ',
-          displayFor: 45
+          displayFor: 15
         },
         {
           id: 'LATimes',
-          displayFor: 30
+          displayFor: 15
         },
         {
           id: 'WaPo',
