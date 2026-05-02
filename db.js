@@ -40,7 +40,7 @@ module.exports = {
     {
       id: 'LinhTimes',
       name: 'The Linh Times',
-      url: () => 'https://linh-news.fly.dev/pdf/latest?token=rbxGtp1zSCdI09rUI6LHq9vri-bIlG9eey9enXuVRoA',
+      url: () => `https://linh-news.fly.dev/pdf/latest?token=${process.env.LINH_TIMES_TOKEN}`,
       scale: 1.0
     }
   ],
