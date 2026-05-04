@@ -10,12 +10,12 @@ let port = null, server = null, browser = null
 beforeAll(async () => {
   port = await portfinder.getPortPromise()
   server = await require('./app').then(app => app.listen(port))
-  browser = await puppeteer.launch()
+  browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']})
 })
 
 afterAll(async () => {
-  await browser.close()
-  await server.close()
+  if (browser) await browser.close()
+  if (server) await server.close()
 })
 
 contains = str => page => expect(page.content()).resolves.toContain(str)
