@@ -10,7 +10,7 @@ module.exports = {
   // But, any url as a function of date works e.g. for NYT, this works too (albeit with slight adjustment of the scale param):
   // url: date => `https://static01.nyt.com/images/${date.format('YYYY/MM/DD')}/nytfrontpage/scan.pdf`
   //
-  // alwaysDownload: If set; always download and overwrite the local paper. This should likely be set to false as you'd be flagged by the servers
+  // alwaysDownload: If set, redownload and overwrite today's local paper on every refresh (useful for intraday-updated sources)
   // scale: Gets compiled to transform: scale(x) CSS style to zoom in to remove useless white margins. Use the emulator on homepage to experiment
   newspapers: [
     {
