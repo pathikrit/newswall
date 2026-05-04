@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Newspaper Layout Demo — Guillotine Algorithm</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #555;
+    font-family: Georgia, 'Times New Roman', serif;
+    overflow-x: hidden;
+  }
+
+  /* ── Controls ── */
+  #controls {
+    position: fixed; top: 12px; right: 12px; z-index: 100;
+    background: #fff; padding: 12px 18px; border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px; display: flex; gap: 12px; align-items: center;
+  }
+  #controls label { font-weight: 600; white-space: nowrap; }
+  #controls input[type="number"] {
+    width: 55px; padding: 4px 6px;
+    border: 1px solid #ccc; border-radius: 4px; font-size: 13px;
+  }
+  #controls button {
+    padding: 5px 14px; background: #222; color: #fff;
+    border: none; border-radius: 4px; cursor: pointer; font-size: 13px;
+  }
+  #controls button:hover { background: #555; }
+  #algo-info { font-size: 11px; color: #888; max-width: 220px; line-height: 1.3; }
+
+  /* ── Page ── */
+  .page-wrapper {
+    display: flex; justify-content: center;
+    padding: 20px 20px 40px; transform-origin: top center;
+  }
+  .page {
+    width: 1469px; height: 2611px;
+    background: #fefcf5; position: relative; overflow: hidden;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+  }
+
+  /* ── Masthead ── */
+  .masthead {
+    width: 100%; height: 72px;
+    border-bottom: 4px double #000;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; background: #fefcf5;
+  }
+  .masthead-title {
+    font-family: 'Old English Text MT', 'UnifrakturMaguntia', Georgia, serif;
+    font-size: 44px; letter-spacing: 3px; color: #111;
+  }
+  .masthead-date {
+    position: absolute; right: 24px;
+    font-size: 10px; color: #444; text-align: right; line-height: 1.5;
+  }
+  .masthead-left {
+    position: absolute; left: 24px;
+    font-size: 8px; color: #666;
+    text-transform: uppercase; letter-spacing: 1.5px; line-height: 1.6;
+  }
+
+  /* ── Articles ── */
+  .articles-area { position: relative; width: 100%; height: calc(100% - 72px); }
+  .article-box   { position: absolute; overflow: hidden; }
+  .article-inner {
+    display: flex; flex-direction: column;
+    height: 100%; padding: 10px 14px 6px; overflow: hidden;
+  }
+  .article-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 700; line-height: 1.06; margin-bottom: 3px;
+    letter-spacing: -0.4px; color: #111; flex-shrink: 0;
+  }
+  .article-byline {
+    font-family: -apple-system, Arial, Helvetica, sans-serif;
+    font-size: 7.5px; text-transform: uppercase; letter-spacing: 1px;
+    color: #555; margin-bottom: 5px; font-weight: 700; flex-shrink: 0;
+  }
+  .article-body {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 10.5px; line-height: 1.33;
+    column-gap: 14px; column-rule: 1px solid #ddd;
+    text-align: justify; color: #222;
+    flex: 1; overflow: hidden;
+  }
+
+  /* ── Separators ── */
+  .sep-right { border-right: 1px solid #999; }
+  .sep-top .article-inner { border-top: 1px solid #bbb; padding-top: 8px; }
+
+  /* ── Image: banner (full-bleed between sections) ── */
+  .article-img-banner {
+    flex-shrink: 0;
+    margin: 2px -14px 0;
+    position: relative; overflow: hidden;
+    background: linear-gradient(145deg, #b8b8b8, #d0d0d0, #a8a8a8, #c5c5c5);
+  }
+  .article-img-banner img {
+    width: 100%; display: block; object-fit: cover;
+  }
+  .article-img-banner .img-caption { padding: 3px 14px 4px; }
+
+  /* ── Image: float (inside body text) ── */
+  .article-img-float {
+    overflow: hidden; margin-bottom: 5px;
+    background: linear-gradient(145deg, #b8b8b8, #d0d0d0, #a8a8a8, #c5c5c5);
+  }
+  .article-img-float.float-left  { float: left;  margin-right: 10px; }
+  .article-img-float.float-right { float: right;  margin-left: 10px; }
+  .article-img-float img { width: 100%; display: block; object-fit: cover; }
+
+  /* ── Image: inset (CSS Grid, text on all 4 sides) ── */
+  .body-inset {
+    display: grid;
+    flex: 1; overflow: hidden;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 10.5px; line-height: 1.33;
+    text-align: justify; color: #222;
+    gap: 3px 14px;
+  }
+  .body-inset > div { overflow: hidden; }
+  .body-inset .inset-cols {
+    column-gap: 14px; column-rule: 1px solid #ddd;
+  }
+  .body-inset .inset-left  { border-right: 1px solid #ddd; padding-right: 7px; }
+  .body-inset .inset-right { border-left:  1px solid #ddd; padding-left:  7px; }
+  .body-inset .inset-img {
+    overflow: hidden;
+    background: linear-gradient(145deg, #b8b8b8, #d0d0d0, #a8a8a8, #c5c5c5);
+  }
+  .body-inset .inset-img img { width: 100%; display: block; object-fit: cover; }
+  .body-inset .img-caption { padding: 2px 0; }
+
+  /* ── Caption (shared) ── */
+  .img-caption {
+    font-family: -apple-system, Arial, Helvetica, sans-serif;
+    font-size: 7.5px; line-height: 1.45; color: #666; font-style: italic;
+  }
+  .img-credit { font-style: normal; color: #999; font-size: 7px; letter-spacing: 0.3px; }
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <label>N <input type="number" id="inputN" value="8" min="1" max="40"></label>
+  <label>Seed <input type="number" id="inputSeed" value="42" min="0"></label>
+  <button onclick="generate()">Generate</button>
+  <button onclick="shuffle()">Shuffle</button>
+  <div id="algo-info">Guillotine layout + 4 image modes</div>
+</div>
+
+<div class="page-wrapper" id="pageWrapper">
+  <div class="page" id="page">
+    <div class="masthead">
+      <div class="masthead-left">Demo Edition<br>Vol. CLXXV &middot; No. 1</div>
+      <div class="masthead-title">The Daily Demo</div>
+      <div class="masthead-date">Sunday, May 4, 2026<br>Guillotine Layout Algorithm</div>
+    </div>
+    <div class="articles-area" id="articlesArea"></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   Constants
+   ═══════════════════════════════════════════════ */
+var PAGE_W = 1469, PAGE_H = 2611, MASTHEAD_H = 72;
+var AREA_W = PAGE_W, AREA_H = PAGE_H - MASTHEAD_H;
+var MIN_ARTICLE_DIM = 140;
+
+/* ═══════════════════════════════════════════════
+   Seeded PRNG  (Mulberry32)
+   ═══════════════════════════════════════════════ */
+var rand;
+function seedRandom(s) {
+  rand = function () {
+    s |= 0; s = s + 0x6D2B79F5 | 0;
+    var t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ═══════════════════════════════════════════════
+   Placeholder text
+   ═══════════════════════════════════════════════ */
+function makeAlpha(len) {
+  var text = '', pos = Math.floor(rand() * 26), wl2 = 0, ws = 0;
+  var sl = 6 + Math.floor(rand() * 8);
+  for (var i = 0; i < len; i++) {
+    var c = String.fromCharCode(97 + (pos % 26));
+    if (ws === 0 && wl2 === 0) c = c.toUpperCase();
+    text += c; pos++; wl2++;
+    var tw = 2 + Math.floor(rand() * 7);
+    if (wl2 >= tw && i < len - 1) {
+      ws++;
+      if (ws >= sl) { text += '. '; i += 2; ws = 0; sl = 6 + Math.floor(rand() * 8); }
+      else          { text += ' ';  i++; }
+      wl2 = 0;
+    }
+  }
+  return text;
+}
+function makeTitle(idx, imp) {
+  return makeAlpha(Math.floor(12 + imp * 4)).toUpperCase().replace(/\./g, '').trim();
+}
+function makeByline(idx) {
+  var a = String.fromCharCode(65 + (idx % 26)), b = '';
+  for (var i = 0; i < 5; i++) b += String.fromCharCode(97 + ((idx*7+i*3)%26));
+  return 'By ' + a + '. ' + b.charAt(0).toUpperCase() + b.slice(1);
+}
+function makeCaption() {
+  var c = makeAlpha(25 + Math.floor(rand()*50));
+  return c.charAt(c.length-1)==='.' ? c : c+'.';
+}
+function makeCredit() {
+  var a = String.fromCharCode(65+Math.floor(rand()*26)), b='';
+  for (var i=0;i<4+Math.floor(rand()*4);i++) b+=String.fromCharCode(97+Math.floor(rand()*26));
+  return a+'. '+b.charAt(0).toUpperCase()+b.slice(1);
+}
+function estChars(w, h, cols) {
+  if (h <= 0 || w <= 0 || cols <= 0) return 60;
+  var lpc = Math.floor(h / 14);
+  var cpl = Math.floor((w / cols - 14) / 6.2);
+  return Math.max(60, cols * lpc * cpl);
+}
+
+/* ═══════════════════════════════════════════════
+   Article generation
+   ═══════════════════════════════════════════════ */
+function generateArticles(n) {
+  var articles = [];
+  for (var i = 0; i < n; i++) {
+    var importance = Math.max(1.0, 10 * Math.pow(0.65, i));
+    var art = {
+      title: makeTitle(i, importance), byline: makeByline(i),
+      importance: importance, index: i,
+    };
+    if (rand() < 0.30 + importance * 0.045) {
+      art.image = {
+        url: 'https://picsum.photos/seed/demo' + i + '/800/530',
+        title: makeCaption(), credit: makeCredit(),
+      };
+    }
+    articles.push(art);
+  }
+  return articles;
+}
+
+/* ═══════════════════════════════════════════════
+   Guillotine-cut layout
+   ═══════════════════════════════════════════════ */
+function guillotineLayout(arts, reg, depth) {
+  if (arts.length === 0) return [];
+  if (arts.length === 1) return [{ article:arts[0], region:clone(reg), depth:depth }];
+  var ar = reg.w / reg.h;
+  var cutV;
+  if      (ar > 2.5) cutV = true;
+  else if (ar < 0.4) cutV = false;
+  else {
+    var pV = ar > 1 ? 0.5+(ar-1)*0.15 : 0.5-(1/ar-1)*0.15;
+    cutV = rand() < Math.max(0.2, Math.min(0.8, pV));
+  }
+  var tI = 0; for (var i=0;i<arts.length;i++) tI+=arts[i].importance;
+  var bS=1, bSc=1e9;
+  for (var s=1;s<arts.length;s++) {
+    var g=0; for (var j=0;j<s;j++) g+=arts[j].importance;
+    var r=g/tI;
+    if (cutV) { if (reg.w*r<MIN_ARTICLE_DIM||reg.w*(1-r)<MIN_ARTICLE_DIM) continue; }
+    else      { if (reg.h*r<MIN_ARTICLE_DIM||reg.h*(1-r)<MIN_ARTICLE_DIM) continue; }
+    var sc = Math.abs(r - (0.40+rand()*0.15));
+    if (s===1 && arts[0].importance>tI*0.28) sc -= 0.08;
+    if (sc<bSc) { bSc=sc; bS=s; }
+  }
+  var g1=arts.slice(0,bS), g2=arts.slice(bS);
+  var g1I=0; for (var k=0;k<g1.length;k++) g1I+=g1[k].importance;
+  var sp = Math.max(0.18, Math.min(0.82, g1I/tI + (rand()-0.5)*0.04));
+  if (cutV) { var m=MIN_ARTICLE_DIM/reg.w; sp=Math.max(m,Math.min(1-m,sp)); }
+  else      { var m2=MIN_ARTICLE_DIM/reg.h; sp=Math.max(m2,Math.min(1-m2,sp)); }
+  var r1,r2;
+  if (cutV) { var w1=Math.round(reg.w*sp);
+    r1={x:reg.x,y:reg.y,w:w1,h:reg.h}; r2={x:reg.x+w1,y:reg.y,w:reg.w-w1,h:reg.h};
+  } else { var h1=Math.round(reg.h*sp);
+    r1={x:reg.x,y:reg.y,w:reg.w,h:h1}; r2={x:reg.x,y:reg.y+h1,w:reg.w,h:reg.h-h1};
+  }
+  return guillotineLayout(g1,r1,depth+1).concat(guillotineLayout(g2,r2,depth+1));
+}
+function clone(r){return{x:r.x,y:r.y,w:r.w,h:r.h};}
+
+/* ═══════════════════════════════════════════════
+   Image placement strategy
+
+   4 modes, chosen per-article based on region
+   dimensions, column count, and randomness:
+
+   ┌────────────────────┐   BANNER-TOP
+   │ HEADLINE           │   Full-bleed above body.
+   │ Byline             │   Classic lead-story look.
+   │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│
+   │▓▓▓▓ PHOTO ▓▓▓▓▓▓▓▓│
+   │ caption             │
+   │ col1 │ col2 │ col3 │
+   └────────────────────┘
+
+   ┌────────────────────┐   BANNER-MID
+   │ HEADLINE           │   Text above AND below.
+   │ col1 │ col2 │ col3 │
+   │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│
+   │▓▓▓▓ PHOTO ▓▓▓▓▓▓▓▓│
+   │ caption             │
+   │ col1 │ col2 │ col3 │
+   └────────────────────┘
+
+   ┌────────────────────┐   FLOAT
+   │ HEADLINE           │   Text wraps on 3-4 sides.
+   │ text text text text │   Some text before float
+   │▓▓▓▓▓▓▓▓│ text text │   = text above.
+   │▓ PHOTO▓│ text text │   Text beside + below.
+   │▓▓▓▓▓▓▓▓│ text text │
+   │ caption │ text text │
+   │ text text text text │
+   └────────────────────┘
+
+   ┌────────────────────┐   INSET
+   │ HEADLINE           │   CSS Grid: text on ALL
+   │ col1 │ col2 │ col3 │   4 sides of the image.
+   │ text │▓▓▓▓▓▓│ text │   Left/right cols beside
+   │ text │▓PHOTO│ text │   the photo, plus text
+   │ text │▓▓▓▓▓▓│ text │   above and below.
+   │ text │captn │ text │
+   │ col1 │ col2 │ col3 │
+   └────────────────────┘
+   ═══════════════════════════════════════════════ */
+function decideImageMode(article, region, colCount) {
+  var padX   = 28;
+  var availW = region.w - padX;
+  var tSize  = Math.max(13, Math.min(42, article.importance * 4));
+  var titleH = tSize * 1.15 + 20;
+  var availH = region.h - 16 - titleH;
+
+  if (availH < 120 || availW < 150) return null;
+
+  // Build pool of eligible modes
+  var modes = [];
+
+  // banner-top: needs 2+ cols
+  if (colCount >= 2 && availH > 160)
+    modes.push('banner-top');
+
+  // banner-mid: needs 2+ cols and enough height for 3 sections
+  if (colCount >= 2 && availH > 300)
+    modes.push('banner-mid');
+
+  // float: works for any width, best without many columns
+  if (availW > 170 && availH > 160)
+    modes.push('float');
+
+  // inset (all-4-sides): needs 3+ cols, generous space
+  if (colCount >= 3 && availH > 320 && availW > 380) {
+    modes.push('inset');
+    modes.push('inset');   // weight it — this is the interesting one
+  }
+
+  if (modes.length === 0) return null;
+  var mode = modes[Math.floor(rand() * modes.length)];
+
+  switch (mode) {
+    case 'banner-top': {
+      var frac = 0.20 + article.importance * 0.028;
+      var imgH = availH * frac;
+      imgH = Math.min(imgH, (availW+padX)*0.6, availH - 80);
+      return { mode:'banner-top', imgH: Math.max(50,Math.round(imgH)), availH:availH };
+    }
+    case 'banner-mid': {
+      var topFrac = 0.12 + rand() * 0.18;
+      var imgFrac = 0.20 + article.importance * 0.025;
+      var imgH = Math.round(Math.min(availH*imgFrac, (availW+padX)*0.55, availH*0.40));
+      imgH = Math.max(50, imgH);
+      var topH = Math.max(40, Math.round(availH * topFrac));
+      var botH = availH - topH - imgH - 16;
+      if (botH < 50) return { mode:'banner-top', imgH:imgH, availH:availH };
+      return { mode:'banner-mid', imgH:imgH, topH:topH, botH:botH, availH:availH };
+    }
+    case 'float': {
+      var side  = rand() > 0.5 ? 'left' : 'right';
+      var fW    = Math.round(availW * (0.33 + rand() * 0.20));
+      var fH    = Math.round(fW * (0.6 + rand() * 0.25));
+      fH = Math.min(fH, availH * 0.50);
+      fH = Math.max(50, fH);
+      var bef   = 0.06 + rand() * 0.20;
+      return { mode:'float', side:side, floatW:fW, floatH:fH,
+               beforeFrac:bef, availH:availH };
+    }
+    case 'inset': {
+      var iwFrac = 0.38 + rand() * 0.22;
+      var iw = Math.round(availW * iwFrac);
+      var ih = Math.round(iw * (0.55 + rand() * 0.15));
+      ih = Math.min(ih, availH * 0.42);
+      ih = Math.max(60, ih);
+      var tF = 0.08 + rand() * 0.16;
+      var tH = Math.max(30, Math.round(availH * tF));
+      var sw = Math.round((availW - iw - 28) / 2);
+      if (sw < 70) return { mode:'banner-mid', imgH:ih, topH:tH,
+                            botH:availH-tH-ih-16, availH:availH };
+      return { mode:'inset', imgW:iw, imgH:ih, topH:tH, sideW:sw, availH:availH };
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   Helpers for image DOM
+   ═══════════════════════════════════════════════ */
+function makeBannerImgEl(image, imgH) {
+  var w = document.createElement('div');
+  w.className = 'article-img-banner';
+  var img = document.createElement('img');
+  img.src = image.url; img.alt = image.title; img.style.height = imgH + 'px';
+  img.onerror = function(){ this.style.visibility='hidden'; };
+  w.appendChild(img);
+  var cap = document.createElement('div');
+  cap.className = 'img-caption';
+  cap.innerHTML = image.title + ' <span class="img-credit">' + (image.credit||'') + '</span>';
+  w.appendChild(cap);
+  return w;
+}
+
+/* ═══════════════════════════════════════════════
+   Rendering
+   ═══════════════════════════════════════════════ */
+function render(placements) {
+  var area = document.getElementById('articlesArea');
+  area.innerHTML = '';
+
+  placements.forEach(function (p) {
+    var art = p.article, r = p.region;
+
+    var box = document.createElement('div');
+    box.className = 'article-box';
+    if (r.x + r.w < AREA_W - 2) box.className += ' sep-right';
+    if (r.y > 2)                 box.className += ' sep-top';
+    box.style.left = r.x+'px'; box.style.top = r.y+'px';
+    box.style.width = r.w+'px'; box.style.height = r.h+'px';
+
+    var inner = document.createElement('div');
+    inner.className = 'article-inner';
+
+    // Title
+    var tSize = Math.max(13, Math.min(42, art.importance * 4));
+    var tEl = document.createElement('div');
+    tEl.className = 'article-title';
+    tEl.style.fontSize = tSize + 'px';
+    tEl.textContent = art.title;
+    inner.appendChild(tEl);
+
+    // Byline
+    var bEl = document.createElement('div');
+    bEl.className = 'article-byline';
+    bEl.textContent = art.byline;
+    inner.appendChild(bEl);
+
+    // Layout metrics
+    var padX = 28, availW = r.w - padX;
+    var colCount = Math.max(1, Math.floor(availW / 180));
+
+    // Decide image mode
+    var im = art.image ? decideImageMode(art, r, colCount) : null;
+
+    /* ──────────────────────────────────────────
+       MODE: no image
+       ────────────────────────────────────────── */
+    if (!im) {
+      var titleH = tSize * 1.15 + 20;
+      var bH = Math.max(40, r.h - 16 - titleH);
+      var bd = document.createElement('div');
+      bd.className = 'article-body';
+      bd.style.columnCount = colCount;
+      bd.textContent = makeAlpha(estChars(availW, bH, colCount));
+      inner.appendChild(bd);
+
+    /* ──────────────────────────────────────────
+       MODE: banner-top
+       ────────────────────────────────────────── */
+    } else if (im.mode === 'banner-top') {
+      inner.appendChild(makeBannerImgEl(art.image, im.imgH));
+      var bH = Math.max(30, im.availH - im.imgH - 18);
+      var bd = document.createElement('div');
+      bd.className = 'article-body';
+      bd.style.columnCount = colCount;
+      bd.textContent = makeAlpha(estChars(availW, bH, colCount));
+      inner.appendChild(bd);
+
+    /* ──────────────────────────────────────────
+       MODE: banner-mid — text above AND below
+       ────────────────────────────────────────── */
+    } else if (im.mode === 'banner-mid') {
+      // Top body
+      var topBd = document.createElement('div');
+      topBd.className = 'article-body';
+      topBd.style.columnCount = colCount;
+      topBd.style.flex = 'none';
+      topBd.style.height = im.topH + 'px';
+      topBd.textContent = makeAlpha(estChars(availW, im.topH, colCount));
+      inner.appendChild(topBd);
+
+      // Image
+      inner.appendChild(makeBannerImgEl(art.image, im.imgH));
+
+      // Bottom body
+      var botBd = document.createElement('div');
+      botBd.className = 'article-body';
+      botBd.style.columnCount = colCount;
+      botBd.textContent = makeAlpha(estChars(availW, im.botH, colCount));
+      inner.appendChild(botBd);
+
+    /* ──────────────────────────────────────────
+       MODE: float — text wraps 3-4 sides
+       ────────────────────────────────────────── */
+    } else if (im.mode === 'float') {
+      var bd = document.createElement('div');
+      bd.className = 'article-body';
+      // Single column so float wrapping works naturally
+      bd.style.columnCount = 1;
+
+      // Text BEFORE float → appears above the image
+      var totalC = estChars(availW, im.availH, 1);
+      var befC   = Math.max(40, Math.round(totalC * im.beforeFrac));
+      bd.appendChild(document.createTextNode(makeAlpha(befC) + ' '));
+
+      // Float image
+      var fw = document.createElement('div');
+      fw.className = 'article-img-float float-' + im.side;
+      fw.style.width = im.floatW + 'px';
+
+      var fi = document.createElement('img');
+      fi.src = art.image.url; fi.alt = art.image.title;
+      fi.style.height = im.floatH + 'px';
+      fi.onerror = function(){ this.style.visibility='hidden'; };
+      fw.appendChild(fi);
+
+      var fc = document.createElement('div');
+      fc.className = 'img-caption';
+      fc.innerHTML = art.image.title + ' <span class="img-credit">'+(art.image.credit||'')+'</span>';
+      fw.appendChild(fc);
+      bd.appendChild(fw);
+
+      // Text AFTER float → wraps beside and below
+      var aftC = Math.max(60, totalC - befC);
+      bd.appendChild(document.createTextNode(makeAlpha(aftC)));
+
+      inner.appendChild(bd);
+
+    /* ──────────────────────────────────────────
+       MODE: inset — CSS Grid, text on all 4 sides
+       ────────────────────────────────────────── */
+    } else if (im.mode === 'inset') {
+      var grid = document.createElement('div');
+      grid.className = 'body-inset';
+      grid.style.gridTemplateColumns = im.sideW + 'px 1fr ' + im.sideW + 'px';
+      grid.style.gridTemplateRows    = im.topH + 'px auto 1fr';
+
+      // Row 1: top text spanning all columns
+      var topEl = document.createElement('div');
+      topEl.className = 'inset-cols';
+      topEl.style.gridColumn = '1 / -1';
+      topEl.style.columnCount = colCount;
+      topEl.textContent = makeAlpha(estChars(availW, im.topH, colCount));
+      grid.appendChild(topEl);
+
+      // Row 2, col 1: left side text
+      var leftEl = document.createElement('div');
+      leftEl.className = 'inset-left';
+      leftEl.textContent = makeAlpha(estChars(im.sideW, im.imgH, 1));
+      grid.appendChild(leftEl);
+
+      // Row 2, col 2: image
+      var imgCell = document.createElement('div');
+      imgCell.className = 'inset-img';
+      var img2 = document.createElement('img');
+      img2.src = art.image.url; img2.alt = art.image.title;
+      img2.style.height = im.imgH + 'px';
+      img2.onerror = function(){ this.style.visibility='hidden'; };
+      imgCell.appendChild(img2);
+      var cap2 = document.createElement('div');
+      cap2.className = 'img-caption';
+      cap2.innerHTML = art.image.title + ' <span class="img-credit">'+(art.image.credit||'')+'</span>';
+      imgCell.appendChild(cap2);
+      grid.appendChild(imgCell);
+
+      // Row 2, col 3: right side text
+      var rightEl = document.createElement('div');
+      rightEl.className = 'inset-right';
+      rightEl.textContent = makeAlpha(estChars(im.sideW, im.imgH, 1));
+      grid.appendChild(rightEl);
+
+      // Row 3: bottom text spanning all columns
+      var botH = Math.max(30, im.availH - im.topH - im.imgH - 22);
+      var botEl = document.createElement('div');
+      botEl.className = 'inset-cols';
+      botEl.style.gridColumn = '1 / -1';
+      botEl.style.columnCount = colCount;
+      botEl.textContent = makeAlpha(estChars(availW, botH, colCount));
+      grid.appendChild(botEl);
+
+      inner.appendChild(grid);
+    }
+
+    box.appendChild(inner);
+    area.appendChild(box);
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   Viewport scaling
+   ═══════════════════════════════════════════════ */
+function fitToViewport() {
+  var w = document.getElementById('pageWrapper');
+  var vw = window.innerWidth - 40, vh = window.innerHeight - 60;
+  var s = Math.min(vw / PAGE_W, vh / PAGE_H, 1);
+  w.style.transform = 'scale(' + s + ')';
+  w.style.transformOrigin = 'top center';
+  w.style.height = (PAGE_H * s + 40) + 'px';
+}
+
+/* ═══════════════════════════════════════════════
+   Main
+   ═══════════════════════════════════════════════ */
+function generate() {
+  var n = parseInt(document.getElementById('inputN').value) || 8;
+  var seed = parseInt(document.getElementById('inputSeed').value) || 42;
+  seedRandom(seed);
+  render(guillotineLayout(generateArticles(n), {x:0,y:0,w:AREA_W,h:AREA_H}, 0));
+  fitToViewport();
+}
+function shuffle() {
+  document.getElementById('inputSeed').value = Math.floor(Math.random()*100000);
+  generate();
+}
+generate();
+window.addEventListener('resize', fitToViewport);
+</script>
+</body>
+</html>
