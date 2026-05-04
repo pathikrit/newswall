@@ -79,7 +79,8 @@ const download = (newspaper, date) => {
   const pngPath = pdfPath.replace('.pdf', '.png')
   const name = `'${newspaper.name}' for ${date}`
 
-  if (fs.existsSync(pdfPath)) {
+  const shouldForceDownload = newspaper.alwaysDownload && date === recentDays(1)[0]
+  if (!shouldForceDownload && fs.existsSync(pdfPath)) {
     return fs.existsSync(pngPath) ? Promise.resolve(log.debug(`Already downloaded ${name}`)) : pdfToImage(pdfPath, pngPath)
   }
 
