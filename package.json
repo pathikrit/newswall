@@ -8,6 +8,7 @@
     "dayjs-with-plugins": "^1.0.3",
     "dotenv": "^16.0.3",
     "ejs": "^3.1.8",
+    "exa-js": "^1.4.10",
     "express": "^4.18.2",
     "extract-date": "^2.8.2",
     "glob": "^8.0.3",
@@ -17,9 +18,11 @@
     "md5-file": "^5.0.0",
     "node-visionect": "^0.0.6",
     "nodejs-file-downloader": "^4.10.2",
+    "openai": "^4.85.3",
     "pdf-img-convert": "^1.1.1",
     "pdf-text": "^0.4.0",
-    "serve-index": "^1.9.1"
+    "serve-index": "^1.9.1",
+    "zod": "^3.24.2"
   },
   "engines": {
     "npm": ">=8",
