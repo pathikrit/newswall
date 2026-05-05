@@ -60,10 +60,6 @@ module.exports = {
       showFahrenheit: true,
       newspapers: [
         {
-          id: 'RickTimes',
-          displayFor: 60
-        },
-        {
           id: 'NYT',
           displayFor: 60
         },
@@ -73,6 +69,10 @@ module.exports = {
         },
         {
           id: 'WaPo',
+          displayFor: 15
+        },
+        {
+          id: 'RickTimes',
           displayFor: 15
         }
       ]
