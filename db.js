@@ -36,6 +36,12 @@ module.exports = {
       name: 'Wall Street Journal',
       url: freedom_forum_url('wsj'),
       scale: 1.04,
+    },
+    {
+      id: 'RickTimes',
+      name: 'The Rick Times',
+      url: date => `https://linh-news.fly.dev/pdf/${date.format('YYYY-MM-DD')}/rick?token=${process.env.RICK_TIMES_TOKEN}`,
+      scale: 1.0
     }
   ],
 
@@ -53,6 +59,10 @@ module.exports = {
       timezone: 'America/New_York',
       showFahrenheit: true,
       newspapers: [
+        {
+          id: 'RickTimes',
+          displayFor: 60
+        },
         {
           id: 'NYT',
           displayFor: 60
