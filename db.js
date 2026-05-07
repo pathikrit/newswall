@@ -45,6 +45,12 @@ module.exports = {
       name: 'The Rick Times',
       url: linh_times_url('Rick', process.env.RICK_TIMES_TOKEN),
       scale: 1.0
+    },
+    {
+      id: 'LinhTimes',
+      name: 'The Linh Times',
+      url: linh_times_url('Linh', process.env.LINH_TIMES_TOKEN),
+      scale: 1.0
     }
   ],
 
