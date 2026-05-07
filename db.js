@@ -133,12 +133,16 @@ module.exports = {
       showFahrenheit: false,
       newspapers: [
         {
+          id: 'LinhTimes',
+          displayFor: 30
+        },
+        {
           id: 'NYT',
-          displayFor: 60
+          displayFor: 30
         },
         {
           id: 'WSJ',
-          displayFor: 45
+          displayFor: 30
         },
         {
           id: 'LATimes',
@@ -146,7 +150,7 @@ module.exports = {
         },
         {
           id: 'WaPo',
-          displayFor: 15
+          displayFor: 30
         }
       ]
     }
