@@ -68,7 +68,9 @@ const downloadAll = () => {
   })
 
   log.info('Checking for new papers ...')
-  return Promise.all(_.product(recentDays(3), db.newspapers).map(([date, newspaper]) => download(newspaper, date)))
+  // LinhTimes requires a private token and is intentionally excluded from tests to avoid external auth dependency in CI.
+  const newspapers = env.isTest ? db.newspapers.filter(paper => paper.id !== 'LinhTimes') : db.newspapers
+  return Promise.all(_.product(recentDays(3), newspapers).map(([date, newspaper]) => download(newspaper, date)))
 }
 
 /** Download the newspaper for given date */
@@ -79,7 +81,8 @@ const download = (newspaper, date) => {
   const pngPath = pdfPath.replace('.pdf', '.png')
   const name = `'${newspaper.name}' for ${date}`
 
-  if (fs.existsSync(pdfPath)) {
+  const shouldForceDownload = newspaper.alwaysDownload && date === recentDays(1)[0]
+  if (!shouldForceDownload && fs.existsSync(pdfPath)) {
     return fs.existsSync(pngPath) ? Promise.resolve(log.debug(`Already downloaded ${name}`)) : pdfToImage(pdfPath, pngPath)
   }
 
@@ -92,7 +95,12 @@ const download = (newspaper, date) => {
     .then(() => {
       const md5 = require('md5-file')
       const hash = md5.sync(pdfPath)
-      if (hashes.has(hash)) return Promise.reject(`Stale file found at ${url}: ${pdfPath} and ${hashes.get(hash)} have same hash (${hash})`)
+      if (hashes.has(hash)) {
+        const msg = shouldForceDownload ?
+          `No intraday change detected for ${name} at ${url}` :
+          `Stale file found at ${url}: ${pdfPath} and ${hashes.get(hash)} have same hash (${hash})`
+        return Promise.reject(msg)
+      }
       hashes.set(hash, pdfPath)
       log.debug(`Hash size = ${hashes.size}`)
       return config.dateCheck ? pdfToText(pdfPath).then(extractDateFromText) : [date]
@@ -102,6 +110,8 @@ const download = (newspaper, date) => {
       return pdfToImage(pdfPath, pngPath)
     })
     .catch(error => {
+      if (typeof error === 'string' && error.startsWith('No intraday change detected'))
+        return log.info(error)
       fs.rmSync(pdfPath, {force: true})
       if (error.statusCode && error.statusCode === StatusCodes.NOT_FOUND)
         log.info(`${name} is not available at ${url}`)
