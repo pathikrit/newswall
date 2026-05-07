@@ -1,7 +1,7 @@
 const freedom_forum_url = id => date =>
   `https://d2dr22b2lm4tvw.cloudfront.net/${id}/${date.format('YYYY-MM-DD')}/front-page.pdf` // TODO: support .png direct?
 
-const linh_times_url = (token, name) => date =>
+const linh_times_url = (name, token) => date =>
   `https://linh-news.fly.dev/pdf/${date.format('YYYY-MM-DD')}/${name.toLowerCase()}?token=${token}`
 
 module.exports = {
@@ -43,7 +43,7 @@ module.exports = {
     {
       id: 'RickTimes',
       name: 'The Rick Times',
-      url: linh_times_url(process.env.RICK_TIMES_TOKEN, 'Rick'),
+      url: linh_times_url('Rick', process.env.RICK_TIMES_TOKEN),
       scale: 1.0
     }
   ],
