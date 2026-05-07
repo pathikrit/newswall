@@ -1,5 +1,8 @@
-const freedom_forum_url = id => date => 
+const freedom_forum_url = id => date =>
   `https://d2dr22b2lm4tvw.cloudfront.net/${id}/${date.format('YYYY-MM-DD')}/front-page.pdf` // TODO: support .png direct?
+
+const linh_times_url = (token, name) => date =>
+  `https://linh-news.fly.dev/pdf/${date.format('YYYY-MM-DD')}/${name.toLowerCase()}?token=${token}`
 
 module.exports = {
   // List of newspapers we support
@@ -40,7 +43,7 @@ module.exports = {
     {
       id: 'RickTimes',
       name: 'The Rick Times',
-      url: date => `https://linh-news.fly.dev/pdf/${date.format('YYYY-MM-DD')}/rick?token=${process.env.RICK_TIMES_TOKEN}`,
+      url: linh_times_url(process.env.RICK_TIMES_TOKEN, 'Rick'),
       scale: 1.0
     }
   ],
