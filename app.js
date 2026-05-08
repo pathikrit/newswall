@@ -35,8 +35,7 @@ const config = {
   display: {
     height: 2560,
     width: 1440,
-    pdf2ImgOpts: {width: 1600},
-    validHeight: {min: 2700, max: 3500} // if height outside this range, it would look bad on display e.g. when a multipage ad is shown
+    pdf2ImgOpts: {width: 1600}
   },
 
   // Show low battery warning below this
@@ -142,10 +141,10 @@ const pdfToImage = (pdf, png) => {
 const checkImage = (image) => {
   const name = path.parse(image).name
   try {
-    const {min, max} = config.display.validHeight
-    const {width, height} = require('image-size').imageSize(image)
-    if (height < min || height > max) {
-      log.warn(`Skipping ${name} since it has dimensions of ${width} x ${height} which is abnormal and not in range of ${width} x [${min}-${max}]`)
+    const {width, height} = require('image-size')(image)
+    const minHeight = width * config.display.height / config.display.width * 0.8
+    if (height <= minHeight) {
+      log.warn(`Skipping ${name} since it has dimensions of ${width} x ${height} which is abnormal and not in range of ${width} x [${Math.round(minHeight)}-∞]`)
       return []
     }
   } catch (e) {
