@@ -138,14 +138,14 @@ const pdfToImage = (pdf, png) => {
     .then(images => fs.writeFile(png, images[0], () => log.info(`Wrote ${png}`)))
 }
 
-const checkImage = (image) => {
+const checkImage = _.memoize((image) => {
   const name = path.parse(image).name
   const {width, height} = require('image-size')(image)
   const minHeight = width * config.display.height / config.display.width * 0.8
   if (env.isTest || height >= minHeight) return [name] // Skip check in tests to avoid flaky failures when a newspaper publishes an unusual page
   log.warn(`Skipping ${name} (${width}W x ${height}H) since it has abnormal height`)
   return []
-}
+})
 
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
 const nextPaper = (currentDevice, currentPaper) => {
