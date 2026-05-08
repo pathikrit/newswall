@@ -140,12 +140,16 @@ const pdfToImage = (pdf, png) => {
 }
 
 const checkImage = (image) => {
-  const {min, max} = config.display.validHeight
   const name = path.parse(image).name
-  const {width, height} = require('image-size').imageSize(image)
-  if (height < min || height > max) {
-    log.warn(`Skipping ${name} since it has dimensions of ${width} x ${height} which is abnormal and not in range of ${width} x [${min}-${max}]`)
-    return []
+  try {
+    const {min, max} = config.display.validHeight
+    const {width, height} = require('image-size').imageSize(image)
+    if (height < min || height > max) {
+      log.warn(`Skipping ${name} since it has dimensions of ${width} x ${height} which is abnormal and not in range of ${width} x [${min}-${max}]`)
+      return []
+    }
+  } catch (e) {
+    log.warn(`Could not read dimensions of ${name}:`, e.message)
   }
   return [name]
 }
