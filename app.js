@@ -35,7 +35,8 @@ const config = {
   display: {
     height: 2560,
     width: 1440,
-    pdf2ImgOpts: {width: 1600}
+    pdf2ImgOpts: {width: 1600},
+    validHeight: {min: 2700, max: 3500} // if height outside this range, it would look bad on display e.g. when a multipage ad is shown
   },
 
   // Show low battery warning below this
@@ -138,6 +139,17 @@ const pdfToImage = (pdf, png) => {
     .then(images => fs.writeFile(png, images[0], () => log.info(`Wrote ${png}`)))
 }
 
+const checkImage = (image) => {
+  const {min, max} = config.display.validHeight
+  const name = path.parse(image).name
+  const {width, height} = require('image-size').imageSize(image)
+  if (height < min || height > max) {
+    log.warn(`Skipping ${name} since it has dimensions of ${width} x ${height} which is abnormal and not in range of ${width} x [${min}-${max}]`)
+    return []
+  }
+  return [name]
+}
+
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
 const nextPaper = (currentDevice, currentPaper) => {
   const searchTerm = currentDevice?.newspapers?.length > 0 ?
@@ -148,7 +160,7 @@ const nextPaper = (currentDevice, currentPaper) => {
 
   for (const date of recentDays(3, currentDevice?.timezone)) {
     const globExpr = path.join(config.newsstand, date, `${searchTerm}.png`)
-    const ids = glob.sync(globExpr.replace(/\\/g, '/')).map(image => path.parse(image).name).sort()
+    const ids = glob.sync(globExpr.replace(/\\/g, '/')).flatMap(checkImage).sort()
 
     if (ids.length === 0) continue
     // Find something that is not current or a random one

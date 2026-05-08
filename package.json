@@ -12,6 +12,7 @@
     "extract-date": "^2.8.2",
     "glob": "^8.0.3",
     "http-status-codes": "^2.2.0",
+    "image-size": "^2.0.2",
     "lodash": "^4.17.21",
     "lodash.product": "^18.10.0",
     "md5-file": "^5.0.0",
