@@ -1,5 +1,8 @@
-const freedom_forum_url = id => date => 
+const freedom_forum_url = id => date =>
   `https://d2dr22b2lm4tvw.cloudfront.net/${id}/${date.format('YYYY-MM-DD')}/front-page.pdf` // TODO: support .png direct?
+
+const linh_times_url = (name, token) => date =>
+  `https://linh-news.fly.dev/pdf/${date.format('YYYY-MM-DD')}/${name.toLowerCase()}?token=${token}`
 
 module.exports = {
   // List of newspapers we support
@@ -39,9 +42,16 @@ module.exports = {
       scale: 1.04,
     },
     {
+      id: 'RickTimes',
+      name: 'The Rick Times',
+      url: linh_times_url('Rick', process.env.RICK_TIMES_TOKEN),
+      alwaysDownload: true,
+      scale: 1.0
+    },
+    {
       id: 'LinhTimes',
       name: 'The Linh Times',
-      url: date => `https://linh-news.fly.dev/pdf/${date.format('YYYY-MM-DD')}?token=${process.env.LINH_TIMES_TOKEN}`,
+      url: linh_times_url('Linh', process.env.LINH_TIMES_TOKEN),
       alwaysDownload: true,
       scale: 1.0
     }
@@ -71,6 +81,10 @@ module.exports = {
         },
         {
           id: 'WaPo',
+          displayFor: 15
+        },
+        {
+          id: 'RickTimes',
           displayFor: 15
         }
       ]
@@ -123,23 +137,23 @@ module.exports = {
       newspapers: [
         {
           id: 'LinhTimes',
-          displayFor: 60
+          displayFor: 30
         },
         {
           id: 'NYT',
-          displayFor: 15
+          displayFor: 30
         },
         {
           id: 'WSJ',
-          displayFor: 15
+          displayFor: 30
         },
         {
           id: 'LATimes',
-          displayFor: 15
+          displayFor: 30
         },
         {
           id: 'WaPo',
-          displayFor: 15
+          displayFor: 30
         }
       ]
     }
