@@ -133,10 +133,6 @@ module.exports = {
           displayFor: 30
         },
         {
-          id: 'NYT',
-          displayFor: 15
-        },
-        {
           id: 'WSJ',
           displayFor: 15
         },
