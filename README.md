@@ -1,5 +1,4 @@
-Newswall [![CI](https://github.com/pathikrit/newswall/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/pathikrit/newswall/actions/workflows/ci.yml)
----
+# Newswall [![CI](https://github.com/pathikrit/newswall/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/pathikrit/newswall/actions/workflows/ci.yml)
 
 ![My Frame](https://cdn.shopify.com/s/files/1/0732/9539/7170/files/Black.jpg?v=1719942534)
 
@@ -30,8 +29,8 @@ yarn test
 
 Most of the papers come from [The Freedom Forum](https://www.freedomforum.org/todaysfrontpages/) - please consider [supporting](https://www.freedomforum.org/support/) them.
 
-My Setup
----
+## My Setup
+
 I use the [32-inch Visionect display](https://www.visionect.com/shop/place-play-32/ref/pathikrit/)
 which can be easily configured in [their online portal](https://portal.getjoan.com/) to point to any website
 ([this](http://newswall.onrender.com) is currently [deployed on render.com](https://render.com/docs/deploy-node-express-app)).
@@ -41,3 +40,9 @@ that makes it easy to recharge the display without taking the frame off the wall
 I have a [little util](https://github.com/pathikrit/node-joan) which uses [their API](https://portal.getjoan.com/api/docs/) to overlay a little battery status on the bottom of the newspaper being shown.
 
 ![Mounted](https://cdn.shopify.com/s/files/1/0732/9539/7170/files/ApartmentLivingRoom_1000x1500.jpg?v=1719942534)
+
+
+### Adding a new display
+1. Connect display to computer via USB to wake up BT module
+2. Download the mobile app to configure: `server=pathikrit-1.dk.visionect.com` and `port=11113`
+2. Grab the `id` from <https://pathikrit-1-admin.dk.visionect.com> to add to [db.js](/db.js)
