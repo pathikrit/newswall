@@ -145,6 +145,26 @@ module.exports = {
           displayFor: 15
         }
       ]
-    }
+    },
+    {
+      id: '18003e00-1051-3430-3339-373700000000',
+      name: "NX1 Newswall",
+      timezone: 'America/New_York',
+      showFahrenheit: true,
+      newspapers: [
+        {
+          id: 'NYT',
+          displayFor: 15
+        },
+        {
+          id: 'WSJ',
+          displayFor: 60
+        },
+        {
+          id: 'WaPo',
+          displayFor: 15
+        }
+      ]
+    },
   ]
 }
