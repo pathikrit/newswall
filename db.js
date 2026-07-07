@@ -148,13 +148,13 @@ module.exports = {
     },
     {
       id: '18003e00-1051-3430-3339-373700000000',
-      name: "NX1 Newswall",
+      name: "Stephen's Newswall",
       timezone: 'America/New_York',
       showFahrenheit: true,
       newspapers: [
         {
           id: 'NYT',
-          displayFor: 15
+          displayFor: 30
         },
         {
           id: 'WSJ',
@@ -162,7 +162,7 @@ module.exports = {
         },
         {
           id: 'WaPo',
-          displayFor: 15
+          displayFor: 30
         }
       ]
     },
