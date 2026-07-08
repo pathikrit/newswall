@@ -4,7 +4,7 @@
   <title>Newswall</title>
   <!-- Always refresh every 12 hours to fix stuck displays and/or get new versions of this page -->
   <meta http-equiv="refresh" content="<%= 12 * 60 * 60 %>">
-  <link rel="stylesheet" href="https://kit.fontawesome.com/a22be8527e.css" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
   <style>
     * {
       margin: 0;
@@ -34,8 +34,8 @@
     }
   </style>
   <!--  TODO: https://github.com/browserify/browserify-->
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=URLSearchParams,Promise"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=URLSearchParams,Promise"></script>
   <script>
     const params = new URLSearchParams(window.location.search)
 
@@ -46,54 +46,59 @@
 
     // Update the DOM with new paper and status while also reporting current status with any prior error passed in
     update = (arg) => {
-      // okular object is injected  by the display frame; we mock it otherwise in browser based emulations
-      if (typeof okular === 'undefined') {
-        random = (from, to) => from + Math.floor((to - from) * Math.random())
-        okular = {
-          <% if (!env.isProd) { %>
-          RSSI: random(45, 85),
-          BatteryLevel: random(5, 99),
-          Temperature: random(-10, 35),
-          <% } %>
-          isMock: true
+      const retry = (ms) => setTimeout(update, ms)
+      try {
+        // okular object is injected  by the display frame; we mock it otherwise in browser based emulations
+        if (typeof okular === 'undefined') {
+          random = (from, to) => from + Math.floor((to - from) * Math.random())
+          okular = {
+            <% if (!env.isProd) { %>
+            RSSI: random(45, 85),
+            BatteryLevel: random(5, 99),
+            Temperature: random(-10, 35),
+            <% } %>
+            isMock: true
+          }
         }
-      }
-      const status = {
-        uuid: okular.session_uuid || params.get('deviceId'),
-        wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
-        battery: okular.BatteryLevel,
-        temperature: okular.Temperature,
-        timeout: typeof okular['DevicesStatus'] == 'function' ? okular.GetReloadTimeout() : undefined,
-        url: window.location.pathname,
-        papers: params.has('papers') ? params.get('papers').split(',') : undefined,
-        prev: params.get('prev') || $('.paper-container > img').attr('id'),
-        isFrame: !okular.isMock,
-        mode: typeof arg == 'function' ? 'PageLoad' : 'AJAX', // arg is either null (ajax) or a fn from document.ready
-      }
-      return $.post('/latest', status)
-        .fail((jqXhr, textStatus, errorThrown) => status.error = {status: jqXhr.status, message: textStatus, error: errorThrown})
-        .done(res => {
-          try {
-            status.refreshAfter = res.paper.displayFor * 60 * 1000
+        const status = {
+          uuid: okular.session_uuid || params.get('deviceId'),
+          wifi: okular.RSSI ? Math.min(Math.max(2*(100 - okular.RSSI), 0), 100) : undefined, //See: https://stackoverflow.com/a/31852591/471136
+          battery: okular.BatteryLevel,
+          temperature: okular.Temperature,
+          timeout: typeof okular.GetReloadTimeout == 'function' ? okular.GetReloadTimeout() : undefined,
+          url: window.location.pathname,
+          papers: params.has('papers') ? params.get('papers').split(',') : undefined,
+          prev: params.get('prev') || $('.paper-container > img').attr('id'),
+          isFrame: !okular.isMock,
+          mode: typeof arg == 'function' ? 'PageLoad' : 'AJAX', // arg is either null (ajax) or a fn from document.ready
+        }
+        return $.post('/latest', status)
+          .fail((jqXhr, textStatus, errorThrown) => status.error = {status: jqXhr.status, message: textStatus, error: errorThrown})
+          .done(res => {
+            try {
+              status.refreshAfter = res.paper.displayFor * 60 * 1000
 
-            let statusBar = ``
-            if (status.refreshAfter)  statusBar += `${timeFormat(new Date(new Date().getTime() + status.refreshAfter))} <i class="fa-sharp fa-clock-rotate-left"></i>&emsp;`
-            if (status.wifi)          statusBar += `${status.wifi}% <i class="fa-regular fa-signal-${Math.ceil(status.wifi * 6/100) - 1}"></i>&emsp;`
-            if (status.battery)       statusBar += `${status.battery}% <i class="fa-regular fa-rotate-270 fa-battery-${Math.ceil(status.battery * 6/100) - 1}"></i>&emsp;`
-            if (status.temperature)   statusBar += `${res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`}&emsp;`
+              let statusBar = ``
+              if (status.refreshAfter)  statusBar += `${timeFormat(new Date(new Date().getTime() + status.refreshAfter))} <i class="fa-solid fa-clock-rotate-left"></i>&emsp;`
+              if (status.wifi)          statusBar += `${status.wifi}% <i class="fa-solid fa-signal"></i>&emsp;`
+              if (status.battery)       statusBar += `${status.battery}% <i class="fa-solid fa-rotate-270 fa-battery-${['empty', 'quarter', 'quarter', 'half', 'three-quarters', 'full'][Math.ceil(status.battery * 6/100) - 1]}"></i>&emsp;`
+              if (status.temperature)   statusBar += `${res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`}&emsp;`
 
-            $('.paper-container').html(
-              (status.battery && status.battery < <%=lowBatteryWarning%> ?
-                `<div class="load-message"><h1>LOW BATTERY ALERT!</h1><i>Please charge this device using the USB cable attached to the back of this frame.</i></div>` :
-                `<img id="${res.paper.id}" src="/archive/${res.paper.date}/${res.paper.id}.png" style="transform: scale(${res.paper.scale})" alt="${res.paper.name} for ${res.paper.date}">`
-              ) + `<div class="statusbar">${statusBar}</div>`
-            )
-          } catch (error) { status.error = error }
-        })
-        .always(() => {
-          setTimeout(update, status.refreshAfter || (1 * 60 * 1000))  // always update at least 1 minute from now
-          if (status.error) $('.statusbar').append(`<code>ERROR: ${JSON.stringify(status.error)}</code>`)
-        })
+              $('.paper-container').html(
+                (status.battery && status.battery < <%=lowBatteryWarning%> ?
+                  `<div class="load-message"><h1>LOW BATTERY ALERT!</h1><i>Please charge this device using the USB cable attached to the back of this frame.</i></div>` :
+                  `<img id="${res.paper.id}" src="/archive/${res.paper.date}/${res.paper.id}.png" style="transform: scale(${res.paper.scale})" alt="${res.paper.name} for ${res.paper.date}">`
+                ) + `<div class="statusbar">${statusBar}</div>`
+              )
+            } catch (error) { status.error = error }
+          })
+          .always(() => {
+            retry(status.refreshAfter || (1 * 60 * 1000))  // always update at least 1 minute from now
+            if (status.error) $('.statusbar').append(`<code>ERROR: ${JSON.stringify(status.error)}</code>`)
+          })
+      } catch (error) {
+        retry(1 * 60 * 1000) // a sync error above must never kill the update loop else the frame freezes till the next page reload
+      }
     }
 
     $(document).ready(update)

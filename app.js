@@ -3,7 +3,6 @@ const dayjs = require('dayjs-with-plugins')
 const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
-require('lodash.product')
 const _ = require('lodash')
 const {StatusCodes} = require('http-status-codes')
 const db = require('./db.js')
@@ -15,6 +14,9 @@ const env = {
   isTest: process.env.NODE_ENV === 'test'
 }
 
+/** Parse an int from an env var, falling back if unset or garbage (a NaN here can be dangerous e.g. archiveLength=NaN would trash the whole newsstand) */
+const intEnv = (value, fallback) => Number.isFinite(parseInt(value)) ? parseInt(value) : fallback
+
 const config = {
   port: process.env.PORT ?? 3000,
 
@@ -25,10 +27,10 @@ const config = {
   myUrl: process.env.RENDER_EXTERNAL_URL,
 
   // How many days of papers to keep
-  archiveLength: parseInt(process.env.ARCHIVE_LENGTH_DAYS ?? 5),
+  archiveLength: intEnv(process.env.ARCHIVE_LENGTH_DAYS, 5),
 
   // Every hour check for new papers and update device statuses
-  refreshInterval: dayjs.duration({minutes: parseInt(process.env.REFRESH_INTERVAL_MINUTES ?? 60)}),
+  refreshInterval: dayjs.duration({minutes: intEnv(process.env.REFRESH_INTERVAL_MINUTES, 60)}),
 
   // Although the Visionect 32-inch e-ink display is 2560x1440 we choose a slightly bigger width of 1600px when converting from pdf to png
   // since it makes it easier to zoom/crop useless white margins around the edges of the newspapers
@@ -39,7 +41,7 @@ const config = {
   },
 
   // Show low battery warning below this
-  lowBatteryWarning: parseInt(process.env.LOW_BATTERY_WARNING ?? 15),
+  lowBatteryWarning: intEnv(process.env.LOW_BATTERY_WARNING, 15),
 
   // VSS Settings: See https://github.com/pathikrit/node-visionect
   // Note: This whole section can be removed and things will still work e.g. if you are using the Joan portal
@@ -63,18 +65,25 @@ const recentDays = (n, timezone = 'Etc/GMT-14') => _.range(n).map(i => dayjs().t
 const downloadAll = () => {
   // Delete old stuff
   glob(path.join(config.newsstand, `!(${recentDays(config.archiveLength).join('|')})`), (err, dirs) => {
+    if (err) return log.error('Could not clean up old papers', err)
     dirs.forEach(dir => fs.rm(dir, {force: true, recursive: true}, () => log.info(`Deleted old files: ${dir}`)))
   })
 
-  // Seed hashes of PDFs already on disk (e.g. from before a server restart) so the stale-file check in download() works across restarts
+  // Rebuild hashes from PDFs on disk (e.g. from before a server restart) so the stale-file check in download() works across restarts
   const md5 = require('md5-file')
-  glob.sync(path.join(config.newsstand, '*', '*.pdf').replace(/\\/g, '/'))
-    .forEach(pdf => hashes.set(md5.sync(pdf), pdf))
+  hashes.clear()
+  glob.sync(path.join(config.newsstand, '*', '*.pdf').replace(/\\/g, '/')).forEach(pdf => {
+    try { hashes.set(md5.sync(pdf), pdf) } catch (error) { log.warn(`Could not hash ${pdf}`, error) } // file may vanish mid-scan (e.g. cleanup above)
+  })
 
   log.info('Checking for new papers ...')
   // LinhTimes requires a private token and is intentionally excluded from tests to avoid external auth dependency in CI.
   const newspapers = env.isTest ? db.newspapers.filter(paper => paper.id !== 'LinhTimes') : db.newspapers
-  return Promise.all(_.product(recentDays(3), newspapers).map(([date, newspaper]) => download(newspaper, date)))
+  // For each newspaper, download dates oldest-first sequentially so an earlier date always claims its hash
+  const dates = recentDays(3).reverse()
+  return Promise.all(newspapers.map(newspaper =>
+    dates.reduce((prev, date) => prev.then(() => download(newspaper, date)), Promise.resolve())
+  ))
 }
 
 /** Download the newspaper for given date */
@@ -117,7 +126,7 @@ const download = (newspaper, date) => {
       if (typeof error === 'string' && error.startsWith('No intraday change detected'))
         return log.info(error)
       fs.rmSync(pdfPath, {force: true})
-      if (error.statusCode && error.statusCode === StatusCodes.NOT_FOUND)
+      if ([StatusCodes.NOT_FOUND, StatusCodes.FORBIDDEN].includes(error.statusCode)) // CDNs like CloudFront return 403 for missing objects
         log.info(`${name} is not available at ${url}`)
       else
         log.error(`Could not download ${name} from ${url}`, error)
@@ -137,19 +146,26 @@ const extractDateFromText = (text) => {
 
 const pdfToImage = (pdf, png) => {
   log.info(`Converting ${pdf} to ${png} ...`)
+  const tmp = `${png}.tmp` // write to a temp file and rename so a device request can never glob a half-written png
   return require('pdf-img-convert')
     .convert(pdf, config.display.pdf2ImgOpts)
-    .then(images => fs.writeFile(png, images[0], () => log.info(`Wrote ${png}`)))
+    .then(images => fs.promises.writeFile(tmp, images[0]))
+    .then(() => fs.promises.rename(tmp, png))
+    .then(() => log.info(`Wrote ${png}`))
 }
 
-const checkImage = _.memoize((image) => {
+const checkImage = _.memoize((image, mtime) => {
   const name = path.parse(image).name
-  const {width, height} = require('image-size')(image)
-  const minHeight = width * config.display.height / config.display.width * 0.8
-  if (env.isTest || height >= minHeight) return [name] // Skip check in tests to avoid flaky failures when a newspaper publishes an unusual page
-  log.warn(`Skipping ${name} (${width}W x ${height}H) since it has abnormal height`)
+  try {
+    const {width, height} = require('image-size')(image)
+    const minHeight = width * config.display.height / config.display.width * 0.8
+    if (env.isTest || height >= minHeight) return [name] // Skip check in tests to avoid flaky failures when a newspaper publishes an unusual page
+    log.warn(`Skipping ${name} (${width}W x ${height}H) since it has abnormal height`)
+  } catch (error) {
+    log.warn(`Skipping unreadable image ${image}`, error)
+  }
   return []
-})
+}, (image, mtime) => `${image}@${mtime}`) // memoize per file version since alwaysDownload papers overwrite the same path intraday
 
 /** Finds a new latest paper that is preferably not the current one. If papers is specified, it would be one of these */
 const nextPaper = (currentDevice, currentPaper) => {
@@ -161,7 +177,9 @@ const nextPaper = (currentDevice, currentPaper) => {
 
   for (const date of recentDays(3, currentDevice?.timezone)) {
     const globExpr = path.join(config.newsstand, date, `${searchTerm}.png`)
-    const ids = glob.sync(globExpr.replace(/\\/g, '/')).flatMap(checkImage).sort()
+    const ids = glob.sync(globExpr.replace(/\\/g, '/')).flatMap(image => {
+      try { return checkImage(image, fs.statSync(image).mtimeMs) } catch (error) { return [] } // file may vanish between glob and stat
+    }).sort()
 
     if (ids.length === 0) continue
     // Find something that is not current or a random one
@@ -170,7 +188,7 @@ const nextPaper = (currentDevice, currentPaper) => {
     const paper = db.newspapers.find(paper => paper.id === id)
     const displayFor = currentDevice?.newspapers?.find(p => p.id === paper?.id)?.displayFor || config.refreshInterval.asMinutes()
 
-    if (paper) return Object.assign(paper, {date, displayFor})
+    if (paper) return {...paper, date, displayFor} // return a copy - don't pollute the shared db object with request-specific fields
     if (id) log.error(`Unknown paper found: ${id}`)
   }
 }
@@ -232,7 +250,8 @@ const app = express()
   .post('/latest', (req, res) => {
     const result = {}
     if (req.body.papers) {
-      result.paper = nextPaper({newspapers: req.body.papers.map(paper => ({id: paper}))}, req.body.prev)
+      const ids = [].concat(req.body.papers).filter(id => /^\w+$/.test(id)) // ids end up in a glob - don't let a crafted one escape the newsstand
+      result.paper = nextPaper({newspapers: ids.map(paper => ({id: paper}))}, req.body.prev)
       if (!result.paper) result.missing = `Newspapers = ${req.body.papers}`
     } else if (req.body.uuid) {
       result.device = db.devices.find(device => device.id === req.body.uuid)
@@ -256,14 +275,13 @@ app.locals = Object.assign(app.locals, config, {env})
 //     fs.rmSync(path)
 //   })
 
-// Kickoff download and export the app if this is a test so test framework can start the server else we start it ourselves
-module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.listen(config.port, () => {
+// Start listening right away (in prod) so devices are never refused while a slow cold-start download runs;
+// export a promise that resolves after the first download cycle completes (tests await this before asserting)
+const server = env.isTest ? app : app.listen(config.port, () => {
   log.info(`\nStarted server on port ${config.port} with paper refresh interval of ${config.refreshInterval.humanize()} ...`)
 
-  const dateToday = dayjs().tz(config.timezone)
-
   // Resolve newspaper DB items URL function to its string, for display in the console table output
-  log.table(db.newspapers.map((item) => ({...item, url: item.url(dateToday)})))
+  log.table(db.newspapers.map((item) => ({...item, url: item.url(dayjs())})))
 
   // Update Visionect
   if (config.visionect?.apiKey && config.visionect?.apiServer && config.visionect?.apiSecret) {
@@ -274,4 +292,5 @@ module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.l
       log.error('VSS update failed', error)
     }
   }
-}))
+})
+module.exports = scheduleAndRun(downloadAll).then(() => server)
