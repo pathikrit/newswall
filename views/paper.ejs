@@ -4,7 +4,7 @@
   <title>Newswall</title>
   <%# Always refresh every 12 hours to fix stuck displays and/or get new versions of this page -%>
   <meta http-equiv="refresh" content="<%= 12 * 60 * 60 %>">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://kit.fontawesome.com/a22be8527e.css" crossorigin="anonymous">
   <style>
     * {
       margin: 0;
@@ -80,9 +80,9 @@
               status.refreshAfter = res.paper.displayFor * 60 * 1000
 
               let statusBar = ``
-              if (status.refreshAfter)  statusBar += `${timeFormat(new Date(new Date().getTime() + status.refreshAfter))} <i class="fa-solid fa-clock-rotate-left"></i>&emsp;`
-              if (status.wifi)          statusBar += `${status.wifi}% <i class="fa-solid fa-signal"></i>&emsp;`
-              if (status.battery)       statusBar += `${status.battery}% <i class="fa-solid fa-rotate-270 fa-battery-${['empty', 'quarter', 'quarter', 'half', 'three-quarters', 'full'][Math.ceil(status.battery * 6/100) - 1]}"></i>&emsp;`
+              if (status.refreshAfter)  statusBar += `${timeFormat(new Date(new Date().getTime() + status.refreshAfter))} <i class="fa-duotone fa-clock-rotate-left"></i>&emsp;`
+              if (status.wifi)          statusBar += `${status.wifi}% <i class="fa-duotone fa-${['signal-weak', 'signal-weak', 'signal-fair', 'signal-good', 'signal-strong', 'signal'][Math.ceil(status.wifi * 6/100) - 1]}"></i>&emsp;`
+              if (status.battery)       statusBar += `${status.battery}% <i class="fa-duotone fa-rotate-270 fa-battery-${['empty', 'quarter', 'quarter', 'half', 'three-quarters', 'full'][Math.ceil(status.battery * 6/100) - 1]}"></i>&emsp;`
               if (status.temperature)   statusBar += `${res.device && res.device.showFahrenheit ?`${Math.floor(1.8*status.temperature + 32)}° F` : `${status.temperature}° C`}&emsp;`
 
               $('.paper-container').html(
