@@ -9,6 +9,10 @@ const db = require('./db.js')
 
 const log = console
 
+// Last-resort safety nets: a stray async error (e.g. a fire-and-forget VSS call failing) must never take the server down
+process.on('unhandledRejection', (err) => log.error('Unhandled rejection', err))
+process.on('uncaughtException', (err) => log.error('Uncaught exception', err))
+
 const env = {
   isProd: process.env.NODE_ENV === 'production',
   isTest: process.env.NODE_ENV === 'test'
@@ -204,30 +208,34 @@ const scheduleAndRun = (job) => {
 const updateVss = (vss) => {
   vss.http.defaults.timeout = 30 * 1000 // don't hang forever if VSS is unresponsive
 
+  // Note: interceptors must re-reject (not swallow) errors - a swallowed rejection resolves to undefined inside
+  // node-visionect's promise chains and the resulting TypeError is an unhandled rejection that kills the process
   vss.http.interceptors.request.use(req => {
     req.method = req.method.toUpperCase()
     if (env.isTest) return Promise.reject('VSS should not be messed around from tests')
     if (!env.isProd && req.method !== 'GET') return Promise.reject(`${req.method} ${req.url} BLOCKED (cannot make non-GET call from non-prod env)`)
     return req
-  }, (err) => log.error('VSS request failure', err))
+  }, (err) => Promise.reject(err))
 
   vss.http.interceptors.response.use(res => {
     log.debug(res.request.method, res.request.path, res.status)
     return res
-  }, (err) => log.error(err))
+  }, (err) => Promise.reject(err))
 
   // TODO: diff against current VSS state and only patch/restart devices whose config actually changed
   db.devices.forEach((device, i) => {
+    const logFail = (action) => (err) => log.error(`VSS ${action} failed for ${device.name}: ${err?.message ?? err}`)
     setTimeout(() => { // Stagger the devices so we don't blast the VSS API with all updates at once
       log.info(`Syncing ${device.id} to VSS ...`)
       log.table(device.newspapers)
-      vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
+      vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}}).catch(logFail('device patch'))
       if (config.myUrl) {
         const myUrl = `${config.myUrl}/latest`
         log.debug(`Sending URL ${myUrl} to device ${device.id} ...`)
-        vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: myUrl}}})
+        vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: myUrl}}}).catch(logFail('session patch'))
       }
-      setTimeout(vss.sessions.restart, 60 * 1000, device.id) // Restart the device session a minute from now (also makes its html engine pick up timezone changes)
+      // Restart the device session a minute from now (also makes its html engine pick up timezone changes)
+      setTimeout(() => vss.sessions.restart(device.id).catch(logFail('session restart')), 60 * 1000)
     }, i * 10 * 1000)
   })
 }
