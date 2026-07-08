@@ -56,9 +56,8 @@ const config = {
 /** We store hashes of all PDFs we dowload to do a quick verification that we are not redownloading same file twice */
 const hashes = new Map()
 
-/** Returns last n days (including today), if timezone is not specified we assume the earliest timezone i.e. UTC-14 */
-const recentDays = (n, timezone = 'Etc/GMT+12') => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
-//TODO: Change back to GMT-14 ^^^^
+/** Returns last n days (including today); default is the earliest timezone on Earth (UTC+14 i.e. Etc/GMT-14 in POSIX notation) so we fetch new papers as soon as they can possibly exist */
+const recentDays = (n, timezone = 'Etc/GMT-14') => _.range(n).map(i => dayjs().tz(timezone).subtract(i, 'days').format('YYYY-MM-DD'))
 
 /** Downloads all newspapers for all recent days; trashes old ones */
 const downloadAll = () => {
@@ -66,6 +65,11 @@ const downloadAll = () => {
   glob(path.join(config.newsstand, `!(${recentDays(config.archiveLength).join('|')})`), (err, dirs) => {
     dirs.forEach(dir => fs.rm(dir, {force: true, recursive: true}, () => log.info(`Deleted old files: ${dir}`)))
   })
+
+  // Seed hashes of PDFs already on disk (e.g. from before a server restart) so the stale-file check in download() works across restarts
+  const md5 = require('md5-file')
+  glob.sync(path.join(config.newsstand, '*', '*.pdf').replace(/\\/g, '/'))
+    .forEach(pdf => hashes.set(md5.sync(pdf), pdf))
 
   log.info('Checking for new papers ...')
   // LinhTimes requires a private token and is intentionally excluded from tests to avoid external auth dependency in CI.
@@ -81,7 +85,7 @@ const download = (newspaper, date) => {
   const pngPath = pdfPath.replace('.pdf', '.png')
   const name = `'${newspaper.name}' for ${date}`
 
-  const shouldForceDownload = newspaper.alwaysDownload && date === recentDays(1)[0]
+  const shouldForceDownload = newspaper.alwaysDownload && recentDays(2).includes(date)
   if (!shouldForceDownload && fs.existsSync(pdfPath)) {
     return fs.existsSync(pngPath) ? Promise.resolve(log.debug(`Already downloaded ${name}`)) : pdfToImage(pdfPath, pngPath)
   }
@@ -180,6 +184,8 @@ const scheduleAndRun = (job) => {
 
 /** Sync device configs to VSS and restart sessions */
 const updateVss = (vss) => {
+  vss.http.defaults.timeout = 30 * 1000 // don't hang forever if VSS is unresponsive
+
   vss.http.interceptors.request.use(req => {
     req.method = req.method.toUpperCase()
     if (env.isTest) return Promise.reject('VSS should not be messed around from tests')
@@ -192,16 +198,19 @@ const updateVss = (vss) => {
     return res
   }, (err) => log.error(err))
 
-  db.devices.forEach(device => {
-    log.info(`Syncing ${device.id} to VSS ...`)
-    log.table(device.newspapers)
-    vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
-    if (config.myUrl) {
-      const myUrl = `${config.myUrl}/latest`
-      log.debug(`Sending URL ${myUrl} to device ${device.id} ...`)
-      vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: myUrl}}})
-    }
-    setTimeout(vss.sessions.restart, 60 * 1000, device.id) // Restart the device session a minute from now
+  // TODO: diff against current VSS state and only patch/restart devices whose config actually changed
+  db.devices.forEach((device, i) => {
+    setTimeout(() => { // Stagger the devices so we don't blast the VSS API with all updates at once
+      log.info(`Syncing ${device.id} to VSS ...`)
+      log.table(device.newspapers)
+      vss.devices.patch(device.id, {Options: {Name: device.name, Timezone: device.timezone}})
+      if (config.myUrl) {
+        const myUrl = `${config.myUrl}/latest`
+        log.debug(`Sending URL ${myUrl} to device ${device.id} ...`)
+        vss.sessions.patch(device.id, {Backend: { Name: 'HTML', Fields: { ReloadTimeout: '0', url: myUrl}}})
+      }
+      setTimeout(vss.sessions.restart, 60 * 1000, device.id) // Restart the device session a minute from now (also makes its html engine pick up timezone changes)
+    }, i * 10 * 1000)
   })
 }
 
@@ -256,10 +265,13 @@ module.exports = scheduleAndRun(downloadAll).then(() => env.isTest ? app : app.l
   // Resolve newspaper DB items URL function to its string, for display in the console table output
   log.table(db.newspapers.map((item) => ({...item, url: item.url(dateToday)})))
 
-  // Update Visionect?
+  // Update Visionect
   if (config.visionect?.apiKey && config.visionect?.apiServer && config.visionect?.apiSecret) {
-    const VisionectApiClient = require('node-visionect')
-    // TODO: Enable VSS update
-    // updateVss(new VisionectApiClient(config.visionect))
+    try {
+      const VisionectApiClient = require('node-visionect')
+      updateVss(new VisionectApiClient(config.visionect))
+    } catch (error) {
+      log.error('VSS update failed', error)
+    }
   }
 }))

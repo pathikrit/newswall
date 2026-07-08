@@ -35,7 +35,7 @@ I use the [32-inch Visionect display](https://www.visionect.com/shop/place-play-
 which can be easily configured in [their online portal](https://portal.getjoan.com/) to point to any website
 ([this](http://newswall.onrender.com) is currently [deployed on render.com](https://render.com/docs/deploy-node-express-app)).
 My excellent [local framing shop](https://tenaflycamera.business.site/)
-made a [custom frame](https://photos.app.goo.gl/SYgRZbz4BgVaxsVg8) for me that not only hides the manufacturer's logo on the frame but also hides [a small portable powerbank](https://www.amazon.com/gp/product/B09VP41M71/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&th=1)
+made a [custom frame](https://photos.app.goo.gl/SYgRZbz4BgVaxsVg8) for me that not only hides the manufacturer's logo on the frame but also hides [a small portable powerbank](https://www.amazon.com/INIU-20000mAh-Portable-Charging-3-Output/dp/B0DB86W481/)
 that makes it easy to recharge the display without taking the frame off the wall.
 I have a [little util](https://github.com/pathikrit/node-joan) which uses [their API](https://portal.getjoan.com/api/docs/) to overlay a little battery status on the bottom of the newspaper being shown.
 
@@ -45,4 +45,5 @@ I have a [little util](https://github.com/pathikrit/node-joan) which uses [their
 ### Adding a new display
 1. Connect display to computer via USB to wake up BT module
 2. Download the mobile app to configure: `server=pathikrit-1.dk.visionect.com` and `port=11113`
-2. Grab the `id` from <https://pathikrit-1-admin.dk.visionect.com> to add to [db.js](/db.js)
+3. Grab the `id` from [admin portal](https://pathikrit-1-admin.dk.visionect.com) to add to [db.js](/db.js)
+4. In admin portal, a) update device name b) set timezone c) set to auto-update (both software and bootloader)
