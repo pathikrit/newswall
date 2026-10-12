@@ -41,13 +41,13 @@ module.exports = {
       url: freedom_forum_url('wsj'),
       scale: 1.04,
     },
-    {
-      id: 'LinhTimes',
-      name: 'The Linh Times',
-      url: linh_times_url('Linh', process.env.LINH_TIMES_TOKEN),
-      alwaysDownload: true,
-      scale: 1.0
-    }
+    // {
+    //   id: 'LinhTimes',
+    //   name: 'The Linh Times',
+    //   url: linh_times_url('Linh', process.env.LINH_TIMES_TOKEN),
+    //   alwaysDownload: true,
+    //   scale: 1.0
+    // }
   ],
 
   // Each device has the following attributes:
@@ -124,17 +124,17 @@ module.exports = {
       timezone: 'America/New_York',
       showFahrenheit: false,
       newspapers: [
+        // {
+        //   id: 'LinhTimes',
+        //   displayFor: 45
+        // },
         {
-          id: 'LinhTimes',
+          id: 'NYT',
           displayFor: 45
         },
         {
-          id: 'NYT',
-          displayFor: 30
-        },
-        {
           id: 'WSJ',
-          displayFor: 15
+          displayFor: 45
         },
         {
           id: 'LATimes',
@@ -142,7 +142,7 @@ module.exports = {
         },
         {
           id: 'WaPo',
-          displayFor: 15
+          displayFor: 30
         }
       ]
     },
